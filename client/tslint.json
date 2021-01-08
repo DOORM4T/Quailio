@@ -6,6 +6,9 @@
   "rules": {
     "member-access": true,
     "interface-name": true,
-    "no-console": false
+    "no-console": false,
+    "no-empty": false,
+    "jsx-no-lambda": false,
+    "jsx-boolean-value": false
   }
 }
