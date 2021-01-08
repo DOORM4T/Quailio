@@ -18,25 +18,31 @@ interface IProps {
 const MenuItems = [
   {
     label: (
-      <Link to="/">
-        <Text margin={{ right: "small" }}>
-          <Icons.Home color="accent-1" />
-        </Text>
-        <Text color="light-1">Home</Text>
-      </Link>
+      <Box fill>
+        <Link to="/">
+          <Text margin={{ right: "small" }}>
+            <Icons.Home color="accent-1" />
+          </Text>
+          <Text color="light-1">Home</Text>
+        </Link>
+      </Box>
     ),
   },
   {
     label: (
-      <Link to="/dashboard">
-        <Text margin={{ right: "small" }}>
-          <Icons.Dashboard color="accent-1" />
-        </Text>
-        <Text color="light-1">Dashboard</Text>
-      </Link>
+      <Box fill>
+        <Link to="/dashboard">
+          <Text margin={{ right: "small" }}>
+            <Icons.Dashboard color="accent-1" />
+          </Text>
+          <Text color="light-1">Dashboard</Text>
+        </Link>
+      </Box>
     ),
   },
 ]
+
+export const HEADER_HEIGHT = 60
 
 const Header: React.FC<IProps> = (props) => {
   const size = React.useContext(ResponsiveContext)
@@ -47,6 +53,7 @@ const Header: React.FC<IProps> = (props) => {
       background="brand"
       pad={{ horizontal: "large" }}
       justify="start"
+      height={{ min: `${HEADER_HEIGHT}px`, max: `${HEADER_HEIGHT}px` }}
     >
       <Heading level={3}>{props.title}</Heading>
       <Nav margin={{ left: "auto" }} direction="row" pad="xsmall">

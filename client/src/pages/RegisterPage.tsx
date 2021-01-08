@@ -47,10 +47,6 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
                 <TextInput name="email" type="email" />
               </FormField>
 
-              <FormField name="confirm-email" label="Confirm Email" required>
-                <TextInput name="confirm-email" type="email" />
-              </FormField>
-
               <FormField name="password" label="Password" required>
                 <TextInput name="password" type="password" />
               </FormField>
