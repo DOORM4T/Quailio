@@ -1,25 +1,43 @@
+import { Mouse } from "grommet-icons"
 import p5 from "p5"
+import { setUncaughtExceptionCaptureCallback } from "process"
 import { SketchCreator } from "../components/Canvas"
-
-export interface INetworkSketchState {
-  offsetX: number
-  offsetY: number
-  scale: number
-  people: any[]
-}
+import Bubble, { BUBBLE_RADIUS } from "./helpers/Bubble"
+import drawNode from "./helpers/Bubble"
+import { isMouseInCanvas } from "./helpers/isMouseInCanvas"
+import { IBaseSketchProperties } from "./helpers/sketchTypes"
 
 export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
   container,
   state,
 ) => {
-  // ==- Configure Canvas Dimensions -== //
+  console.log(state)
+
+  /* Configure canvas dimensions */
   state.canvasWidth = container.offsetWidth || 500
   state.canvasHeight = container.offsetHeight || 500
 
-  // ==- P5 Sketch -== //
+  let centerX = state.canvasWidth / 2
+  let centerY = state.canvasHeight / 2
+
+  /* center canvas */
+  state.offsetX = centerX
+  state.offsetY = centerY
+
+  /* array of bubbles to draw */
+  const bubbles: Bubble<INetworkSketchState>[] = []
+
+  /* P5 sketch */
   const sketch = (p: p5) => {
     // Canvas setup
     p.setup = () => {
+      /* initialize bubbles */
+      state.people.forEach((person) => {
+        bubbles.push(new Bubble(p, bubbles, state, person.name))
+      })
+
+      p.textAlign(p.CENTER)
+      p.ellipseMode(p.RADIUS)
       p.frameRate(60)
       p.createCanvas(state.canvasWidth, state.canvasHeight)
     }
@@ -34,6 +52,16 @@ export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
       const delta = -e.deltaY * SCROLL_SCALE
       state.scale += delta
       state.scale = p.constrain(state.scale, MIN_SCALE, MAX_SCALE)
+
+      /* center zooming at mouse point */
+      state.offsetX = p.mouseX
+      state.offsetY = p.mouseY
+    }
+
+    p.doubleClicked = (e: MouseEvent) => {
+      state.offsetX = centerX
+      state.offsetX = centerY
+      state.scale = 1
     }
 
     // Draw network things every frame
@@ -45,28 +73,57 @@ export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
         p.mouseIsPressed &&
         isMouseInCanvas(p, state.canvasWidth, state.canvasHeight)
       ) {
-        state.offsetX += p.mouseX - p.pmouseX
-        state.offsetY += p.mouseY - p.pmouseY
+        state.offsetX += p.pmouseX - p.mouseX
+        state.offsetY += p.pmouseY - p.mouseY
       }
 
-      p.rect(state.offsetX, state.offsetY, 50 * state.scale, 50 * state.scale)
+      /* show panned canvas */
+      // TODO: Fix panning issue. See black circle
+      p.translate(p.width / 2, p.height / 2)
+      p.scale(state.scale)
+      p.translate(-state.offsetX, -state.offsetY)
+
+      /* draw circles */
+      bubbles.forEach((b) => {
+        if ("draw" in b) {
+          b.draw()
+        }
+      })
+      p.text(
+        `${p.mouseX} ${p.mouseY} ${state.offsetX} ${state.offsetY}`,
+        centerX,
+        centerY,
+      )
+
+      p.stroke("red")
+      p.line(centerX, 1000, centerX, -1000)
+      p.line(-1000, centerY, 1000, centerY)
+
+      p.ellipse(p.mouseX, p.mouseY, BUBBLE_RADIUS, BUBBLE_RADIUS)
     }
 
     // Resize canvas when the window resize
     window.addEventListener("resize", () => {
       state.canvasWidth = container.offsetWidth || 500
       state.canvasHeight = container.offsetHeight || 500
+      centerX = state.canvasWidth / 2
+      centerY = state.canvasHeight / 2
       p.resizeCanvas(state.canvasWidth, state.canvasHeight)
     })
   }
 
-  // ==- Return P5 Sketch Instance -== //
+  /* Return P5 Sketch Instance */
   return new p5(sketch, container)
 }
 
-function isMouseInCanvas(p: p5, canvasWidth: number, canvasHeight: number) {
-  const isBelowBounds = p.mouseX < 0 || p.mouseY < 0
-  const isAboveBounds = p.mouseX > canvasWidth || p.mouseY > canvasHeight
-  if (isBelowBounds || isAboveBounds) return false
-  return true
+// ==- TYPE DEFINITIONS -== //
+export interface INetworkSketchState extends IBaseSketchProperties {
+  people: IPerson[]
 }
+
+export interface IPerson {
+  name: string
+  relationships: { [name: string]: Relationship }
+}
+
+export type Relationship = [you: string, them: string]
