@@ -55,7 +55,7 @@ const Header: React.FC<IProps> = (props) => {
       justify="start"
       height={{ min: `${HEADER_HEIGHT}px`, max: `${HEADER_HEIGHT}px` }}
     >
-      <Heading level={3}>{props.title}</Heading>
+      <Heading level={2}>{props.title}</Heading>
       <Nav margin={{ left: "auto" }} direction="row" pad="xsmall">
         {
           // ==- SMALL SCREENS -== //

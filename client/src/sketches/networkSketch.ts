@@ -1,16 +1,13 @@
-import { Mouse } from "grommet-icons"
 import p5 from "p5"
-import { setUncaughtExceptionCaptureCallback } from "process"
-import { SketchCreator } from "../components/Canvas"
+import { SketchCreator } from "../components/containers/P5Canvas"
+import { INetworkSketchState } from "../network"
 import Bubble, { BUBBLE_RADIUS } from "./helpers/Bubble"
-import drawNode from "./helpers/Bubble"
 import { isMouseInCanvas } from "./helpers/isMouseInCanvas"
 import { IBaseSketchProperties } from "./helpers/sketchTypes"
 
-export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
-  container,
-  state,
-) => {
+export const createNetworkSketch: SketchCreator<
+  INetworkSketchState & IBaseSketchProperties
+> = (container, state) => {
   console.log(state)
 
   /* Configure canvas dimensions */
@@ -25,7 +22,7 @@ export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
   state.offsetY = centerY
 
   /* array of bubbles to draw */
-  const bubbles: Bubble<INetworkSketchState>[] = []
+  const bubbles: Bubble<INetworkSketchState & IBaseSketchProperties>[] = []
 
   /* P5 sketch */
   const sketch = (p: p5) => {
@@ -33,7 +30,7 @@ export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
     p.setup = () => {
       /* initialize bubbles */
       state.people.forEach((person) => {
-        bubbles.push(new Bubble(p, bubbles, state, person.name))
+        bubbles.push(new Bubble(p, person, bubbles, state))
       })
 
       p.textAlign(p.CENTER)
@@ -89,17 +86,21 @@ export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
           b.draw()
         }
       })
-      p.text(
-        `${p.mouseX} ${p.mouseY} ${state.offsetX} ${state.offsetY}`,
-        centerX,
-        centerY,
-      )
 
       p.stroke("red")
       p.line(centerX, 1000, centerX, -1000)
       p.line(-1000, centerY, 1000, centerY)
 
       p.ellipse(p.mouseX, p.mouseY, BUBBLE_RADIUS, BUBBLE_RADIUS)
+      p.fill("white")
+      p.stroke("black")
+      p.text(
+        `(${p.round(p.mouseX)} ${p.round(p.mouseY)}) (${state.offsetX}, ${
+          state.offsetY
+        })`,
+        p.mouseX,
+        p.mouseY,
+      )
     }
 
     // Resize canvas when the window resize
@@ -115,15 +116,3 @@ export const createNetworkSketch: SketchCreator<INetworkSketchState> = (
   /* Return P5 Sketch Instance */
   return new p5(sketch, container)
 }
-
-// ==- TYPE DEFINITIONS -== //
-export interface INetworkSketchState extends IBaseSketchProperties {
-  people: IPerson[]
-}
-
-export interface IPerson {
-  name: string
-  relationships: { [name: string]: Relationship }
-}
-
-export type Relationship = [you: string, them: string]

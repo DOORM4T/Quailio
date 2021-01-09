@@ -1,4 +1,5 @@
 import p5 from "p5"
+import { IPerson } from "../../network"
 import { Color, IBaseSketchProperties } from "./sketchTypes"
 export const BUBBLE_RADIUS = 50
 export default class Bubble<T extends IBaseSketchProperties> {
@@ -10,6 +11,7 @@ export default class Bubble<T extends IBaseSketchProperties> {
 
   constructor(
     public p: p5,
+    public person: IPerson,
     public otherBubbles: Bubble<T>[],
     state: T,
     public text?: string,
@@ -18,6 +20,7 @@ export default class Bubble<T extends IBaseSketchProperties> {
   ) {
     this.x = state.offsetX
     this.y = state.offsetY
+    this.text = person.name
     this.fadeIn()
   }
 
