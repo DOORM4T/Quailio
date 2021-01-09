@@ -17,7 +17,12 @@ export function createNetworkGraph(container, state) {
         thumbnail.src = person.thumbnail_url
       }
 
-      return { id: person.name, thumbnail, neighbors: [] }
+      return {
+        id: person.name,
+        thumbnail,
+        neighbors: [],
+        relationships: person.relationships,
+      }
     }),
     links: [],
   }
@@ -102,6 +107,10 @@ export function createNetworkGraph(container, state) {
         highlightNodes.add(link.source)
         highlightNodes.add(link.target)
       }
+    })
+    .linkLabel((link) => {
+      const [rel1, rel2] = link.source.relationships[link.target.id]
+      return `${link.source.id} (${rel1}) - ${link.target.id} (${rel2})`
     })
     .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
     .linkColor((link) => (highlightLinks.has(link) ? "yellow" : "black"))
