@@ -14,19 +14,19 @@ import {
   Text,
   TextInput,
 } from "grommet"
-import * as Icons from "grommet-icons"
 import Header from "../components/Header"
 import { Link, useHistory } from "react-router-dom"
 import { useDispatch } from "react-redux"
-import { createAccount } from "../store/auth/authActions"
+import { createAccount, setAuthLoading } from "../store/auth/authActions"
 import { ThunkDispatch } from "redux-thunk"
 import { IAuthCreateAccountAction, IAuthState } from "../store/auth/authTypes"
 import { auth } from "../firebase"
+import { ActionCreator, AnyAction } from "redux"
 
 const RegisterPage: React.FC<IProps> = (props: IProps) => {
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
-  const dispatch: RegisterDispatch = useDispatch()
+  const dispatch: RegisterDispatch | ActionCreator<AnyAction> = useDispatch()
   const history = useHistory()
 
   React.useEffect(() => {
@@ -62,12 +62,16 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
     const canSubmit = isValid(submitted)
 
     try {
-      const action = createAccount(submitted.email, submitted.password)
+      const registerAction = createAccount(submitted.email, submitted.password)
       if (canSubmit) {
-        await dispatch(action)
+        await dispatch(registerAction)
         history.push("/login")
       }
     } catch (error) {
+      /* end loading state */
+      dispatch(setAuthLoading(false))
+
+      /* show error message upon failure */
       setMessage(error.message)
     }
   }

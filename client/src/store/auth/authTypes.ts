@@ -1,3 +1,4 @@
+import { ThunkDispatch } from "redux-thunk"
 import { IPersonProperties } from "../networks/networkTypes"
 
 export interface IAuthState {
@@ -52,3 +53,6 @@ export type AuthActions =
   | IAuthDeleteAccountAction
   | IAuthLoginAction
   | IAuthLogoutAction
+
+// -== DISPATCH TYPES ==- //
+export type LoginDispatch = ThunkDispatch<IAuthState, null, IAuthLoginAction>

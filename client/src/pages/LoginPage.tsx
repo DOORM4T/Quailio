@@ -13,20 +13,19 @@ import {
   TextInput,
   Text,
 } from "grommet"
-import * as Icons from "grommet-icons"
 
 import Header from "../components/Header"
 import { Link, useHistory } from "react-router-dom"
-import { IAuthLoginAction, IAuthState } from "../store/auth/authTypes"
+import { LoginDispatch } from "../store/auth/authTypes"
 import { useDispatch } from "react-redux"
-import { ThunkDispatch } from "redux-thunk"
-import { login } from "../store/auth/authActions"
+import { login, setAuthLoading } from "../store/auth/authActions"
 import { auth } from "../firebase"
+import { ActionCreator, AnyAction } from "redux"
 
 const LoginPage: React.FC<IProps> = (props: IProps) => {
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
-  const dispatch: LoginDispatch = useDispatch()
+  const dispatch: LoginDispatch | ActionCreator<AnyAction> = useDispatch()
   const history = useHistory()
 
   React.useEffect(() => {
@@ -36,14 +35,17 @@ const LoginPage: React.FC<IProps> = (props: IProps) => {
 
   const handleSubmit = async (e: FormExtendedEvent<unknown, Element>) => {
     e.preventDefault()
-
     const submitted = e.value as IForm
 
     try {
-      const action = login(submitted.email, submitted.password)
-      await dispatch(action)
+      const loginAction = login(submitted.email, submitted.password)
+      await dispatch(loginAction)
       history.push("/dashboard")
     } catch (error) {
+      /* end loading state */
+      dispatch(setAuthLoading(false))
+
+      /* show error message upon failure */
       setMessage(error.message)
     }
   }
@@ -107,8 +109,6 @@ const LoginPage: React.FC<IProps> = (props: IProps) => {
 export default LoginPage
 
 interface IProps {}
-
-type LoginDispatch = ThunkDispatch<IAuthState, null, IAuthLoginAction>
 
 interface IForm {
   email: string

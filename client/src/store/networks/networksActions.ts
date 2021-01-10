@@ -20,16 +20,18 @@ import {
 
 // -== ACTION CREATORS ==- //
 /* set isLoading state to true for async actions. Reducer will set isLoading to false for async actions.. */
-const setLoading: ActionCreator<INetworkLoadingAction> = () => ({
+export const setNetworkLoading: ActionCreator<INetworkLoadingAction> = (
+  isLoading: boolean,
+) => ({
   type: NetworkActionTypes.LOADING,
-  isLoading: true,
+  isLoading,
 })
 
 export const addPerson: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, IAddPersonAction>
 > = (network: INetwork, person: IPerson) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setNetworkLoading(true))
 
     // TODO: Interact with API
     await wait(1000)
@@ -45,7 +47,7 @@ export const connectPeople: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, IConnectPeopleAction>
 > = (person1: IPerson, person2: IPerson) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setNetworkLoading(true))
 
     // TODO: Interact with API
     await wait(1000)
@@ -62,7 +64,7 @@ export const createNetwork: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, ICreateNetworkAction>
 > = (name: string) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setNetworkLoading(true))
 
     /* create the network with a random ID & an empty list of people */
     const network: INetwork = {
@@ -85,7 +87,7 @@ export const setNetwork: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, ISetNetworkAction>
 > = (id: string) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setNetworkLoading(true))
 
     await wait(1000)
     // TODO: Get all networks from Firebase
@@ -108,7 +110,7 @@ export const deleteNetwork: ActionCreator<
   >
 > = (id: string) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setNetworkLoading(true))
 
     // TODO: Interact with API
     await wait(1000)
@@ -129,7 +131,7 @@ export const deletePerson: ActionCreator<
   >
 > = (name: string) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setNetworkLoading(true))
 
     // TODO: Interact with API
     await wait(1000)
@@ -145,7 +147,7 @@ export const getAllNetworks: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, IGetAllNetworksAction>
 > = () => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setNetworkLoading(true))
 
     // TODO: Get all networks from Firebase
     await wait(1000)
@@ -159,7 +161,7 @@ export const getAllNetworks: ActionCreator<
   }
 }
 
-async function wait(ms: number) {
+export async function wait(ms: number) {
   return new Promise((res) => {
     setTimeout(() => {
       res(null)

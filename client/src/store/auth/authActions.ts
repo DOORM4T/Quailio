@@ -15,16 +15,18 @@ import {
 
 // -== ACTION CREATORS ==- //
 /* set isLoading state to true for async actions. Reducer will set isLoading to false for async actions.. */
-const setLoading: ActionCreator<IAuthLoading> = () => ({
+export const setAuthLoading: ActionCreator<IAuthLoading> = (
+  isLoading: boolean,
+) => ({
   type: AuthActionTypes.LOADING,
-  isLoading: true,
+  isLoading,
 })
 
 export const createAccount: ActionCreator<
   ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthCreateAccountAction>
 > = (email: string, password: string) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setAuthLoading(true))
 
     try {
       const credentials = await auth.createUserWithEmailAndPassword(
@@ -51,7 +53,7 @@ export const login: ActionCreator<
   ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthLoginAction>
 > = (email: string, password: string) => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setAuthLoading(true))
 
     try {
       const credentials = await auth.signInWithEmailAndPassword(email, password)
@@ -70,7 +72,7 @@ export const logout: ActionCreator<
   ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthLogoutAction>
 > = () => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setAuthLoading(true))
 
     try {
       await auth.signOut()
@@ -88,7 +90,7 @@ export const deleteAccount: ActionCreator<
   ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthDeleteAccountAction>
 > = () => {
   return async (dispatch: Dispatch) => {
-    dispatch(setLoading(true))
+    dispatch(setAuthLoading(true))
 
     try {
       /* try to delete the current user, if there is one */

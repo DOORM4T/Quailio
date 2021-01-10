@@ -10,12 +10,13 @@ import {
   Text,
   Header as GrommetHeader,
 } from "grommet"
-import * as Icons from "grommet-icons"
 
 import Header from "../components/Header"
 import { Link } from "react-router-dom"
 
 interface IProps {}
+
+const APP_NAME = "appname"
 
 const HomePage: React.FC<IProps> = (props: IProps) => {
   return (
@@ -44,7 +45,7 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
           />
         </GrommetHeader>
         <Box align="center" justify="center">
-          <Heading>welcome to app</Heading>
+          <Heading>welcome to {APP_NAME}</Heading>
           <Box align="center" justify="center" pad="large" fill="horizontal" />
           <Text size="xxlarge">Make a connection</Text>
           <Box align="stretch">
@@ -58,7 +59,7 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
               <AccordionPanel label="Organizational Hierarchy">
                 <Text>
                   Whether you're a part of a project team or a social club,
-                  appname is great for school organizations!
+                  {APP_NAME} is great for school organizations!
                 </Text>
               </AccordionPanel>
               <AccordionPanel label="Writers and Fandoms">

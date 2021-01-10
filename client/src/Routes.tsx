@@ -12,9 +12,13 @@ const Routes: React.FC = () => {
     <Router>
       <Switch>
         <Route exact path="/" component={HomePage} />
+
         <Route path="/login" component={LoginPage} />
+
         <Route path="/register" component={RegisterPage} />
+
         <Route path="/dashboard" component={DashboardPage} />
+
         <Route path="/settings" component={SettingsPage} />
       </Switch>
     </Router>

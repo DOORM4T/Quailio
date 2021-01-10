@@ -14,9 +14,13 @@ import * as Icons from "grommet-icons"
 import { Link, useHistory } from "react-router-dom"
 import { auth } from "../firebase"
 import { IAuthLogoutAction, IAuthState } from "../store/auth/authTypes"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { ThunkDispatch } from "redux-thunk"
 import { logout } from "../store/auth/authActions"
+import { IApplicationState } from "../store/store"
+
+import Spinner from "react-spinner"
+import "react-spinner/react-spinner.css"
 
 export const HEADER_HEIGHT = 60
 
@@ -24,6 +28,13 @@ export const HEADER_HEIGHT = 60
 const Header: React.FC<IProps> = (props) => {
   const dispatch: LogoutDispatch = useDispatch()
   const history = useHistory()
+
+  const isLoggedIn: boolean = auth.currentUser ? true : false
+
+  const isLoading = useSelector<IApplicationState>(
+    (state) => state.auth.isLoading || state.networks.isLoading,
+  ) as boolean
+  console.log(isLoading)
 
   const logoutFunction = () => {
     try {
@@ -42,10 +53,13 @@ const Header: React.FC<IProps> = (props) => {
       height={{ min: `${HEADER_HEIGHT}px`, max: `${HEADER_HEIGHT}px` }}
     >
       <Heading level={2}>{props.title}</Heading>
-      <Nav direction="row" pad="xsmall" margin={{ left: "auto" }}>
+      <Box margin={{ left: "auto", top: "medium" }}>
+        {isLoading && <Spinner />}
+      </Box>
+      <Nav direction="row" pad="xsmall">
         <Menu
           icon={<Icons.Menu />}
-          items={MenuItems({ logoutFunction })}
+          items={MenuItems({ logoutFunction, isLoggedIn })}
           dropAlign={{ top: "bottom", right: "left" }}
           size="large"
         />
@@ -67,11 +81,12 @@ interface IProps {
 
 // -== MENU  ==- //
 interface IMenuProps {
+  isLoggedIn: boolean
   logoutFunction: () => void
 }
 
 function MenuItems(props: IMenuProps) {
-  return [
+  const labels: object[] = [
     {
       label: (
         <Link to="/" style={{ display: "inline-block", width: "100%" }}>
@@ -84,7 +99,11 @@ function MenuItems(props: IMenuProps) {
         </Link>
       ),
     },
-    {
+  ]
+
+  /* show user auth pages */
+  if (props.isLoggedIn) {
+    labels.push({
       label: (
         <Link
           to="/dashboard"
@@ -98,8 +117,9 @@ function MenuItems(props: IMenuProps) {
           </Box>
         </Link>
       ),
-    },
-    {
+    })
+
+    labels.push({
       label: (
         <Link to="/settings" style={{ display: "inline-block", width: "100%" }}>
           <Box fill pad="small" direction="row">
@@ -110,8 +130,9 @@ function MenuItems(props: IMenuProps) {
           </Box>
         </Link>
       ),
-    },
-    {
+    })
+
+    labels.push({
       label: (
         <Box margin={{ left: "auto" }} direction="row">
           {auth.currentUser && (
@@ -128,6 +149,35 @@ function MenuItems(props: IMenuProps) {
           )}
         </Box>
       ),
-    },
-  ]
+    })
+  } else {
+    /* otherwise, show register & login links */
+    labels.push({
+      label: (
+        <Link to="/login" style={{ display: "inline-block", width: "100%" }}>
+          <Box fill pad="small" direction="row">
+            <Text margin={{ right: "small" }}>
+              <Icons.User color="accent-1" />
+            </Text>
+            <Text color="light-1">Log in</Text>
+          </Box>
+        </Link>
+      ),
+    })
+
+    labels.push({
+      label: (
+        <Link to="/register" style={{ display: "inline-block", width: "100%" }}>
+          <Box fill pad="small" direction="row">
+            <Text margin={{ right: "small" }}>
+              <Icons.UserNew color="accent-1" />
+            </Text>
+            <Text color="light-1">Register</Text>
+          </Box>
+        </Link>
+      ),
+    })
+  }
+
+  return labels
 }

@@ -14,7 +14,7 @@ export const authReducer: Reducer<IAuthState, AuthActions> = (
   switch (action.type) {
     // SET LOADING TO true
     case AuthActionTypes.LOADING: {
-      return { ...state, isLoading: true }
+      return { ...state, isLoading: action.isLoading }
     }
 
     case AuthActionTypes.CREATE_ACCOUNT: {

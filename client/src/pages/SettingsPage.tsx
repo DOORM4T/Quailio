@@ -16,10 +16,19 @@ import {
   CheckBoxGroup,
   List,
 } from "grommet"
-import { TreeOption, SettingsOption, Medium } from "grommet-icons"
+import { TreeOption, SettingsOption } from "grommet-icons"
 import Header from "../components/Header"
+import { auth } from "../firebase"
+import { useHistory } from "react-router-dom"
 
 const SettingsPage: React.FC = () => {
+  const history = useHistory()
+
+  React.useEffect(() => {
+    /* redirect to login page if no user is signed in */
+    if (!auth.currentUser) history.push("/login")
+  }, [])
+
   return (
     <React.Fragment>
       <Header title="Settings" />
