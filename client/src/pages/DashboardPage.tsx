@@ -4,11 +4,13 @@ import { Box, Heading, List, ResponsiveContext } from "grommet"
 import Header, { HEADER_HEIGHT } from "../components/Header"
 
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
-import { INetworkSketchState } from "../network"
+import { INetwork } from "../store/networks/networkTypes"
 
 // TODO: delete when Redux + Firebase is implemented
 
-const dummyState: INetworkSketchState = {
+const dummyState: INetwork = {
+  id: "0",
+  name: "dummy network",
   people: [
     {
       name: "Luke Skywalker",
@@ -17,13 +19,6 @@ const dummyState: INetworkSketchState = {
       relationships: {
         "Leia Organa": ["Brother", "Sister"],
         "Anakin Skywalker": ["Son", "Father"],
-        "Padme Amidala": ["Son", "Mother"],
-        "Ben Solo": ["Uncle", "Nephew"],
-        "Han Solo": ["Brother-in-law", "Brother-in-law"],
-        "Own Lars": ["Step-nephew", "Step-uncle"],
-        "Beru Lars": ["Step-nephew", "Step-aunt"],
-        "Shmi Skywalker": ["Grandson", "Grandmother"],
-        "Cliegg Lars": ["Step-grandson", "Step-grandfather"],
       },
     },
     {
@@ -47,7 +42,7 @@ const dummyState: INetworkSketchState = {
       thumbnail_url:
         "https://static.wikia.nocookie.net/starwars/images/6/6f/Anakin_Skywalker_RotS.png/revision/latest/scale-to-width-down/500?cb=20130621175844",
       relationships: {
-        "Luke Skywalker": ["Sister", "Brother"],
+        "Luke Skywalker": ["Father", "Son"],
         "Leia Organa": ["Father", "Daughter"],
         "Padme Amidala": ["Daughter", "Mother"],
         "Ben Solo": ["Mother", "Son"],
@@ -68,6 +63,24 @@ const dummyState: INetworkSketchState = {
       name: "Lott Dodd",
       relationships: {
         "Nute Gunray": ["Associate", "Associate"],
+      },
+    },
+    {
+      name: "Sheev Palpatine",
+      thumbnail_url:
+        "https://static.wikia.nocookie.net/starwars/images/9/98/Palpatine-TROS-infobox.jpg/revision/latest/scale-to-width-down/500?cb=20200401080828",
+      relationships: {
+        "Nute Gunray": ["Puppetmaster", "Pawn"],
+        "Anakin Skywalker": ["Mentor", "Secret Apprentice"],
+      },
+    },
+    {
+      name: "Count Dooku",
+      thumbnail_url:
+        "https://static.wikia.nocookie.net/starwars/images/b/b8/Dooku_Headshot.jpg/revision/latest/scale-to-width-down/500?cb=20180430181839",
+      relationships: {
+        "Nute Gunray": ["Associate", "Associate"],
+        "Sheev Palpatine": ["Apprentice", "Master"],
       },
     },
   ],

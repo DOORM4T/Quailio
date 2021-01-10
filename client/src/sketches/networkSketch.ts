@@ -1,12 +1,12 @@
 import p5 from "p5"
 import { SketchCreator } from "../components/containers/P5Canvas"
-import { INetworkSketchState } from "../network"
+import { INetwork } from "../store/networks/networkTypes"
 import Bubble, { BUBBLE_RADIUS } from "./helpers/Bubble"
 import { isMouseInCanvas } from "./helpers/isMouseInCanvas"
 import { IBaseSketchProperties } from "./helpers/sketchTypes"
 
 export const createNetworkSketch: SketchCreator<
-  INetworkSketchState & IBaseSketchProperties
+  INetwork & IBaseSketchProperties
 > = (container, state) => {
   console.log(state)
 
@@ -22,7 +22,7 @@ export const createNetworkSketch: SketchCreator<
   state.offsetY = centerY
 
   /* array of bubbles to draw */
-  const bubbles: Bubble<INetworkSketchState & IBaseSketchProperties>[] = []
+  const bubbles: Bubble<INetwork & IBaseSketchProperties>[] = []
 
   /* P5 sketch */
   const sketch = (p: p5) => {

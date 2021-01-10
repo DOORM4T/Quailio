@@ -40,6 +40,18 @@ const MenuItems = [
       </Box>
     ),
   },
+  {
+    label: (
+      <Box fill>
+        <Link to="/settings">
+          <Text margin={{ right: "small" }}>
+            <Icons.UserSettings color="accent-1" />
+          </Text>
+          <Text color="light-1">Settings</Text>
+        </Link>
+      </Box>
+    ),
+  },
 ]
 
 export const HEADER_HEIGHT = 60
@@ -80,6 +92,10 @@ const Header: React.FC<IProps> = (props) => {
 
               <Link to="/dashboard">
                 <Icons.Dashboard color="accent-1" />
+              </Link>
+
+              <Link to="/settings">
+                <Icons.UserSettings color="accent-1" />
               </Link>
             </Box>
           )

@@ -1,5 +1,5 @@
 import p5 from "p5"
-import { IPerson } from "../../network"
+import { IPerson } from "../../store/networks/networkTypes"
 import { Color, IBaseSketchProperties } from "./sketchTypes"
 export const BUBBLE_RADIUS = 50
 export default class Bubble<T extends IBaseSketchProperties> {
