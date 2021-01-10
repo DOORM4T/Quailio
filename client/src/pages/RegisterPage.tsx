@@ -8,18 +8,70 @@ import {
   CardFooter,
   CardHeader,
   Form,
+  FormExtendedEvent,
   FormField,
   Heading,
+  Text,
   TextInput,
 } from "grommet"
 import * as Icons from "grommet-icons"
-
 import Header from "../components/Header"
-import { Link } from "react-router-dom"
-
-interface IProps {}
+import { Link, useHistory } from "react-router-dom"
+import { useDispatch } from "react-redux"
+import { createAccount } from "../store/auth/authActions"
+import { ThunkDispatch } from "redux-thunk"
+import { IAuthCreateAccountAction, IAuthState } from "../store/auth/authTypes"
+import { auth } from "../firebase"
 
 const RegisterPage: React.FC<IProps> = (props: IProps) => {
+  const [values, setValues] = React.useState<IForm>(defaultFormValue)
+  const [errorMessage, setMessage] = React.useState<string>("")
+  const dispatch: RegisterDispatch = useDispatch()
+  const history = useHistory()
+
+  React.useEffect(() => {
+    /* redirect to dashboard if the user is already signed in */
+    if (auth.currentUser) history.push("/dashboard")
+  }, [])
+
+  const isValid = (formValues: IForm) => {
+    setMessage("")
+
+    if (!formValues.email.includes("@")) {
+      setMessage("Invalid email.")
+      return false
+    }
+
+    if (formValues.password.length < 6) {
+      setMessage("Password is too short.")
+      return false
+    }
+
+    if (formValues.password !== formValues.confirmPassword) {
+      setMessage("Password and Confirm Password fields do not match.")
+      return false
+    }
+
+    return true
+  }
+
+  const handleSubmit = async (e: FormExtendedEvent<unknown, Element>) => {
+    e.preventDefault()
+
+    const submitted = e.value as IForm
+    const canSubmit = isValid(submitted)
+
+    try {
+      const action = createAccount(submitted.email, submitted.password)
+      if (canSubmit) {
+        await dispatch(action)
+        history.push("/login")
+      }
+    } catch (error) {
+      setMessage(error.message)
+    }
+  }
+
   return (
     <React.Fragment>
       <Header title="Register" />
@@ -38,27 +90,31 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
           </CardHeader>
           <CardBody pad={{ horizontal: "large" }}>
             <Form
-            // value={value}
-            // onChange={(nextValue) => setValue(nextValue)}
-            // onReset={() => setValue({})}
-            // onSubmit={({ value }) => {}}
+              value={values}
+              onChange={(nextValue) => setValues(nextValue as IForm)}
+              onReset={() => setValues(defaultFormValue)}
+              onSubmit={handleSubmit}
+              validate="blur"
             >
-              <FormField name="email" label="Email" required>
+              <FormField name="email" label="Email">
                 <TextInput name="email" type="email" />
               </FormField>
 
-              <FormField name="password" label="Password" required>
+              <FormField name="password" label="Password">
                 <TextInput name="password" type="password" />
               </FormField>
-              <FormField
-                name="confirm-password"
-                label="Confirm Password"
-                required
-              >
-                <TextInput name="confirm-password" type="password" />
+              <FormField name="confirmPassword" label="Confirm Password">
+                <TextInput name="confirmPassword" type="password" />
               </FormField>
 
-              <Box direction="row" gap="medium" pad={{ bottom: "large" }}>
+              <Box direction="column" gap="medium" pad={{ bottom: "large" }}>
+                {errorMessage && (
+                  <Box>
+                    <Text color="status-error" size="xsmall">
+                      {errorMessage}
+                    </Text>
+                  </Box>
+                )}
                 <Button type="submit" label="Register" />
               </Box>
             </Form>
@@ -67,9 +123,9 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
             pad={{ horizontal: "medium", vertical: "small" }}
             background="light-2"
           >
-            <Anchor margin={{ left: "auto" }}>
+            <Box margin={{ left: "auto" }}>
               <Link to="/login">Or... Log in!</Link>
-            </Anchor>
+            </Box>
           </CardFooter>
         </Card>
       </Box>
@@ -78,3 +134,23 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
 }
 
 export default RegisterPage
+
+interface IProps {}
+
+interface IForm {
+  email: string
+  password: string
+  confirmPassword: string
+}
+
+type RegisterDispatch = ThunkDispatch<
+  IAuthState,
+  null,
+  IAuthCreateAccountAction
+>
+
+const defaultFormValue: IForm = {
+  email: "",
+  password: "",
+  confirmPassword: "",
+}

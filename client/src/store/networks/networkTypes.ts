@@ -15,10 +15,10 @@ export interface IPerson {
   name: string
   relationships: IRelationships
   thumbnail_url?: string
-  properties?: IPersonNodeProperties
+  properties?: IPersonProperties
 }
 
-export interface IPersonNodeProperties {
+export interface IPersonProperties {
   name: string
   birthday: Date | string
   hometown: string

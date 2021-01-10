@@ -1,6 +1,6 @@
 import React from "react"
 import { Grommet } from "grommet"
-import { grommet, ThemeType } from "grommet/themes"
+import { ThemeType } from "grommet/themes"
 
 import Routes from "./Routes"
 import { Provider } from "react-redux"

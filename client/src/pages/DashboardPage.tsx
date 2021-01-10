@@ -5,6 +5,8 @@ import Header, { HEADER_HEIGHT } from "../components/Header"
 
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 import { INetwork } from "../store/networks/networkTypes"
+import { auth } from "../firebase"
+import { useHistory } from "react-router-dom"
 
 // TODO: delete when Redux + Firebase is implemented
 
@@ -89,6 +91,13 @@ const dummyState: INetwork = {
 const DashboardPage: React.FC<IProps> = (props: IProps) => {
   const size = React.useContext(ResponsiveContext)
   const isSmall = size === "xsmall" || size === "small"
+
+  const history = useHistory()
+
+  React.useEffect(() => {
+    /* redirect to sign in if the user is not authenticated in */
+    if (!auth.currentUser) history.push("/login")
+  }, [])
 
   return (
     <React.Fragment>
