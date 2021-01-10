@@ -51,6 +51,13 @@ export const authReducer: Reducer<IAuthState, AuthActions> = (
         isLoading: false,
       }
     }
+
+    case AuthActionTypes.SET_USER: {
+      return {
+        ...state,
+        userId: action.userId,
+      }
+    }
   }
   return state
 }

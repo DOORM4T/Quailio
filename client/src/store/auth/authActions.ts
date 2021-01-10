@@ -10,6 +10,7 @@ import {
   IAuthLoading,
   IAuthLoginAction,
   IAuthLogoutAction,
+  IAuthSetUserAction,
   IAuthState,
 } from "./authTypes"
 
@@ -59,7 +60,7 @@ export const login: ActionCreator<
       const credentials = await auth.signInWithEmailAndPassword(email, password)
       const id = credentials.user!.uid
       return dispatch({
-        type: AuthActionTypes.CREATE_ACCOUNT,
+        type: AuthActionTypes.LOGIN,
         id,
       })
     } catch (error) {
@@ -108,3 +109,8 @@ export const deleteAccount: ActionCreator<
     }
   }
 }
+
+export const setUser: ActionCreator<IAuthSetUserAction> = (userId: string) => ({
+  type: AuthActionTypes.SET_USER,
+  userId,
+})

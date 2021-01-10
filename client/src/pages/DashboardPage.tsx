@@ -1,94 +1,43 @@
 import React from "react"
-import { Box, Heading, List, ResponsiveContext } from "grommet"
+import {
+  Box,
+  Button,
+  DropButton,
+  Heading,
+  List,
+  Text,
+  ResponsiveContext,
+} from "grommet"
 
 import Header, { HEADER_HEIGHT } from "../components/Header"
 
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
-import { INetwork } from "../store/networks/networkTypes"
+import { INetwork, INetworksState } from "../store/networks/networkTypes"
 import { auth } from "../firebase"
 import { useHistory } from "react-router-dom"
-
-// TODO: delete when Redux + Firebase is implemented
-
-const dummyState: INetwork = {
-  id: "0",
-  name: "dummy network",
-  people: [
-    {
-      name: "Luke Skywalker",
-      thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/3/3d/LukeSkywalker.png/revision/latest/scale-to-width-down/499?cb=20201218190434",
-      relationships: {
-        "Leia Organa": ["Brother", "Sister"],
-        "Anakin Skywalker": ["Son", "Father"],
-      },
-    },
-    {
-      name: "Leia Organa",
-      thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/f/f1/Leia_Organa_TROS.png/revision/latest/scale-to-width-down/500?cb=20200102034101",
-      relationships: {
-        "Luke Skywalker": ["Sister", "Brother"],
-        "Anakin Skywalker": ["Daughter", "Father"],
-        "Padme Amidala": ["Daughter", "Mother"],
-        "Ben Solo": ["Mother", "Son"],
-        "Han Solo": ["Partner", "Partner"],
-        "Own Lars": ["Step-niece", "Step-uncle"],
-        "Beru Lars": ["Step-niece", "Step-aunt"],
-        "Shmi Skywalker": ["Granddaughter", "Grandmother"],
-        "Cliegg Lars": ["Step-granddaughter", "Step-grandfather"],
-      },
-    },
-    {
-      name: "Anakin Skywalker",
-      thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/6/6f/Anakin_Skywalker_RotS.png/revision/latest/scale-to-width-down/500?cb=20130621175844",
-      relationships: {
-        "Luke Skywalker": ["Father", "Son"],
-        "Leia Organa": ["Father", "Daughter"],
-        "Padme Amidala": ["Daughter", "Mother"],
-        "Ben Solo": ["Mother", "Son"],
-        "Han Solo": ["Partner", "Partner"],
-        "Own Lars": ["Step-niece", "Step-uncle"],
-        "Beru Lars": ["Step-niece", "Step-aunt"],
-        "Shmi Skywalker": ["Granddaughter", "Grandmother"],
-        "Cliegg Lars": ["Step-granddaughter", "Step-grandfather"],
-      },
-    },
-    {
-      name: "Nute Gunray",
-      relationships: {
-        "Lott Dodd": ["Associate", "Associate"],
-      },
-    },
-    {
-      name: "Lott Dodd",
-      relationships: {
-        "Nute Gunray": ["Associate", "Associate"],
-      },
-    },
-    {
-      name: "Sheev Palpatine",
-      thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/9/98/Palpatine-TROS-infobox.jpg/revision/latest/scale-to-width-down/500?cb=20200401080828",
-      relationships: {
-        "Nute Gunray": ["Puppetmaster", "Pawn"],
-        "Anakin Skywalker": ["Mentor", "Secret Apprentice"],
-      },
-    },
-    {
-      name: "Count Dooku",
-      thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/b/b8/Dooku_Headshot.jpg/revision/latest/scale-to-width-down/500?cb=20180430181839",
-      relationships: {
-        "Nute Gunray": ["Associate", "Associate"],
-        "Sheev Palpatine": ["Apprentice", "Master"],
-      },
-    },
-  ],
-}
+import { useDispatch, useSelector } from "react-redux"
+import { ActionCreator, AnyAction } from "redux"
+import {
+  addPerson,
+  createNetwork,
+  getAllNetworks,
+  setNetwork,
+  setNetworkLoading,
+} from "../store/networks/networksActions"
+import { IApplicationState } from "../store/store"
+import { setUser } from "../store/auth/authActions"
 
 const DashboardPage: React.FC<IProps> = (props: IProps) => {
+  const dispatch: ActionCreator<AnyAction> = useDispatch()
+  const networks =
+    useSelector<IApplicationState, INetwork[]>(
+      (state) => state.networks.networks,
+    ) || []
+
+  const currentNetwork = useSelector<IApplicationState, INetwork | null>(
+    (state) => state.networks.currentNetwork,
+  )
+
   const size = React.useContext(ResponsiveContext)
   const isSmall = size === "xsmall" || size === "small"
 
@@ -96,8 +45,76 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
 
   React.useEffect(() => {
     /* redirect to sign in if the user is not authenticated in */
-    if (!auth.currentUser) history.push("/login")
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) history.push("/login")
+
+      try {
+        dispatch(setUser(user!.uid))
+        await dispatch(getAllNetworks())
+      } catch (error) {
+        await dispatch(setNetworkLoading(false))
+        console.error(error)
+      }
+    })
   }, [])
+
+  // TODO: get networks based on UID
+  const handleCreateNetwork = async () => {
+    const networkName = prompt("Name your network:")
+    if (!networkName) return
+    const doesNetworkExist = networks.some((n) => n.name === networkName)
+    if (doesNetworkExist) {
+      alert("[NOT CREATED] That network already exists.")
+      return
+    }
+
+    try {
+      await dispatch(createNetwork(networkName))
+    } catch (error) {
+      await dispatch(setNetworkLoading(false))
+      console.error(error)
+    }
+  }
+
+  const handleNetworkSelect = (id: string) => {
+    return async () => {
+      try {
+        await dispatch(setNetwork(id))
+      } catch (error) {
+        await dispatch(setNetworkLoading(false))
+        console.error(error)
+      }
+    }
+  }
+
+  const addPersonHandler = async () => {
+    if (!currentNetwork) {
+      alert("Please select a Network!")
+      return
+    }
+
+    const name = prompt("Name of person:")
+    if (!name) return
+
+    await dispatch(addPerson(currentNetwork.id, name))
+  }
+
+  /* Menu of the user's Networks for the Select Network dropdown */
+  const NetworkMenu = () => {
+    if (!networks || networks.length === 0) return <Box />
+
+    return (
+      <Box direction="column">
+        {networks.map((n, index) => {
+          return (
+            <Box key={`${n.id}-${index}`} onClick={handleNetworkSelect(n.id)}>
+              {n.name}
+            </Box>
+          )
+        })}
+      </Box>
+    )
+  }
 
   return (
     <React.Fragment>
@@ -115,12 +132,35 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
           background="light-1"
           overflow={{ vertical: "auto" }}
         >
-          <Heading level={3}>Network</Heading>
-          <List data={dummyState.people} margin={{ bottom: "medium" }} />
+          <Box pad="small" gap="large">
+            <Button label="New Network" onClick={handleCreateNetwork} />
+            <DropButton
+              label={
+                (currentNetwork && currentNetwork.name) || "Select Network"
+              }
+              dropAlign={{ top: "bottom" }}
+              dropContent={NetworkMenu()}
+              disabled={networks.length === 0}
+            />
+          </Box>
+          <Box pad={{ top: "large" }}>
+            <Heading level={3}>Network</Heading>
+            <Button
+              label="Add Person"
+              onClick={addPersonHandler}
+              disabled={!currentNetwork}
+            />
+            <List
+              data={
+                currentNetwork ? currentNetwork.people.map((p) => p.name) : []
+              }
+              margin={{ bottom: "medium" }}
+            />
+          </Box>
         </Box>
         <ForceGraphCanvas
           id="network-sketch"
-          state={dummyState}
+          state={currentNetwork}
           style={{ overflow: "hidden", backgroundColor: "#DDD" }}
         />
       </Box>

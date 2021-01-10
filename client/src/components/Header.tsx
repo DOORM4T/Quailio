@@ -9,6 +9,7 @@ import {
   Text,
   Button,
   Anchor,
+  Image,
 } from "grommet"
 import * as Icons from "grommet-icons"
 import { Link, useHistory } from "react-router-dom"
@@ -22,6 +23,8 @@ import { IApplicationState } from "../store/store"
 import Spinner from "react-spinner"
 import "react-spinner/react-spinner.css"
 
+import Logo from "../assets/logo.png"
+
 export const HEADER_HEIGHT = 60
 
 // -== HEADER ==- //
@@ -29,17 +32,24 @@ const Header: React.FC<IProps> = (props) => {
   const dispatch: LogoutDispatch = useDispatch()
   const history = useHistory()
 
-  const isLoggedIn: boolean = auth.currentUser ? true : false
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
+
+  React.useEffect(() => {
+    /* redirect to sign in if the user is not authenticated in */
+    auth.onAuthStateChanged((user) => {
+      const hasUser: boolean = user ? true : false
+      setIsLoggedIn(hasUser)
+    })
+  }, [])
 
   const isLoading = useSelector<IApplicationState>(
     (state) => state.auth.isLoading || state.networks.isLoading,
   ) as boolean
-  console.log(isLoading)
 
   const logoutFunction = () => {
     try {
       dispatch(logout())
-      history.push("/")
+      history.push("/login")
     } catch (error) {
       console.error(error)
     }
@@ -48,10 +58,13 @@ const Header: React.FC<IProps> = (props) => {
   return (
     <GrommetHeader
       background="brand"
-      pad={{ left: "large", right: "small" }}
+      pad={{ left: "small", right: "small" }}
       justify="start"
       height={{ min: `${HEADER_HEIGHT}px`, max: `${HEADER_HEIGHT}px` }}
     >
+      <Link to="/">
+        <Image src={Logo} style={{ width: "50px", marginTop: "10px" }} />
+      </Link>
       <Heading level={2}>{props.title}</Heading>
       <Box margin={{ left: "auto", top: "medium" }}>
         {isLoading && <Spinner />}
@@ -137,7 +150,7 @@ function MenuItems(props: IMenuProps) {
         <Box margin={{ left: "auto" }} direction="row">
           {auth.currentUser && (
             <Box direction="column" align="center">
-              <Text size="small">Logged in as: ${auth.currentUser.email}</Text>
+              <Text size="small">Logged in as: {auth.currentUser.email}</Text>
               <Anchor
                 color="light-1"
                 size="small"

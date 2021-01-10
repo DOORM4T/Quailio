@@ -44,7 +44,7 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
 
     // GET ALL NETWORKS
     case NetworkActionTypes.GET_ALL: {
-      return { ...state, networks: action.networks }
+      return { ...state, networks: action.networks, isLoading: false }
     }
 
     // DELETE A NETWORK
@@ -115,9 +115,14 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
         people: [
           updatedPerson1,
           updatedPerson2,
-          ...state.currentNetwork.people,
+          ...state.currentNetwork.people.filter(
+            (p) =>
+              p.name !== updatedPerson1.name && p.name !== updatedPerson2.name,
+          ),
         ],
       }
+
+      console.log(updatedNetwork)
 
       /* updated copy of all networks */
       const networks = state.networks.filter(

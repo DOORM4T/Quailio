@@ -11,14 +11,19 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
   // ==- Load the P5 Sketch -== //
   React.useEffect(() => {
+    if (!props.state) return
+
     const container = canvasRef.current
 
     if (container) {
       /* set canvas width and height based on container dimensions */
 
+      console.log(props.state)
+
       const forceGraph = createNetworkGraph(
         container,
         props.state,
+        props.disconnected,
       ) as ForceGraphInstance
 
       const handleResize = () => {
@@ -34,16 +39,21 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
         window.removeEventListener("resize", handleResize)
       }
     }
-  }, [])
+  }, [props])
 
   return <Canvas id={props.id} ref={canvasRef} style={props.style} />
 }
 
 export default ForceGraphCanvas
 
+ForceGraphCanvas.defaultProps = {
+  disconnected: false,
+}
+
 // ==- TYPE DEFINITIONS -== //
 interface IProps {
   style?: CSSProperties
   id: string
   state: any
+  disconnected?: boolean
 }

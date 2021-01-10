@@ -1,4 +1,10 @@
 import ForceGraph from "force-graph"
+import {
+  addPerson,
+  connectPeople,
+  setNetworkLoading,
+} from "../../../store/networks/networksActions"
+import { store } from "../../../store/store"
 
 const FOCUS_TIME = 1000
 const NODE_SIZE = 12
@@ -8,7 +14,7 @@ const NODE_SIZE = 12
  * @param {HTMLDivElement} container
  * @param {import("../../../sketches/helpers/sketchTypes").INetworkSketchState} state
  */
-export function createNetworkGraph(container, state) {
+export function createNetworkGraph(container, state, disconnected) {
   const gData = {
     nodes: state.people.map((person) => {
       let thumbnail = null
@@ -141,29 +147,42 @@ export function createNetworkGraph(container, state) {
       node.fx = node.x
       node.fy = node.y
     })
-    .onBackgroundRightClick(() => {
-      // TODO: add a person
-      // dispatch Redux state update
-      console.log("rc")
+    .onBackgroundRightClick(async () => {
+      if (disconnected) return
+
+      try {
+        const name = prompt("Add Person:")
+        if (!name) return
+
+        await store.dispatch(addPerson(state.id, name))
+      } catch (error) {
+        console.error(error)
+        store.dispatch(setNetworkLoading(false))
+      }
     })
-    .onNodeRightClick((node) => {
+    .onNodeRightClick(async (node) => {
+      if (disconnected) return
+
       if (!nodeToConnect) {
         nodeToConnect = node
       } else {
-        // TODO: create link in Redux
-        gData.links.push({
-          source: nodeToConnect.id,
-          target: node.id,
-        })
-        gData.links.push({
-          source: node.id,
-          target: nodeToConnect.id,
-        })
-        nodeToConnect = null
+        try {
+          const p1Reason = prompt("What is Person 1 to Person 2?") || ""
+          const p2Reason = prompt("What is Person 2 to Person 1?") || ""
 
-        console.log(gData)
-
-        window.location.reload()
+          await store.dispatch(
+            connectPeople(
+              state.id,
+              nodeToConnect.id,
+              node.id,
+              p1Reason,
+              p2Reason,
+            ),
+          )
+        } catch (error) {
+          console.error(error)
+          store.dispatch(setNetworkLoading(false))
+        }
       }
     })
   return Graph

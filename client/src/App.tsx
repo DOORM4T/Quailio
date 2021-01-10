@@ -4,15 +4,13 @@ import { ThemeType } from "grommet/themes"
 
 import Routes from "./Routes"
 import { Provider } from "react-redux"
-import configureStore from "./store/store"
+import { store } from "./store/store"
 
 const customTheme: ThemeType = {
   global: {
     colors: {},
   },
 }
-
-const store = configureStore()
 
 function App() {
   return (

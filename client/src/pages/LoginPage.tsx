@@ -16,7 +16,6 @@ import {
 
 import Header from "../components/Header"
 import { Link, useHistory } from "react-router-dom"
-import { LoginDispatch } from "../store/auth/authTypes"
 import { useDispatch } from "react-redux"
 import { login, setAuthLoading } from "../store/auth/authActions"
 import { auth } from "../firebase"
@@ -25,12 +24,14 @@ import { ActionCreator, AnyAction } from "redux"
 const LoginPage: React.FC<IProps> = (props: IProps) => {
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
-  const dispatch: LoginDispatch | ActionCreator<AnyAction> = useDispatch()
+  const dispatch: ActionCreator<AnyAction> = useDispatch()
   const history = useHistory()
 
   React.useEffect(() => {
     /* redirect to dashboard if the user is already signed in */
-    if (auth.currentUser) history.push("/dashboard")
+    auth.onAuthStateChanged((user) => {
+      if (user) history.push("/dashboard")
+    })
   }, [])
 
   const handleSubmit = async (e: FormExtendedEvent<unknown, Element>) => {

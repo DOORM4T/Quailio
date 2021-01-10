@@ -22,15 +22,12 @@ const rootReducer = combineReducers<IApplicationState>({
   auth: authReducer,
 })
 
-export default function configureStore(): Store<IApplicationState> {
-  const store = createStore(
-    rootReducer,
-    compose(
-      applyMiddleware(thunk),
-      // TODO: Remove in Production
-      (window as any).__REDUX_DEVTOOLS_EXTENSION__ &&
-        (window as any).__REDUX_DEVTOOLS_EXTENSION__(),
-    ),
-  )
-  return store
-}
+export const store = createStore(
+  rootReducer,
+  compose(
+    applyMiddleware(thunk),
+    // TODO: Remove in Production
+    (window as any).__REDUX_DEVTOOLS_EXTENSION__ &&
+      (window as any).__REDUX_DEVTOOLS_EXTENSION__(),
+  ),
+)

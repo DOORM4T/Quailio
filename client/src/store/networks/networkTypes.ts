@@ -95,3 +95,8 @@ export type NetworksActions =
   | IAddPersonAction
   | IConnectPeopleAction
   | IDeletePersonByNameAction
+
+/* document type for data stored in Firebase */
+export interface IFirebaseData {
+  networks: INetwork[]
+}

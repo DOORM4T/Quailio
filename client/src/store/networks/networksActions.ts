@@ -16,7 +16,12 @@ import {
   IPerson,
   INetwork,
   ISetNetworkAction,
+  IFirebaseData,
 } from "./networkTypes"
+
+import { store } from "../store"
+import { db } from "../../firebase"
+const collection = db.collection("networks")
 
 // -== ACTION CREATORS ==- //
 /* set isLoading state to true for async actions. Reducer will set isLoading to false for async actions.. */
@@ -29,34 +34,126 @@ export const setNetworkLoading: ActionCreator<INetworkLoadingAction> = (
 
 export const addPerson: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, IAddPersonAction>
-> = (network: INetwork, person: IPerson) => {
+> = (networkId: string, name: string) => {
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    // TODO: Interact with API
-    await wait(1000)
-    return dispatch({
-      type: NetworkActionTypes.ADD_PERSON,
-      network,
-      person,
-    })
+    const person: IPerson = {
+      name,
+      relationships: {},
+    }
+
+    /* update with Firebase */
+    try {
+      const uid = store.getState().auth.userId
+      if (!uid) throw new Error("user not found")
+
+      let data = (await collection.doc(uid).get()).data() as IFirebaseData
+      if (!data) {
+        /* create a collection for the user if they don't already have one */
+        await collection.doc(uid).set({ networks: [] })
+        data = (await collection.doc(uid).get()).data() as IFirebaseData
+      }
+
+      const prevNetworks: INetwork[] = (data as IFirebaseData).networks
+
+      const prevNetwork = prevNetworks.find((n) => n.id === networkId)
+      if (!prevNetwork) throw new Error("network not found")
+
+      const newNetwork: INetwork = {
+        ...prevNetwork,
+        people: [...prevNetwork.people, person],
+      }
+
+      /* create updated networks array without the previous version of the updated network */
+      const newNetworks: INetwork[] = [
+        ...prevNetworks.filter((n) => n.id !== networkId),
+        newNetwork,
+      ]
+
+      const updatedData = {
+        ...data,
+        networks: newNetworks,
+      }
+
+      await collection.doc(uid).set(updatedData)
+
+      return dispatch({
+        type: NetworkActionTypes.ADD_PERSON,
+        newNetwork,
+        person,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
 
 export const connectPeople: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, IConnectPeopleAction>
-> = (person1: IPerson, person2: IPerson) => {
+> = (
+  networkId: string,
+  p1Name: string,
+  p2Name: string,
+  p1Rel: string,
+  p2Rel: string,
+) => {
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    // TODO: Interact with API
-    await wait(1000)
+    try {
+      const uid = store.getState().auth.userId
+      if (!uid) throw new Error("user not found")
 
-    return dispatch({
-      type: NetworkActionTypes.CONNECT_PEOPLE,
-      person1,
-      person2,
-    })
+      const data = (await collection.doc(uid).get()).data() as IFirebaseData
+      const prevNetworks: INetwork[] = (data as IFirebaseData).networks
+      const prevNetwork = prevNetworks.find((n) => n.id === networkId)
+      if (!prevNetwork) throw new Error("network not found")
+
+      const person1 = prevNetwork.people.find((p) => p.name === p1Name)
+      const person2 = prevNetwork.people.find((p) => p.name === p2Name)
+
+      if (!person1 || !person2) throw new Error("person(s) not found")
+
+      /* set the relationship */
+      person1.relationships[p2Name] = [p1Rel, p2Rel]
+      person2.relationships[p1Name] = [p2Rel, p1Rel]
+
+      /* update current network with updated people */
+      const updatedNetwork: INetwork = {
+        ...prevNetwork,
+        people: [
+          person1,
+          person2,
+          ...prevNetwork.people.filter(
+            (p) => p.name !== p1Name && p.name !== p2Name,
+          ),
+        ],
+      }
+
+      /* create updated networks array without the previous version of the updated network */
+      const newNetworks: INetwork[] = [
+        ...prevNetworks.filter((n) => n.id !== networkId),
+        updatedNetwork,
+      ]
+
+      const updatedData = {
+        ...data,
+        networks: newNetworks,
+      }
+
+      await collection.doc(uid).set(updatedData)
+
+      return dispatch({
+        type: NetworkActionTypes.CONNECT_PEOPLE,
+        person1,
+        person2: p2Name,
+        p1Rel,
+        p2Rel,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
 
@@ -73,13 +170,35 @@ export const createNetwork: ActionCreator<
       people: [],
     }
 
-    // TODO: Interact with API
-    await wait(1000)
+    /* update with Firebase */
+    try {
+      const uid = store.getState().auth.userId
+      if (!uid) throw new Error("user not found")
 
-    return dispatch({
-      type: NetworkActionTypes.CREATE,
-      network,
-    })
+      let data = (await collection.doc(uid).get()).data() as IFirebaseData
+      if (!data) {
+        /* create a collection for the user if they don't already have one */
+        await collection.doc(uid).set({ networks: [] })
+        data = (await collection.doc(uid).get()).data() as IFirebaseData
+      }
+
+      const prevNetworks: INetwork[] = (data as IFirebaseData).networks
+      const newNetworks: INetwork[] = [...prevNetworks, network]
+
+      const updatedData = {
+        ...data,
+        networks: newNetworks,
+      }
+
+      await collection.doc(uid).set(updatedData)
+
+      return dispatch({
+        type: NetworkActionTypes.CREATE,
+        network,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
 
@@ -89,15 +208,24 @@ export const setNetwork: ActionCreator<
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    await wait(1000)
-    // TODO: Get all networks from Firebase
-    const networks: INetwork[] = [] // get from firebase
-    const network: INetwork = networks.filter((n) => n.id === id)[0] || null
+    try {
+      const uid = store.getState().auth.userId
+      if (!uid) throw new Error("user not found")
 
-    return dispatch({
-      type: NetworkActionTypes.SET,
-      network,
-    })
+      // TODO: Get all networks from Firebase
+      const data = (await collection.doc(uid).get()).data() as IFirebaseData
+      if (!data) throw new Error("data not found")
+
+      const networks: INetwork[] = data.networks
+      const network = networks.find((n) => n.id === id)
+
+      return dispatch({
+        type: NetworkActionTypes.SET,
+        network,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
 
@@ -149,15 +277,22 @@ export const getAllNetworks: ActionCreator<
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    // TODO: Get all networks from Firebase
-    await wait(1000)
-    // empty array if no networks found
-    const networks: INetwork[] = []
+    try {
+      const uid = store.getState().auth.userId
+      if (!uid) throw new Error("user not found")
 
-    return dispatch({
-      type: NetworkActionTypes.GET_ALL,
-      networks,
-    })
+      const data = (await collection.doc(uid).get()).data() as IFirebaseData
+      if (!data) throw new Error("data not found")
+
+      const networks: INetwork[] = data.networks
+
+      return dispatch({
+        type: NetworkActionTypes.GET_ALL,
+        networks,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
 

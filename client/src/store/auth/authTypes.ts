@@ -1,5 +1,9 @@
 import { ThunkDispatch } from "redux-thunk"
-import { IPersonProperties } from "../networks/networkTypes"
+import {
+  ICreateNetworkAction,
+  IGetAllNetworksAction,
+  IPersonProperties,
+} from "../networks/networkTypes"
 
 export interface IAuthState {
   isLoading: boolean
@@ -14,6 +18,7 @@ export enum AuthActionTypes {
   UPDATE_ACCOUNT = "AUTH/UPDATE_ACCOUNT",
   LOGIN = "AUTH/LOGIN",
   LOGOUT = "AUTH/LOGOUT",
+  SET_USER = "AUTH/SET_USER",
 }
 
 export interface IAuthLoading {
@@ -46,6 +51,11 @@ export interface IAuthLogoutAction {
   type: AuthActionTypes.LOGOUT
 }
 
+export interface IAuthSetUserAction {
+  type: AuthActionTypes.SET_USER
+  userId: string
+}
+
 /* action types used by the networks reducer */
 export type AuthActions =
   | IAuthLoading
@@ -53,6 +63,4 @@ export type AuthActions =
   | IAuthDeleteAccountAction
   | IAuthLoginAction
   | IAuthLogoutAction
-
-// -== DISPATCH TYPES ==- //
-export type LoginDispatch = ThunkDispatch<IAuthState, null, IAuthLoginAction>
+  | IAuthSetUserAction
