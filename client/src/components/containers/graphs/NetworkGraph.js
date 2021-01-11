@@ -13,6 +13,7 @@ const NODE_SIZE = 12
  *
  * @param {HTMLDivElement} container
  * @param {import("../../../sketches/helpers/sketchTypes").INetworkSketchState} state
+ * @param {*} disconnected whether the graph is connected to Network state or not. Set to false for standalone demo graphs.
  */
 export function createNetworkGraph(container, state, disconnected) {
   const gData = {
@@ -150,6 +151,17 @@ export function createNetworkGraph(container, state, disconnected) {
     .onBackgroundRightClick(async () => {
       if (disconnected) return
 
+      /* if the user is in the middle of making a node connection  */
+      if (nodeToConnect) {
+        const doCancelConnectionAction = window.confirm(
+          "Cancel connection? Press OK to cancel the connection.",
+        )
+        if (doCancelConnectionAction) {
+          nodeToConnect = null
+        }
+        return
+      }
+
       try {
         const name = prompt("Add Person:")
         if (name === null) {
@@ -171,19 +183,21 @@ export function createNetworkGraph(container, state, disconnected) {
         nodeToConnect = node
       } else {
         alert(`Link B: ${node.id}`)
+        const p1Reason = prompt("What is Person 1 to Person 2?")
+        if (p1Reason === null) {
+          alert("Canceled node connection.")
+          nodeToConnect = null
+          return
+        }
+
+        const p2Reason = prompt("What is Person 2 to Person 1?")
+        if (p2Reason === null) {
+          alert("Canceled node connection.")
+          nodeToConnect = null
+          return
+        }
+
         try {
-          const p1Reason = prompt("What is Person 1 to Person 2?")
-          if (p1Reason === null) {
-            alert("Canceled node connection.")
-            return
-          }
-
-          const p2Reason = prompt("What is Person 2 to Person 1?")
-          if (p2Reason === null) {
-            alert("Canceled node connection.")
-            return
-          }
-
           await store.dispatch(
             connectPeople(
               state.id,

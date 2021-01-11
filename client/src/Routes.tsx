@@ -13,10 +13,13 @@ import RegisterPage from "./pages/RegisterPage"
 import DashboardPage from "./pages/DashboardPage"
 import SettingsPage from "./pages/SettingsPage"
 import { auth } from "./firebase"
-import { getAllNetworks } from "./store/networks/networksActions"
+import {
+  getAllNetworks,
+  setNetworkLoading,
+} from "./store/networks/networksActions"
 import { useDispatch } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
-import { setUser } from "./store/auth/authActions"
+import { setAuthLoading, setUser } from "./store/auth/authActions"
 
 const Routes: React.FC = () => {
   const dispatch: ActionCreator<AnyAction> = useDispatch()
@@ -25,7 +28,11 @@ const Routes: React.FC = () => {
     /* set user credentials in global state */
     auth.onAuthStateChanged(async (user) => {
       const id = user ? user.uid : null
-      await dispatch(setUser(id))
+      try {
+        await dispatch(setUser(id))
+      } catch (error) {
+        await dispatch(setNetworkLoading(false))
+      }
     })
   }, [])
 

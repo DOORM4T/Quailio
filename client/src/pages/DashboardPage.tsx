@@ -61,7 +61,10 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
   // TODO: get networks based on UID
   const handleCreateNetwork = async () => {
     const networkName = prompt("Name your network:")
-    if (!networkName) return
+    if (!networkName) {
+      alert("Canceled network creation")
+      return
+    }
     const doesNetworkExist = networks.some((n) => n.name === networkName)
     if (doesNetworkExist) {
       alert("[NOT CREATED] That network already exists.")
@@ -94,7 +97,10 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     }
 
     const name = prompt("Name of person:")
-    if (!name) return
+    if (!name) {
+      alert("Canceled add person action")
+      return
+    }
 
     await dispatch(addPerson(currentNetwork.id, name))
   }

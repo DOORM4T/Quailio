@@ -56,6 +56,7 @@ export const authReducer: Reducer<IAuthState, AuthActions> = (
       return {
         ...state,
         userId: action.userId,
+        isLoading: false,
       }
     }
   }
