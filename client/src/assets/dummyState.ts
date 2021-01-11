@@ -7,7 +7,7 @@ export const dummyState: INetwork = {
     {
       name: "Luke Skywalker",
       thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/3/3d/LukeSkywalker.png/revision/latest/scale-to-width-down/499?cb=20201218190434",
+        "https://static.tvtropes.org/pmwiki/pub/images/skywalker_luke.jpg",
       relationships: {
         "Leia Organa": ["Brother", "Sister"],
         "Anakin Skywalker": ["Son", "Father"],
@@ -15,8 +15,7 @@ export const dummyState: INetwork = {
     },
     {
       name: "Leia Organa",
-      thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/f/f1/Leia_Organa_TROS.png/revision/latest/scale-to-width-down/500?cb=20200102034101",
+      thumbnail_url: "https://www1.pictures.zimbio.com/mp/Pkxxy9ZCJAjx.jpg",
       relationships: {
         "Luke Skywalker": ["Sister", "Brother"],
         "Anakin Skywalker": ["Daughter", "Father"],
@@ -32,7 +31,7 @@ export const dummyState: INetwork = {
     {
       name: "Anakin Skywalker",
       thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/6/6f/Anakin_Skywalker_RotS.png/revision/latest/scale-to-width-down/500?cb=20130621175844",
+        "https://pbs.twimg.com/profile_images/939771637213417472/-PlBbjo_.jpg",
       relationships: {
         "Luke Skywalker": ["Father", "Son"],
         "Leia Organa": ["Father", "Daughter"],
@@ -47,12 +46,15 @@ export const dummyState: INetwork = {
     },
     {
       name: "Nute Gunray",
+      thumbnail_url:
+        "https://static.tvtropes.org/pmwiki/pub/images/nute_gunray_sw_4394.jpg",
       relationships: {
         "Lott Dodd": ["Associate", "Associate"],
       },
     },
     {
       name: "Lott Dodd",
+      thumbnail_url: "https://www.postavy.cz/foto/lott-dodd-foto.jpg",
       relationships: {
         "Nute Gunray": ["Associate", "Associate"],
       },
@@ -60,7 +62,7 @@ export const dummyState: INetwork = {
     {
       name: "Sheev Palpatine",
       thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/9/98/Palpatine-TROS-infobox.jpg/revision/latest/scale-to-width-down/500?cb=20200401080828",
+        "https://memegenerator.net/img/images/600x600/16353631/chancellor-palpatine-do-it.jpg",
       relationships: {
         "Nute Gunray": ["Puppetmaster", "Pawn"],
         "Anakin Skywalker": ["Mentor", "Secret Apprentice"],
@@ -69,7 +71,7 @@ export const dummyState: INetwork = {
     {
       name: "Count Dooku",
       thumbnail_url:
-        "https://static.wikia.nocookie.net/starwars/images/b/b8/Dooku_Headshot.jpg/revision/latest/scale-to-width-down/500?cb=20180430181839",
+        "https://pbs.twimg.com/profile_images/1031629581692878848/eWF-884Y_400x400.jpg",
       relationships: {
         "Nute Gunray": ["Associate", "Associate"],
         "Sheev Palpatine": ["Apprentice", "Master"],

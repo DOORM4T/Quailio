@@ -20,7 +20,7 @@ import Logo from "../assets/logo.png"
 import { useSelector } from "react-redux"
 import { IApplicationState } from "../store/store"
 import { auth } from "../firebase"
-import { dummyState } from "./dummyState"
+import { dummyState } from "../assets/dummyState"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 
 interface IProps {}
@@ -127,12 +127,14 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
           </Box>
           <Box align="center" justify="center" margin={{ top: "xlarge" }}>
             <Text size="xxlarge">Try it out!</Text>
-            <ForceGraphCanvas
-              id="network-sketch"
-              state={dummyState}
-              style={{ overflow: "hidden", backgroundColor: "#DDD" }}
-              disconnected={true}
-            />
+            <Box pad="large" width="large" height="large">
+              <ForceGraphCanvas
+                id="network-sketch"
+                state={dummyState}
+                style={{ overflow: "hidden", backgroundColor: "#DDD" }}
+                disconnected={true}
+              />
+            </Box>
           </Box>
           <Footer
             align="center"
