@@ -75,9 +75,9 @@ export interface IAddPersonAction {
 export interface IConnectPeopleAction {
   type: NetworkActionTypes.CONNECT_PEOPLE
   person1: IPerson
-  p1Rel?: string
   person2: IPerson
-  p2Rel?: string
+  p1Rel: string
+  p2Rel: string
 }
 
 export interface IDeletePersonByNameAction {

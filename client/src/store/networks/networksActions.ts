@@ -95,8 +95,8 @@ export const connectPeople: ActionCreator<
   networkId: string,
   p1Name: string,
   p2Name: string,
-  p1Rel: string,
-  p2Rel: string,
+  p1Rel: string = "",
+  p2Rel: string = "",
 ) => {
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
@@ -147,7 +147,7 @@ export const connectPeople: ActionCreator<
       return dispatch({
         type: NetworkActionTypes.CONNECT_PEOPLE,
         person1,
-        person2: p2Name,
+        person2,
         p1Rel,
         p2Rel,
       })

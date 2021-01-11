@@ -90,7 +90,10 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
       if (!state.currentNetwork) break
 
       /* connect each person */
-      const { person1, person2, p1Rel = "", p2Rel = "" } = action
+      const { person1, person2, p1Rel, p2Rel } = action
+
+      console.log(person1, person2, p1Rel, p2Rel)
+
       const updatedPerson1Rels: IRelationships = {
         ...person1.relationships,
         [person2.name]: [p1Rel, p2Rel],

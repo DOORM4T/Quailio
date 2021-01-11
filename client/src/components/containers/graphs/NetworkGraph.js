@@ -152,7 +152,10 @@ export function createNetworkGraph(container, state, disconnected) {
 
       try {
         const name = prompt("Add Person:")
-        if (!name) return
+        if (name === null) {
+          alert("Canceled node creation")
+          return
+        }
 
         await store.dispatch(addPerson(state.id, name))
       } catch (error) {
@@ -164,11 +167,22 @@ export function createNetworkGraph(container, state, disconnected) {
       if (disconnected) return
 
       if (!nodeToConnect) {
+        alert(`Link A: ${node.id}`)
         nodeToConnect = node
       } else {
+        alert(`Link B: ${node.id}`)
         try {
-          const p1Reason = prompt("What is Person 1 to Person 2?") || ""
-          const p2Reason = prompt("What is Person 2 to Person 1?") || ""
+          const p1Reason = prompt("What is Person 1 to Person 2?")
+          if (p1Reason === null) {
+            alert("Canceled node connection.")
+            return
+          }
+
+          const p2Reason = prompt("What is Person 2 to Person 1?")
+          if (p2Reason === null) {
+            alert("Canceled node connection.")
+            return
+          }
 
           await store.dispatch(
             connectPeople(
@@ -186,49 +200,4 @@ export function createNetworkGraph(container, state, disconnected) {
       }
     })
   return Graph
-
-  // const NODE_R = 8
-
-  // const highlightNodes = new Set()
-  // const highlightLinks = new Set()
-  // let hoverNode = null
-
-  // return ForceGraph()(container)
-  //   .graphData(gData)
-  //   .nodeRelSize(NODE_R)
-  //   .onNodeHover((node) => {
-  //     highlightNodes.clear()
-  //     highlightLinks.clear()
-  //     if (node) {
-  //       highlightNodes.add(node)
-  //       node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
-  //       node.links.forEach((link) => highlightLinks.add(link))
-  //     }
-
-  //     hoverNode = node || null
-  //     container.style.cursor = node ? "-webkit-grab" : null
-  //   })
-  //   .onLinkHover((link) => {
-  //     highlightNodes.clear()
-  //     highlightLinks.clear()
-
-  //     if (link) {
-  //       highlightLinks.add(link)
-  //       highlightNodes.add(link.source)
-  //       highlightNodes.add(link.target)
-  //     }
-  //   })
-  //   .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
-  //   .linkDirectionalParticles(4)
-  //   .linkDirectionalParticleWidth((link) => (highlightLinks.has(link) ? 4 : 0))
-  //   .nodeCanvasObjectMode((node) =>
-  //     highlightNodes.has(node) ? "before" : undefined,
-  //   )
-  //   .nodeCanvasObject((node, ctx) => {
-  //     // add ring just for highlighted nodes
-  //     ctx.beginPath()
-  //     ctx.arc(node.x, node.y, NODE_R * 1.4, 0, 2 * Math.PI, false)
-  //     ctx.fillStyle = node === hoverNode ? "red" : "orange"
-  //     ctx.fill()
-  //   })
 }
