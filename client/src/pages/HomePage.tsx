@@ -40,26 +40,23 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
         <GrommetHeader
           align="center"
           direction="row"
-          flex={false}
           justify="center"
-          gap="medium"
           fill="horizontal"
-          background={{ color: "light-2" }}
-          pad="small"
+          background={{ color: "accent-1" }}
         >
           <Avatar
             align="center"
             flex={false}
             justify="center"
-            overflow="hidden"
-            round="full"
-            size="xlarge"
-            background={{ color: "accent-1" }}
             src={Logo}
+            style={{
+              width: "256px",
+              height: "256px",
+            }}
+            animation={{ type: "zoomIn" }}
           />
         </GrommetHeader>
         <Box align="center" justify="center">
-          <Box align="center" justify="center" pad="large" fill="horizontal" />
           <Box
             align="center"
             justify="center"
@@ -67,6 +64,8 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
             gap="medium"
             fill="horizontal"
             pad={{ bottom: "xlarge" }}
+            animation={{ type: "fadeIn", delay: 500 }}
+            style={{ height: "250px" }}
           >
             {isLoggedIn ? (
               <Box direction="column" align="center">
@@ -81,14 +80,14 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
                 </Link>
               </Box>
             ) : (
-              <React.Fragment>
+              <Box direction="row" gap="small">
                 <Link to="/login">
                   <Button label="Sign In" />
                 </Link>
                 <Link to="/register">
                   <Button label="Register" />
                 </Link>
-              </React.Fragment>
+              </Box>
             )}
           </Box>
 
@@ -121,20 +120,29 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
               </AccordionPanel>
             </Accordion>
           </Box>
-          <Box align="center" justify="center" />
-          <Box align="center" justify="center" fill="horizontal" pad="xsmall">
-            <Text size="xlarge">Get started now!</Text>
-          </Box>
-          <Box align="center" justify="center" margin={{ top: "xlarge" }}>
-            <Text size="xxlarge">Try it out!</Text>
-            <Box pad="large" width="large" height="large">
-              <ForceGraphCanvas
-                id="network-sketch"
-                state={dummyState}
-                style={{ overflow: "hidden", backgroundColor: "#DDD" }}
-                disconnected={true}
-              />
-            </Box>
+
+          <Box
+            align="center"
+            justify="center"
+            margin={{ top: "xlarge" }}
+            pad="large"
+            width="large"
+            height="large"
+          >
+            <Text size="xxlarge" margin={{ top: "xlarge" }}>
+              Try it out!
+            </Text>
+            <ForceGraphCanvas
+              id="network-sketch"
+              state={dummyState}
+              style={{
+                overflow: "hidden",
+                backgroundColor: "#DDD",
+                width: "500px",
+                height: "500px",
+              }}
+              disconnected={true}
+            />
           </Box>
           <Footer
             align="center"

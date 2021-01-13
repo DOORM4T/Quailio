@@ -1,6 +1,4 @@
-import React from "react"
 import {
-  Anchor,
   Box,
   Button,
   Card,
@@ -14,27 +12,22 @@ import {
   Text,
   TextInput,
 } from "grommet"
-import Header from "../components/Header"
-import { Link, useHistory } from "react-router-dom"
+import React from "react"
 import { useDispatch } from "react-redux"
-import { createAccount, setAuthLoading } from "../store/auth/authActions"
-import { ThunkDispatch } from "redux-thunk"
-import { IAuthCreateAccountAction, IAuthState } from "../store/auth/authTypes"
-import { auth } from "../firebase"
+import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
+import Header from "../components/Header"
+import useAuthRedirect from "../hooks/auth/useAuthRedirect"
+import { createAccount, setAuthLoading } from "../store/auth/authActions"
 
 const RegisterPage: React.FC<IProps> = (props: IProps) => {
+  /* redirect to dashboard if already authenticated */
+  useAuthRedirect({ whenAuth: true, destination: "/dashboard" })
+
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const history = useHistory()
-
-  React.useEffect(() => {
-    /* redirect to dashboard if the user is already signed in */
-    auth.onAuthStateChanged((user) => {
-      if (user) history.push("/dashboard")
-    })
-  }, [])
 
   const isValid = (formValues: IForm) => {
     setMessage("")

@@ -20,19 +20,16 @@ import { useDispatch } from "react-redux"
 import { login, setAuthLoading } from "../store/auth/authActions"
 import { auth } from "../firebase"
 import { ActionCreator, AnyAction } from "redux"
+import useAuthRedirect from "../hooks/auth/useAuthRedirect"
 
 const LoginPage: React.FC<IProps> = (props: IProps) => {
+  /* redirect to dashboard if already authenticated */
+  useAuthRedirect({ whenAuth: true, destination: "/dashboard" })
+
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const history = useHistory()
-
-  React.useEffect(() => {
-    /* redirect to dashboard if the user is already signed in */
-    auth.onAuthStateChanged((user) => {
-      if (user) history.push("/dashboard")
-    })
-  }, [])
 
   const handleSubmit = async (e: FormExtendedEvent<unknown, Element>) => {
     e.preventDefault()

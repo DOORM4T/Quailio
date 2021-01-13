@@ -1,56 +1,47 @@
-import React from "react"
 import {
-  ResponsiveContext,
-  Header as GrommetHeader,
+  Anchor,
   Box,
+  Header as GrommetHeader,
+  Heading,
+  Image,
   Menu,
   Nav,
-  Heading,
   Text,
-  Button,
-  Anchor,
-  Image,
 } from "grommet"
 import * as Icons from "grommet-icons"
-import { Link, useHistory } from "react-router-dom"
-import { auth } from "../firebase"
-import { IAuthLogoutAction, IAuthState } from "../store/auth/authTypes"
+import React from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { ThunkDispatch } from "redux-thunk"
-import { logout } from "../store/auth/authActions"
-import { IApplicationState } from "../store/store"
-
+import { Link, useHistory } from "react-router-dom"
 import Spinner from "react-spinner"
 import "react-spinner/react-spinner.css"
-
+import { AnyAction, Dispatch } from "redux"
+import { ThunkDispatch } from "redux-thunk"
 import Logo from "../assets/logo.png"
+import { auth } from "../firebase"
+import useAuth from "../hooks/auth/useAuth"
+import { logout, setAuthLoading } from "../store/auth/authActions"
+import { IAuthLogoutAction, IAuthState } from "../store/auth/authTypes"
+import { IApplicationState } from "../store/store"
 
 export const HEADER_HEIGHT = 60
 
 // -== HEADER ==- //
 const Header: React.FC<IProps> = (props) => {
-  const dispatch: LogoutDispatch = useDispatch()
+  const { isAuthenticated: isLoggedIn } = useAuth()
+
+  const dispatch: Dispatch<any> = useDispatch()
   const history = useHistory()
-
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
-
-  React.useEffect(() => {
-    /* redirect to sign in if the user is not authenticated in */
-    auth.onAuthStateChanged((user) => {
-      const hasUser: boolean = user ? true : false
-      setIsLoggedIn(hasUser)
-    })
-  }, [])
 
   const isLoading = useSelector<IApplicationState>(
     (state) => state.auth.isLoading || state.networks.isLoading,
   ) as boolean
 
-  const logoutFunction = () => {
+  const logoutFunction = async () => {
     try {
-      dispatch(logout())
-      history.push("/login")
+      await dispatch(logout())
+      history.push("/")
     } catch (error) {
+      await dispatch(setAuthLoading(false))
       console.error(error)
     }
   }

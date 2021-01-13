@@ -8,7 +8,10 @@ import { store } from "./store/store"
 
 const customTheme: ThemeType = {
   global: {
-    colors: {},
+    colors: {
+      brand: "#32858A",
+      "accent-1": "#B1EACD",
+    },
   },
 }
 

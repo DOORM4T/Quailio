@@ -1,22 +1,18 @@
-import React from "react"
 import {
   Box,
   Button,
   DropButton,
   Heading,
   List,
-  Text,
   ResponsiveContext,
 } from "grommet"
-
-import Header, { HEADER_HEIGHT } from "../components/Header"
-
-import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
-import { INetwork, INetworksState } from "../store/networks/networkTypes"
-import { auth } from "../firebase"
-import { useHistory } from "react-router-dom"
+import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
+import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
+import Header, { HEADER_HEIGHT } from "../components/Header"
+import useAuthRedirect from "../hooks/auth/useAuthRedirect"
+import useGetNetworks from "../hooks/networks/useGetNetworks"
 import {
   addPerson,
   createNetwork,
@@ -24,41 +20,29 @@ import {
   setNetwork,
   setNetworkLoading,
 } from "../store/networks/networksActions"
+import { INetwork } from "../store/networks/networkTypes"
 import { IApplicationState } from "../store/store"
-import { setUser } from "../store/auth/authActions"
 
 const DashboardPage: React.FC<IProps> = (props: IProps) => {
-  const dispatch: ActionCreator<AnyAction> = useDispatch()
-  const networks =
-    useSelector<IApplicationState, INetwork[]>(
-      (state) => state.networks.networks,
-    ) || []
+  /* redirect to login page if not authenticated */
+  useAuthRedirect({ whenAuth: false, destination: "/login" })
 
+  /* get all network data for an authenticated user */
+  const { didGetNetworks } = useGetNetworks()
+
+  const dispatch: ActionCreator<AnyAction> = useDispatch()
+  const networks = useSelector<IApplicationState, INetwork[]>(
+    (state) => state.networks.networks,
+  )
   const currentNetwork = useSelector<IApplicationState, INetwork | null>(
     (state) => state.networks.currentNetwork,
   )
 
+  /* responsive breakpoints */
   const size = React.useContext(ResponsiveContext)
   const isSmall = size === "xsmall" || size === "small"
 
-  const history = useHistory()
-
-  React.useEffect(() => {
-    /* redirect to sign in if the user is not authenticated in */
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) history.push("/login")
-
-      try {
-        dispatch(setUser(user!.uid))
-        await dispatch(getAllNetworks())
-      } catch (error) {
-        await dispatch(setNetworkLoading(false))
-        console.error(error)
-      }
-    })
-  }, [])
-
-  // TODO: get networks based on UID
+  /* Create Network Function */
   const handleCreateNetwork = async () => {
     const networkName = prompt("Name your network:")
     if (!networkName) {
@@ -79,6 +63,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     }
   }
 
+  /* Select Network Function */
   const handleNetworkSelect = (id: string) => {
     return async () => {
       try {
@@ -90,6 +75,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     }
   }
 
+  /* Add Person Function */
   const addPersonHandler = async () => {
     if (!currentNetwork) {
       alert("Please select a Network!")
@@ -102,10 +88,15 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
       return
     }
 
-    await dispatch(addPerson(currentNetwork.id, name))
+    try {
+      await dispatch(addPerson(currentNetwork.id, name))
+    } catch (error) {
+      console.error(error)
+      await dispatch(setNetworkLoading(false))
+    }
   }
 
-  /* Menu of the user's Networks for the Select Network dropdown */
+  /* Menu component of the user's Networks for the Select Network dropdown */
   const NetworkMenu = () => {
     if (!networks || networks.length === 0) return <Box />
 

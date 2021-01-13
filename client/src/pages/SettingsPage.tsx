@@ -1,35 +1,28 @@
-import React from "react"
 import {
-  Box,
-  Header as GrommetHeader,
-  Avatar,
-  DropButton,
-  Tabs,
-  Tab,
-  Heading,
   Accordion,
   AccordionPanel,
-  Text,
-  TextInput,
-  RadioButtonGroup,
+  Avatar,
+  Box,
   Button,
   CheckBoxGroup,
+  DropButton,
+  Header as GrommetHeader,
+  Heading,
   List,
+  RadioButtonGroup,
+  Tab,
+  Tabs,
+  Text,
+  TextInput,
 } from "grommet"
-import { TreeOption, SettingsOption } from "grommet-icons"
+import { SettingsOption, TreeOption } from "grommet-icons"
+import React from "react"
 import Header from "../components/Header"
-import { auth } from "../firebase"
-import { useHistory } from "react-router-dom"
+import useAuthRedirect from "../hooks/auth/useAuthRedirect"
 
 const SettingsPage: React.FC = () => {
-  const history = useHistory()
-
-  React.useEffect(() => {
-    /* redirect to sign in if the user is not authenticated in */
-    auth.onAuthStateChanged((user) => {
-      if (!user) history.push("/login")
-    })
-  }, [])
+  /* redirect to login page if not authenticated */
+  useAuthRedirect({ whenAuth: false, destination: "/login" })
 
   return (
     <React.Fragment>

@@ -17,9 +17,6 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
     if (container) {
       /* set canvas width and height based on container dimensions */
-
-      console.log(props.state)
-
       const forceGraph = createNetworkGraph(
         container,
         props.state,
