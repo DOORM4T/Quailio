@@ -28,7 +28,8 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.CREATE: {
       return {
         ...state,
-        networks: state.networks.concat(action.network),
+        networks: action.updatedNetworks,
+        currentNetwork: action.newNetwork,
         isLoading: false,
       }
     }

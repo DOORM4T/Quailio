@@ -162,7 +162,7 @@ export const createNetwork: ActionCreator<
     dispatch(setNetworkLoading(true))
 
     /* create the network with a random ID & an empty list of people */
-    const network: INetwork = {
+    const newNetwork: INetwork = {
       id: uuidv4(),
       name,
       people: [],
@@ -181,18 +181,19 @@ export const createNetwork: ActionCreator<
       }
 
       const prevNetworks: INetwork[] = (data as IFirebaseData).networks
-      const newNetworks: INetwork[] = [...prevNetworks, network]
+      const updatedNetworks: INetwork[] = [...prevNetworks, newNetwork]
 
       const updatedData = {
         ...data,
-        networks: newNetworks,
+        networks: updatedNetworks,
       }
 
       await collection.doc(uid).set(updatedData)
 
       return dispatch({
         type: NetworkActionTypes.CREATE,
-        network,
+        newNetwork,
+        updatedNetworks,
       })
     } catch (error) {
       throw error

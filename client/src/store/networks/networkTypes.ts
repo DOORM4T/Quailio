@@ -49,7 +49,8 @@ export interface INetworkLoadingAction {
 
 export interface ICreateNetworkAction {
   type: NetworkActionTypes.CREATE
-  network: INetwork
+  newNetwork: INetwork
+  updatedNetworks: INetwork[]
 }
 
 export interface ISetNetworkAction {

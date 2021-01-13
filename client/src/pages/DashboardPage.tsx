@@ -5,6 +5,7 @@ import {
   Heading,
   List,
   ResponsiveContext,
+  Text,
 } from "grommet"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -28,7 +29,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
   useAuthRedirect({ whenAuth: false, destination: "/login" })
 
   /* get all network data for an authenticated user */
-  const { didGetNetworks } = useGetNetworks()
+  useGetNetworks()
 
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const networks = useSelector<IApplicationState, INetwork[]>(
@@ -60,18 +61,6 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     } catch (error) {
       await dispatch(setNetworkLoading(false))
       console.error(error)
-    }
-  }
-
-  /* Select Network Function */
-  const handleNetworkSelect = (id: string) => {
-    return async () => {
-      try {
-        await dispatch(setNetwork(id))
-      } catch (error) {
-        await dispatch(setNetworkLoading(false))
-        console.error(error)
-      }
     }
   }
 
@@ -111,9 +100,22 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     /* update state */
     try {
       await dispatch(deleteNetwork(currentNetwork.id))
+      await dispatch(setNetwork(null))
     } catch (error) {
       await dispatch(setNetworkLoading(false))
       console.error(error)
+    }
+  }
+
+  /* Select Network Function */
+  const handleNetworkSelect = (id: string) => {
+    return async () => {
+      try {
+        await dispatch(setNetwork(id))
+      } catch (error) {
+        await dispatch(setNetworkLoading(false))
+        console.error(error)
+      }
     }
   }
 
@@ -146,27 +148,42 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
         <Box
           direction="column"
           width={{ min: "360px" }}
-          pad={{ horizontal: "large", bottom: "large" }}
+          pad={{ horizontal: "small", bottom: "small" }}
           background="light-1"
-          overflow={{ vertical: "auto" }}
         >
-          <Box pad="small" gap="large">
-            <Button label="New Network" onClick={handleCreateNetwork} />
+          <Box
+            pad="small"
+            gap="small"
+            fill="horizontal"
+            height="small"
+            align="center"
+          >
             <DropButton
               label={
-                (currentNetwork && currentNetwork.name) || "Select Network"
+                (currentNetwork &&
+                  `Selected Network: ${currentNetwork.name}`) ||
+                "Select Network"
               }
               dropAlign={{ top: "bottom" }}
               dropContent={NetworkMenu()}
               disabled={networks.length === 0}
+              fill="horizontal"
             />
-            <Button
-              label="Delete Network"
-              onClick={handleDeleteNetwork}
-              disabled={!currentNetwork}
-            />
+            <Box direction="row" gap="small" fill="horizontal" justify="center">
+              <Button
+                label="New Network"
+                onClick={handleCreateNetwork}
+                fill="horizontal"
+              />
+              <Button
+                label="Delete Network"
+                onClick={handleDeleteNetwork}
+                disabled={!currentNetwork}
+                fill="horizontal"
+              />
+            </Box>
           </Box>
-          <Box pad={{ top: "large" }}>
+          <Box>
             <Heading level={3}>Network</Heading>
             <Button
               label="Add Person"
@@ -178,6 +195,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
                 currentNetwork ? currentNetwork.people.map((p) => p.name) : []
               }
               margin={{ bottom: "medium" }}
+              style={{ overflowY: "auto" }}
             />
           </Box>
         </Box>
