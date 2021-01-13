@@ -50,10 +50,9 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     // DELETE A NETWORK
     case NetworkActionTypes.DELETE: {
       /* delete a network */
-      const updatedNetworks = state.networks.filter((n) => n.id !== action.id)
       return {
         ...state,
-        networks: updatedNetworks,
+        networks: action.updatedNetworks,
         isLoading: false,
       }
     }
@@ -62,25 +61,10 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.ADD_PERSON: {
       if (!state.currentNetwork) break
 
-      /* create an updated copy of the current network */
-      const newPeople: IPerson[] = state.currentNetwork.people.concat(
-        action.person,
-      )
-      const updatedNetwork: INetwork = {
-        ...state.currentNetwork,
-        people: newPeople,
-      }
-
-      /* create an updated list of all networks */
-      const networks = state.networks.filter(
-        (n) => n.id !== state.currentNetwork!.id,
-      )
-      const updatedNetworks = [updatedNetwork, ...networks]
-
       return {
         ...state,
-        currentNetwork: updatedNetwork,
-        networks: updatedNetworks,
+        currentNetwork: action.updatedNetwork,
+        networks: action.updatedNetworks,
         isLoading: false,
       }
     }
@@ -89,52 +73,10 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.CONNECT_PEOPLE: {
       if (!state.currentNetwork) break
 
-      /* connect each person */
-      const { person1, person2, p1Rel, p2Rel } = action
-
-      const updatedPerson1Rels: IRelationships = {
-        ...person1.relationships,
-        [person2.name]: [p1Rel, p2Rel],
-      }
-      const updatedPerson1: IPerson = {
-        ...person1,
-        relationships: updatedPerson1Rels,
-      }
-
-      const updatedPerson2Rels: IRelationships = {
-        ...person2.relationships,
-        [person1.name]: [p2Rel, p1Rel],
-      }
-      const updatedPerson2: IPerson = {
-        ...person2,
-        relationships: updatedPerson2Rels,
-      }
-
-      /* create updated copy of the network with the newly connected people */
-      const updatedNetwork: INetwork = {
-        ...state.currentNetwork,
-        people: [
-          updatedPerson1,
-          updatedPerson2,
-          ...state.currentNetwork.people.filter(
-            (p) =>
-              p.name !== updatedPerson1.name && p.name !== updatedPerson2.name,
-          ),
-        ],
-      }
-
-      console.log(updatedNetwork)
-
-      /* updated copy of all networks */
-      const networks = state.networks.filter(
-        (n) => n.id !== state.currentNetwork!.id,
-      )
-      const updatedNetworks: INetwork[] = [updatedNetwork, ...networks]
-
       return {
         ...state,
-        currentNetwork: updatedNetwork,
-        networks: updatedNetworks,
+        currentNetwork: action.updatedNetwork,
+        networks: action.updatedNetworks,
         isLoading: false,
       }
     }

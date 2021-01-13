@@ -64,20 +64,19 @@ export interface IGetAllNetworksAction {
 
 export interface IDeleteNetworkByIdAction {
   type: NetworkActionTypes.DELETE
-  id: string
+  updatedNetworks: INetwork[]
 }
 
 export interface IAddPersonAction {
   type: NetworkActionTypes.ADD_PERSON
-  person: IPerson
+  updatedNetwork: INetwork
+  updatedNetworks: INetwork[]
 }
 
 export interface IConnectPeopleAction {
   type: NetworkActionTypes.CONNECT_PEOPLE
-  person1: IPerson
-  person2: IPerson
-  p1Rel: string
-  p2Rel: string
+  updatedNetwork: INetwork
+  updatedNetworks: INetwork[]
 }
 
 export interface IDeletePersonByNameAction {

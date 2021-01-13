@@ -60,28 +60,28 @@ export const addPerson: ActionCreator<
       const prevNetwork = prevNetworks.find((n) => n.id === networkId)
       if (!prevNetwork) throw new Error("network not found")
 
-      const newNetwork: INetwork = {
+      const updatedNetwork: INetwork = {
         ...prevNetwork,
         people: [...prevNetwork.people, person],
       }
 
       /* create updated networks array without the previous version of the updated network */
-      const newNetworks: INetwork[] = [
+      const updatedNetworks: INetwork[] = [
         ...prevNetworks.filter((n) => n.id !== networkId),
-        newNetwork,
+        updatedNetwork,
       ]
 
+      /* updated version of the entire document in Firebase */
       const updatedData = {
         ...data,
-        networks: newNetworks,
+        networks: updatedNetworks,
       }
-
       await collection.doc(uid).set(updatedData)
 
       return dispatch({
         type: NetworkActionTypes.ADD_PERSON,
-        newNetwork,
-        person,
+        updatedNetwork,
+        updatedNetworks,
       })
     } catch (error) {
       throw error
@@ -132,24 +132,22 @@ export const connectPeople: ActionCreator<
       }
 
       /* create updated networks array without the previous version of the updated network */
-      const newNetworks: INetwork[] = [
+      const updatedNetworks: INetwork[] = [
         ...prevNetworks.filter((n) => n.id !== networkId),
         updatedNetwork,
       ]
 
       const updatedData = {
         ...data,
-        networks: newNetworks,
+        networks: updatedNetworks,
       }
 
       await collection.doc(uid).set(updatedData)
 
       return dispatch({
         type: NetworkActionTypes.CONNECT_PEOPLE,
-        person1,
-        person2,
-        p1Rel,
-        p2Rel,
+        updatedNetwork,
+        updatedNetworks,
       })
     } catch (error) {
       throw error
@@ -212,10 +210,11 @@ export const setNetwork: ActionCreator<
       const uid = store.getState().auth.userId
       if (!uid) throw new Error("user not found")
 
-      // TODO: Get all networks from Firebase
+      /* get all networks from Firebase */
       const data = (await collection.doc(uid).get()).data() as IFirebaseData
       if (!data) throw new Error("data not found")
 
+      /* find the selected network */
       const networks: INetwork[] = data.networks
       const network = networks.find((n) => n.id === id)
 
@@ -240,13 +239,25 @@ export const deleteNetwork: ActionCreator<
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    // TODO: Interact with API
-    await wait(1000)
+    try {
+      const uid = store.getState().auth.userId
+      if (!uid) throw new Error("user not found")
 
-    return dispatch({
-      type: NetworkActionTypes.DELETE,
-      id,
-    })
+      /* get all networks from Firebase */
+      const data = (await collection.doc(uid).get()).data() as IFirebaseData
+      if (!data) throw new Error("data not found")
+
+      /* filter out the network */
+      const networks: INetwork[] = data.networks
+      const updatedNetworks = networks.filter((n) => n.id !== id)
+
+      return dispatch({
+        type: NetworkActionTypes.DELETE,
+        updatedNetworks,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
 

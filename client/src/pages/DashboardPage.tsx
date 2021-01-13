@@ -16,7 +16,6 @@ import useGetNetworks from "../hooks/networks/useGetNetworks"
 import {
   addPerson,
   createNetwork,
-  getAllNetworks,
   setNetwork,
   setNetworkLoading,
 } from "../store/networks/networksActions"
