@@ -240,6 +240,7 @@ export const deleteNetwork: ActionCreator<
     dispatch(setNetworkLoading(true))
 
     try {
+      /* get user id */
       const uid = store.getState().auth.userId
       if (!uid) throw new Error("user not found")
 
@@ -250,6 +251,13 @@ export const deleteNetwork: ActionCreator<
       /* filter out the network */
       const networks: INetwork[] = data.networks
       const updatedNetworks = networks.filter((n) => n.id !== id)
+
+      /* update Firebase document */
+      const updatedData = {
+        ...data,
+        networks: updatedNetworks,
+      }
+      await collection.doc(uid).set(updatedData)
 
       return dispatch({
         type: NetworkActionTypes.DELETE,

@@ -16,6 +16,7 @@ import useGetNetworks from "../hooks/networks/useGetNetworks"
 import {
   addPerson,
   createNetwork,
+  deleteNetwork,
   setNetwork,
   setNetworkLoading,
 } from "../store/networks/networksActions"
@@ -43,7 +44,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
 
   /* Create Network Function */
   const handleCreateNetwork = async () => {
-    const networkName = prompt("Name your network:")
+    const networkName = window.prompt("Name your network:")
     if (!networkName) {
       alert("Canceled network creation")
       return
@@ -81,17 +82,38 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
       return
     }
 
-    const name = prompt("Name of person:")
+    /* get name of person to add */
+    const name = window.prompt("Name of person:")
     if (!name) {
       alert("Canceled add person action")
       return
     }
 
+    /* update state */
     try {
       await dispatch(addPerson(currentNetwork.id, name))
     } catch (error) {
-      console.error(error)
       await dispatch(setNetworkLoading(false))
+      console.error(error)
+    }
+  }
+
+  const handleDeleteNetwork = async () => {
+    if (!currentNetwork) return
+
+    /* confirm deletion */
+    const doDelete = window.confirm(`Delete network: ${currentNetwork.name}?`)
+    if (!doDelete) {
+      alert(`Did not delete ${currentNetwork.name}`)
+      return
+    }
+
+    /* update state */
+    try {
+      await dispatch(deleteNetwork(currentNetwork.id))
+    } catch (error) {
+      await dispatch(setNetworkLoading(false))
+      console.error(error)
     }
   }
 
@@ -137,6 +159,11 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
               dropAlign={{ top: "bottom" }}
               dropContent={NetworkMenu()}
               disabled={networks.length === 0}
+            />
+            <Button
+              label="Delete Network"
+              onClick={handleDeleteNetwork}
+              disabled={!currentNetwork}
             />
           </Box>
           <Box pad={{ top: "large" }}>

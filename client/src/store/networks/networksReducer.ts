@@ -53,6 +53,7 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
       return {
         ...state,
         networks: action.updatedNetworks,
+        currentNetwork: null,
         isLoading: false,
       }
     }
