@@ -87,27 +87,11 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.DELETE_PERSON: {
       if (!state.currentNetwork) break
 
-      /* remove the person by their name */
-      const peopleWithoutPerson: IPerson[] = state.currentNetwork.people.filter(
-        (p) => p.name !== action.name,
-      )
-
-      /* updated copy of the current network */
-      const updatedNetwork: INetwork = {
-        ...state.currentNetwork,
-        people: peopleWithoutPerson,
-      }
-
-      /* updated copy of all networks */
-      const networks = state.networks.filter(
-        (n) => n.id !== state.currentNetwork!.id,
-      )
-      const updatedNetworks: INetwork[] = [updatedNetwork, ...networks]
-
       return {
         ...state,
-        currentNetwork: updatedNetwork,
-        networks: updatedNetworks,
+        currentNetwork: action.updatedNetwork,
+        networks: action.updatedNetworks,
+        isLoading: false,
       }
     }
   }

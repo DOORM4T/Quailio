@@ -81,9 +81,10 @@ export interface IConnectPeopleAction {
   updatedNetworks: INetwork[]
 }
 
-export interface IDeletePersonByNameAction {
+export interface IDeletePersonByIdAction {
   type: NetworkActionTypes.DELETE_PERSON
-  name: string
+  updatedNetwork: INetwork
+  updatedNetworks: INetwork[]
 }
 
 /* action types used by the networks reducer */
@@ -95,7 +96,7 @@ export type NetworksActions =
   | IDeleteNetworkByIdAction
   | IAddPersonAction
   | IConnectPeopleAction
-  | IDeletePersonByNameAction
+  | IDeletePersonByIdAction
 
 /* document type for data stored in Firebase */
 export interface IFirebaseData {

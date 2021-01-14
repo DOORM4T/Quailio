@@ -11,7 +11,7 @@ import {
   IConnectPeopleAction,
   ICreateNetworkAction,
   IDeleteNetworkByIdAction,
-  IDeletePersonByNameAction,
+  IDeletePersonByIdAction,
   IGetAllNetworksAction,
   IPerson,
   INetwork,
@@ -272,23 +272,60 @@ export const deleteNetwork: ActionCreator<
 }
 
 export const deletePerson: ActionCreator<
-  ThunkAction<
-    Promise<AnyAction>,
-    INetworksState,
-    null,
-    IDeletePersonByNameAction
-  >
-> = (name: string) => {
+  ThunkAction<Promise<AnyAction>, INetworksState, null, IDeletePersonByIdAction>
+> = (networkId: string, personId: string) => {
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    // TODO: Interact with API
-    await wait(1000)
+    try {
+      /* get user id */
+      const uid = store.getState().auth.userId
+      if (!uid) throw new Error("user not found")
 
-    return dispatch({
-      type: NetworkActionTypes.DELETE_PERSON,
-      name,
-    })
+      /* get all networks from Firebase */
+      const data = (await collection.doc(uid).get()).data() as IFirebaseData
+      if (!data) throw new Error("data not found")
+
+      /* get the current network */
+      const networks: INetwork[] = data.networks
+      const currentNetwork = networks.find((n) => n.id === networkId)
+      if (!currentNetwork) throw new Error("current network not found")
+
+      /* remove the person */
+      const updatedPeople: IPerson[] = currentNetwork.people.filter(
+        (p) => p.id !== personId,
+      )
+
+      /* update the network */
+      const updatedNetwork: INetwork = {
+        ...currentNetwork,
+        people: updatedPeople,
+      }
+
+      /* update all networks */
+      const withoutUpdatedNetwork: INetwork[] = [
+        ...networks.filter((n) => n.id !== networkId),
+      ]
+      const updatedNetworks: INetwork[] = [
+        updatedNetwork,
+        ...withoutUpdatedNetwork,
+      ]
+
+      /* update Firebase document */
+      const updatedData = {
+        ...data,
+        networks: updatedNetworks,
+      }
+      await collection.doc(uid).set(updatedData)
+
+      return dispatch({
+        type: NetworkActionTypes.DELETE_PERSON,
+        updatedNetwork,
+        updatedNetworks,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 }
 
