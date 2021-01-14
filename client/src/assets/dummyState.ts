@@ -5,6 +5,7 @@ export const dummyState: INetwork = {
   name: "dummy network",
   people: [
     {
+      id: "1",
       name: "Luke Skywalker",
       thumbnail_url:
         "https://static.tvtropes.org/pmwiki/pub/images/skywalker_luke.jpg",
@@ -14,6 +15,7 @@ export const dummyState: INetwork = {
       },
     },
     {
+      id: "2",
       name: "Leia Organa",
       thumbnail_url: "https://www1.pictures.zimbio.com/mp/Pkxxy9ZCJAjx.jpg",
       relationships: {
@@ -29,6 +31,7 @@ export const dummyState: INetwork = {
       },
     },
     {
+      id: "3",
       name: "Anakin Skywalker",
       thumbnail_url:
         "https://pbs.twimg.com/profile_images/939771637213417472/-PlBbjo_.jpg",
@@ -45,6 +48,7 @@ export const dummyState: INetwork = {
       },
     },
     {
+      id: "4",
       name: "Nute Gunray",
       thumbnail_url:
         "https://static.tvtropes.org/pmwiki/pub/images/nute_gunray_sw_4394.jpg",
@@ -53,6 +57,7 @@ export const dummyState: INetwork = {
       },
     },
     {
+      id: "5",
       name: "Lott Dodd",
       thumbnail_url: "https://www.postavy.cz/foto/lott-dodd-foto.jpg",
       relationships: {
@@ -60,6 +65,7 @@ export const dummyState: INetwork = {
       },
     },
     {
+      id: "6",
       name: "Sheev Palpatine",
       thumbnail_url:
         "https://memegenerator.net/img/images/600x600/16353631/chancellor-palpatine-do-it.jpg",
@@ -69,6 +75,7 @@ export const dummyState: INetwork = {
       },
     },
     {
+      id: "7",
       name: "Count Dooku",
       thumbnail_url:
         "https://pbs.twimg.com/profile_images/1031629581692878848/eWF-884Y_400x400.jpg",

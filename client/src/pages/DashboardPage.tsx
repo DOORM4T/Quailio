@@ -1,15 +1,8 @@
-import {
-  Box,
-  Button,
-  DropButton,
-  Heading,
-  List,
-  ResponsiveContext,
-  Text,
-} from "grommet"
+import { Box, Button, DropButton, Heading, ResponsiveContext } from "grommet"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
+import ActionList from "../components/ActionList"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 import Header, { HEADER_HEIGHT } from "../components/Header"
 import useAuthRedirect from "../hooks/auth/useAuthRedirect"
@@ -190,12 +183,24 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
               onClick={addPersonHandler}
               disabled={!currentNetwork}
             />
-            <List
+            <ActionList
               data={
-                currentNetwork ? currentNetwork.people.map((p) => p.name) : []
+                currentNetwork
+                  ? currentNetwork.people.map((p, index) => ({
+                      name: p.name,
+                      id: p.id || `${index}`,
+                    }))
+                  : []
               }
-              margin={{ bottom: "medium" }}
-              style={{ overflowY: "auto" }}
+              handleView={(name: string) => () => {
+                console.log(`View [${name}]`)
+              }}
+              handleEdit={(name: string) => () => {
+                console.log(`Edit [${name}]`)
+              }}
+              handleDelete={(name: string) => () => {
+                console.log(`Delete [${name}]`)
+              }}
             />
           </Box>
         </Box>

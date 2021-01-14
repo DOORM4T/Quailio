@@ -12,6 +12,7 @@ export interface INetwork {
 }
 
 export interface IPerson {
+  id: string
   name: string
   relationships: IRelationships
   thumbnail_url?: string

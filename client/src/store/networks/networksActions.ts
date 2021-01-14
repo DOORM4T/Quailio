@@ -39,6 +39,7 @@ export const addPerson: ActionCreator<
     dispatch(setNetworkLoading(true))
 
     const person: IPerson = {
+      id: uuidv4(),
       name,
       relationships: {},
     }
