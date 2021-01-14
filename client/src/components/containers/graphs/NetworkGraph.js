@@ -25,7 +25,8 @@ export function createNetworkGraph(container, state, disconnected) {
       }
 
       return {
-        id: person.name,
+        id: person.id,
+        name: person.name,
         thumbnail,
         neighbors: [],
         relationships: person.relationships,
@@ -34,12 +35,13 @@ export function createNetworkGraph(container, state, disconnected) {
     links: [],
   }
 
+  /* link people by their relationship fields */
   state.people.forEach((person) => {
-    Object.keys(person.relationships).forEach((name) => {
-      if (!gData.nodes.some((person) => person.id === name)) return
+    Object.keys(person.relationships).forEach((id) => {
+      if (!gData.nodes.some((person) => person.id === id)) return
       gData.links.push({
-        source: person.name,
-        target: name,
+        source: person.id,
+        target: id,
       })
     })
   })
@@ -101,7 +103,7 @@ export function createNetworkGraph(container, state, disconnected) {
         ctx.stroke()
       }
     })
-    .nodeLabel("id")
+    .nodeLabel("name")
     .nodeAutoColorBy("id")
     .linkDirectionalParticles(1)
     .linkDirectionalParticleWidth(1.4)
@@ -117,7 +119,7 @@ export function createNetworkGraph(container, state, disconnected) {
     })
     .linkLabel((link) => {
       const [rel1, rel2] = link.source.relationships[link.target.id]
-      return `${link.source.id} (${rel1}) - ${link.target.id} (${rel2})`
+      return `${link.source.name} (${rel1}) - ${link.target.name} (${rel2})`
     })
     .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
     .linkColor((link) => (highlightLinks.has(link) ? "yellow" : "black"))

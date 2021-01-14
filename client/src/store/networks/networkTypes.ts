@@ -29,7 +29,7 @@ export interface IPersonProperties {
 
 /* string 1: this person in relation to the other person 
    string 2: other person in relation to this person */
-export type IRelationships = { [otherPersonName: string]: [string, string] }
+export type IRelationships = { [otherPersonId: string]: [string, string] }
 
 // -== ACTION TYPES ==- //
 export enum NetworkActionTypes {

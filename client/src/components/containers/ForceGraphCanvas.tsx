@@ -4,6 +4,7 @@ import Canvas from "../Canvas"
 import { CSSProperties } from "styled-components"
 import { createNetworkGraph } from "./graphs/NetworkGraph"
 import { ForceGraphInstance } from "force-graph"
+import { INetwork } from "../../store/networks/networkTypes"
 
 const ForceGraphCanvas: React.FC<IProps> = (props) => {
   /* create a ref for forwarding to the Canvas presentational component */
@@ -51,6 +52,6 @@ ForceGraphCanvas.defaultProps = {
 interface IProps {
   style?: CSSProperties
   id: string
-  state: any
+  state: INetwork | null
   disconnected?: boolean
 }

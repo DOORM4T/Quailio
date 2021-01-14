@@ -94,8 +94,8 @@ export const connectPeople: ActionCreator<
   ThunkAction<Promise<AnyAction>, INetworksState, null, IConnectPeopleAction>
 > = (
   networkId: string,
-  p1Name: string,
-  p2Name: string,
+  p1Id: string,
+  p2Id: string,
   p1Rel: string = "",
   p2Rel: string = "",
 ) => {
@@ -111,14 +111,15 @@ export const connectPeople: ActionCreator<
       const prevNetwork = prevNetworks.find((n) => n.id === networkId)
       if (!prevNetwork) throw new Error("network not found")
 
-      const person1 = prevNetwork.people.find((p) => p.name === p1Name)
-      const person2 = prevNetwork.people.find((p) => p.name === p2Name)
+      /* get each person by their ID */
+      const person1 = prevNetwork.people.find((p) => p.id === p1Id)
+      const person2 = prevNetwork.people.find((p) => p.id === p2Id)
 
       if (!person1 || !person2) throw new Error("person(s) not found")
 
       /* set the relationship */
-      person1.relationships[p2Name] = [p1Rel, p2Rel]
-      person2.relationships[p1Name] = [p2Rel, p1Rel]
+      person1.relationships[p2Id] = [p1Rel, p2Rel]
+      person2.relationships[p1Id] = [p2Rel, p1Rel]
 
       /* update current network with updated people */
       const updatedNetwork: INetwork = {
@@ -126,9 +127,7 @@ export const connectPeople: ActionCreator<
         people: [
           person1,
           person2,
-          ...prevNetwork.people.filter(
-            (p) => p.name !== p1Name && p.name !== p2Name,
-          ),
+          ...prevNetwork.people.filter((p) => p.id !== p1Id && p.id !== p2Id),
         ],
       }
 
@@ -291,10 +290,13 @@ export const deletePerson: ActionCreator<
       const currentNetwork = networks.find((n) => n.id === networkId)
       if (!currentNetwork) throw new Error("current network not found")
 
-      /* remove the person */
-      const updatedPeople: IPerson[] = currentNetwork.people.filter(
-        (p) => p.id !== personId,
-      )
+      /* remove the person and all relationships other people had with them */
+      const updatedPeople: IPerson[] = currentNetwork.people
+        .filter((p) => p.id !== personId)
+        .map((p) => {
+          delete p.relationships[personId]
+          return p
+        })
 
       /* update the network */
       const updatedNetwork: INetwork = {
