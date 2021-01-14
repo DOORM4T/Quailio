@@ -63,7 +63,7 @@ export const addPerson: ActionCreator<
 
       const updatedNetwork: INetwork = {
         ...prevNetwork,
-        people: [...prevNetwork.people, person],
+        people: [person, ...prevNetwork.people],
       }
 
       /* create updated networks array without the previous version of the updated network */
