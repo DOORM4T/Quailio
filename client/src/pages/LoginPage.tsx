@@ -1,4 +1,3 @@
-import React from "react"
 import {
   Box,
   Button,
@@ -10,22 +9,16 @@ import {
   FormExtendedEvent,
   FormField,
   Heading,
-  TextInput,
   Text,
+  TextInput,
 } from "grommet"
-
-import Header from "../components/Header"
-import { Link, useHistory } from "react-router-dom"
+import React from "react"
 import { useDispatch } from "react-redux"
-import { login, setAuthLoading } from "../store/auth/authActions"
-import { auth } from "../firebase"
+import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
-import useAuthRedirect from "../hooks/auth/useAuthRedirect"
+import { login, setAuthLoading } from "../store/auth/authActions"
 
 const LoginPage: React.FC<IProps> = (props: IProps) => {
-  /* redirect to dashboard if already authenticated */
-  useAuthRedirect({ whenAuth: true, destination: "/dashboard" })
-
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
   const dispatch: ActionCreator<AnyAction> = useDispatch()
@@ -50,7 +43,6 @@ const LoginPage: React.FC<IProps> = (props: IProps) => {
 
   return (
     <React.Fragment>
-      <Header title="Log in" />
       <Box direction="column" align="center">
         <Card
           height="medium"

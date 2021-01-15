@@ -4,7 +4,7 @@ import { AuthActions, AuthActionTypes, IAuthState } from "./authTypes"
 
 const initialState: IAuthState = {
   isLoading: false,
-  userId: null,
+  userId: undefined,
 }
 
 export const authReducer: Reducer<IAuthState, AuthActions> = (

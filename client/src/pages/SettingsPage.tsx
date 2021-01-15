@@ -17,16 +17,10 @@ import {
 } from "grommet"
 import { SettingsOption, TreeOption } from "grommet-icons"
 import React from "react"
-import Header from "../components/Header"
-import useAuthRedirect from "../hooks/auth/useAuthRedirect"
 
 const SettingsPage: React.FC = () => {
-  /* redirect to login page if not authenticated */
-  useAuthRedirect({ whenAuth: false, destination: "/login" })
-
   return (
     <React.Fragment>
-      <Header title="Settings" />
       <GrommetHeader
         align="center"
         direction="row"

@@ -42,7 +42,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
   return <Canvas id={props.id} ref={canvasRef} style={props.style} />
 }
 
-export default ForceGraphCanvas
+export default React.memo(ForceGraphCanvas)
 
 ForceGraphCanvas.defaultProps = {
   disconnected: false,

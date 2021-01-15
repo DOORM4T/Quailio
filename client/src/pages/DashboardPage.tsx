@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 import PersonMenu from "../components/containers/PersonMenu"
-import Header, { HEADER_HEIGHT } from "../components/Header"
-import useAuthRedirect from "../hooks/auth/useAuthRedirect"
+import { HEADER_HEIGHT } from "../components/Header"
 import useGetNetworks from "../hooks/networks/useGetNetworks"
 import {
   addPerson,
@@ -18,9 +17,6 @@ import { INetwork } from "../store/networks/networkTypes"
 import { IApplicationState } from "../store/store"
 
 const DashboardPage: React.FC<IProps> = (props: IProps) => {
-  /* redirect to login page if not authenticated */
-  useAuthRedirect({ whenAuth: false, destination: "/login" })
-
   /* get all network data for an authenticated user */
   useGetNetworks()
 
@@ -131,7 +127,6 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
 
   return (
     <React.Fragment>
-      <Header title="Dashboard" />
       <Box
         direction={isSmall ? "column" : "row"}
         flex={{ grow: 1 }}

@@ -15,6 +15,7 @@ function useAuthChange() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       const id = user ? user.uid : null
       try {
+        await dispatch(setAuthLoading(true))
         await dispatch(setUser(id))
       } catch (error) {
         await dispatch(setNetworkLoading(false))

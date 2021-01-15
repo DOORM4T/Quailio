@@ -1,4 +1,3 @@
-import React from "react"
 import {
   Accordion,
   AccordionPanel,
@@ -6,22 +5,18 @@ import {
   Box,
   Button,
   Footer,
+  Header as GrommetHeader,
   Heading,
   Text,
-  Header as GrommetHeader,
-  Image,
-  Stack,
 } from "grommet"
-
-import Header from "../components/Header"
-import { Link } from "react-router-dom"
-
-import Logo from "../assets/logo.png"
+import React from "react"
 import { useSelector } from "react-redux"
-import { IApplicationState } from "../store/store"
-import { auth } from "../firebase"
+import { Link } from "react-router-dom"
 import { dummyState } from "../assets/dummyState"
+import Logo from "../assets/logo.png"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
+import { auth } from "../firebase"
+import { IApplicationState } from "../store/store"
 
 interface IProps {}
 
@@ -34,8 +29,6 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
 
   return (
     <React.Fragment>
-      <Header title={APP_NAME} />
-
       <Box align="center" justify="start" direction="column" fill="horizontal">
         <GrommetHeader
           align="center"

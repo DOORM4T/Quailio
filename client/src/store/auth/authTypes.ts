@@ -1,13 +1,6 @@
-import { ThunkDispatch } from "redux-thunk"
-import {
-  ICreateNetworkAction,
-  IGetAllNetworksAction,
-  IPersonProperties,
-} from "../networks/networkTypes"
-
 export interface IAuthState {
   isLoading: boolean
-  userId: string | null
+  userId: string | null | undefined
 }
 
 // -== ACTION TYPES ==- //

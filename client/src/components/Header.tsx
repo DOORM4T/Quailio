@@ -14,13 +14,11 @@ import { useDispatch, useSelector } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import Spinner from "react-spinner"
 import "react-spinner/react-spinner.css"
-import { AnyAction, Dispatch } from "redux"
-import { ThunkDispatch } from "redux-thunk"
+import { Dispatch } from "redux"
 import Logo from "../assets/logo.png"
 import { auth } from "../firebase"
 import useAuth from "../hooks/auth/useAuth"
 import { logout, setAuthLoading } from "../store/auth/authActions"
-import { IAuthLogoutAction, IAuthState } from "../store/auth/authTypes"
 import { IApplicationState } from "../store/store"
 
 export const HEADER_HEIGHT = 60
@@ -78,14 +76,13 @@ Header.defaultProps = {
 
 export default Header
 
-type LogoutDispatch = ThunkDispatch<IAuthState, null, IAuthLogoutAction>
 interface IProps {
   title?: string
 }
 
 // -== MENU  ==- //
 interface IMenuProps {
-  isLoggedIn: boolean
+  isLoggedIn: boolean | undefined
   logoutFunction: () => void
 }
 

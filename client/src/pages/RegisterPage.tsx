@@ -16,14 +16,9 @@ import React from "react"
 import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
-import Header from "../components/Header"
-import useAuthRedirect from "../hooks/auth/useAuthRedirect"
 import { createAccount, setAuthLoading } from "../store/auth/authActions"
 
 const RegisterPage: React.FC<IProps> = (props: IProps) => {
-  /* redirect to dashboard if already authenticated */
-  useAuthRedirect({ whenAuth: true, destination: "/dashboard" })
-
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
   const dispatch: ActionCreator<AnyAction> = useDispatch()
@@ -73,7 +68,6 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
 
   return (
     <React.Fragment>
-      <Header title="Register" />
       <Box direction="column" align="center">
         <Card
           height="medium"
