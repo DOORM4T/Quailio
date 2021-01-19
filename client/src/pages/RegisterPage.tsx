@@ -58,9 +58,6 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
         history.push("/login")
       }
     } catch (error) {
-      /* end loading state */
-      dispatch(setAuthLoading(false))
-
       /* show error message upon failure */
       setMessage(error.message)
     }

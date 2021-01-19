@@ -17,6 +17,7 @@ import {
   INetwork,
   ISetNetworkAction,
   IFirebaseData,
+  IResetClientNetworksAction,
 } from "./networkTypes"
 
 import { store } from "../store"
@@ -85,6 +86,7 @@ export const addPerson: ActionCreator<
         updatedNetworks,
       })
     } catch (error) {
+      dispatch(setNetworkLoading(false))
       throw error
     }
   }
@@ -150,6 +152,7 @@ export const connectPeople: ActionCreator<
         updatedNetworks,
       })
     } catch (error) {
+      dispatch(setNetworkLoading(false))
       throw error
     }
   }
@@ -196,6 +199,7 @@ export const createNetwork: ActionCreator<
         updatedNetworks,
       })
     } catch (error) {
+      dispatch(setNetworkLoading(false))
       throw error
     }
   }
@@ -224,6 +228,7 @@ export const setNetwork: ActionCreator<
         network,
       })
     } catch (error) {
+      dispatch(setNetworkLoading(false))
       throw error
     }
   }
@@ -265,6 +270,7 @@ export const deleteNetwork: ActionCreator<
         updatedNetworks,
       })
     } catch (error) {
+      dispatch(setNetworkLoading(false))
       throw error
     }
   }
@@ -326,6 +332,7 @@ export const deletePerson: ActionCreator<
         updatedNetworks,
       })
     } catch (error) {
+      dispatch(setNetworkLoading(false))
       throw error
     }
   }
@@ -351,15 +358,13 @@ export const getAllNetworks: ActionCreator<
         networks,
       })
     } catch (error) {
+      dispatch(setNetworkLoading(false))
       throw error
     }
   }
 }
 
-export async function wait(ms: number) {
-  return new Promise((res) => {
-    setTimeout(() => {
-      res(null)
-    }, ms)
-  })
-}
+// Reset local network state. Called when the logout/delete account actions are successful.
+export const resetLocalNetworks: ActionCreator<IResetClientNetworksAction> = () => ({
+  type: NetworkActionTypes.RESET_CLIENT,
+})

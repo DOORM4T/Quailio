@@ -32,7 +32,6 @@ const PersonMenu: React.FC<IProps> = (props) => {
     try {
       await dispatch(deletePersonById(currentNetwork.id, id))
     } catch (error) {
-      await dispatch(setNetworkLoading(false))
       console.error(error)
     }
   }

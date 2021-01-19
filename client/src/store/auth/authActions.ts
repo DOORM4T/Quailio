@@ -2,6 +2,7 @@ import { ActionCreator, AnyAction, Dispatch } from "redux"
 import { ThunkAction } from "redux-thunk"
 
 import { auth } from "../../firebase"
+import { resetLocalNetworks } from "../networks/networksActions"
 
 import {
   AuthActionTypes,
@@ -35,8 +36,6 @@ export const createAccount: ActionCreator<
         password,
       )
 
-      console.log("CREATED ACCOUNT")
-
       /* id used to refer to the user's networks database */
       const id = credentials.user!.uid
       return dispatch({
@@ -44,7 +43,7 @@ export const createAccount: ActionCreator<
         id,
       })
     } catch (error) {
-      /* failed to create account */
+      dispatch(setAuthLoading(false))
       throw error
     }
   }
@@ -64,6 +63,7 @@ export const login: ActionCreator<
         id,
       })
     } catch (error) {
+      dispatch(setAuthLoading(false))
       throw error
     }
   }
@@ -77,7 +77,9 @@ export const logout: ActionCreator<
 
     try {
       await auth.signOut()
+      dispatch(resetLocalNetworks())
     } catch (error) {
+      dispatch(setAuthLoading(false))
       throw error
     }
 
@@ -96,16 +98,14 @@ export const deleteAccount: ActionCreator<
     try {
       /* try to delete the current user, if there is one */
       if (auth.currentUser) await auth.currentUser.delete()
+      dispatch(resetLocalNetworks())
       return dispatch({
         type: AuthActionTypes.DELETE_ACCOUNT,
         didDelete: true,
       })
     } catch (error) {
-      console.error(error)
-      return dispatch({
-        type: AuthActionTypes.DELETE_ACCOUNT,
-        didDelete: false,
-      })
+      dispatch(setAuthLoading(false))
+      throw error
     }
   }
 }

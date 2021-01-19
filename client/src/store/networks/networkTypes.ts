@@ -41,6 +41,7 @@ export enum NetworkActionTypes {
   ADD_PERSON = "NETWORK/ADD_PERSON",
   CONNECT_PEOPLE = "NETWORK/CONNECT_PEOPLE",
   DELETE_PERSON = "NETWORK/DELETE_PERSON",
+  RESET_CLIENT = "NETWORK/RESET_CLIENT",
 }
 
 export interface INetworkLoadingAction {
@@ -87,6 +88,10 @@ export interface IDeletePersonByIdAction {
   updatedNetworks: INetwork[]
 }
 
+export interface IResetClientNetworksAction {
+  type: NetworkActionTypes.RESET_CLIENT
+}
+
 /* action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -97,6 +102,7 @@ export type NetworksActions =
   | IAddPersonAction
   | IConnectPeopleAction
   | IDeletePersonByIdAction
+  | IResetClientNetworksAction
 
 /* document type for data stored in Firebase */
 export interface IFirebaseData {

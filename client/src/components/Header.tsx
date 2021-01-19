@@ -39,7 +39,6 @@ const Header: React.FC<IProps> = (props) => {
       await dispatch(logout())
       history.push("/")
     } catch (error) {
-      await dispatch(setAuthLoading(false))
       console.error(error)
     }
   }

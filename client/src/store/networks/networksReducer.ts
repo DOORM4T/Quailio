@@ -1,9 +1,6 @@
 import { Reducer } from "redux"
 import {
-  INetwork,
   INetworksState,
-  IPerson,
-  IRelationships,
   NetworkActionTypes,
   NetworksActions,
 } from "./networkTypes"
@@ -93,6 +90,11 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
         networks: action.updatedNetworks,
         isLoading: false,
       }
+    }
+
+    // RESET CLIENT STATE (should happen after logging out)
+    case NetworkActionTypes.RESET_CLIENT: {
+      return initialState
     }
   }
   return state

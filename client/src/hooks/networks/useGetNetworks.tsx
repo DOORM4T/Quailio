@@ -20,7 +20,6 @@ function useGetNetworks(): { didGetNetworks: boolean } {
         setDidGetNetworks(true)
       } catch (error) {
         setDidGetNetworks(false)
-        await dispatch(setNetworkLoading(false))
         console.error(error)
       }
     }

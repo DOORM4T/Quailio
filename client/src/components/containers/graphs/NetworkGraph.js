@@ -174,7 +174,6 @@ export function createNetworkGraph(container, state, disconnected) {
         await store.dispatch(addPerson(state.id, name))
       } catch (error) {
         console.error(error)
-        store.dispatch(setNetworkLoading(false))
       }
     })
     .onNodeRightClick(async (node) => {
@@ -211,7 +210,6 @@ export function createNetworkGraph(container, state, disconnected) {
           )
         } catch (error) {
           console.error(error)
-          store.dispatch(setNetworkLoading(false))
         }
       }
     })

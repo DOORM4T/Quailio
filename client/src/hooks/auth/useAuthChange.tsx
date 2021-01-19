@@ -18,8 +18,7 @@ function useAuthChange() {
         await dispatch(setAuthLoading(true))
         await dispatch(setUser(id))
       } catch (error) {
-        await dispatch(setNetworkLoading(false))
-        await dispatch(setAuthLoading(false))
+        console.error(error)
       }
     })
 

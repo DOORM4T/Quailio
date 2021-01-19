@@ -33,9 +33,6 @@ const LoginPage: React.FC<IProps> = (props: IProps) => {
       await dispatch(loginAction)
       history.push("/dashboard")
     } catch (error) {
-      /* end loading state */
-      dispatch(setAuthLoading(false))
-
       /* show error message upon failure */
       setMessage(error.message)
     }

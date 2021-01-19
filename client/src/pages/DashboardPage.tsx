@@ -48,7 +48,6 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     try {
       await dispatch(createNetwork(networkName))
     } catch (error) {
-      await dispatch(setNetworkLoading(false))
       console.error(error)
     }
   }
@@ -71,7 +70,6 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     try {
       await dispatch(addPerson(currentNetwork.id, name))
     } catch (error) {
-      await dispatch(setNetworkLoading(false))
       console.error(error)
     }
   }
@@ -91,7 +89,6 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
       await dispatch(deleteNetwork(currentNetwork.id))
       await dispatch(setNetwork(null))
     } catch (error) {
-      await dispatch(setNetworkLoading(false))
       console.error(error)
     }
   }
@@ -102,7 +99,6 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
       try {
         await dispatch(setNetwork(id))
       } catch (error) {
-        await dispatch(setNetworkLoading(false))
         console.error(error)
       }
     }
