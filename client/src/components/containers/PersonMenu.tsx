@@ -1,13 +1,10 @@
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import ActionList from "../ActionList"
-import {
-  deletePerson as deletePersonById,
-  setNetworkLoading,
-} from "../../store/networks/networksActions"
+import { deletePerson as deletePersonById } from "../../store/networks/networksActions"
 import { INetwork } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
+import ActionList from "../ActionList"
 
 /**
  * Container Menu for viewing, editing, and deleting individuals from a list of people

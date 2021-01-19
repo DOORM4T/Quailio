@@ -1,16 +1,13 @@
 import React from "react"
 import { useDispatch } from "react-redux"
-import { Dispatch } from "redux"
-import {
-  getAllNetworks,
-  setNetworkLoading,
-} from "../../store/networks/networksActions"
+import { ActionCreator, AnyAction } from "redux"
+import { getAllNetworks } from "../../store/networks/networksActions"
 import useAuth from "../auth/useAuth"
 
 /* gets all network data for an authenticated user upon component mount */
 function useGetNetworks(): { didGetNetworks: boolean } {
   const { isAuthenticated } = useAuth()
-  const dispatch: Dispatch<any> = useDispatch()
+  const dispatch: ActionCreator<AnyAction> = useDispatch()
   const [didGetNetworks, setDidGetNetworks] = React.useState(false)
 
   React.useEffect(() => {

@@ -11,7 +11,6 @@ import {
   createNetwork,
   deleteNetwork,
   setNetwork,
-  setNetworkLoading,
 } from "../store/networks/networksActions"
 import { INetwork } from "../store/networks/networkTypes"
 import { IApplicationState } from "../store/store"

@@ -2,7 +2,6 @@ import ForceGraph from "force-graph"
 import {
   addPerson,
   connectPeople,
-  setNetworkLoading,
 } from "../../../store/networks/networksActions"
 import { store } from "../../../store/store"
 

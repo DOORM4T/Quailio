@@ -3,7 +3,6 @@ import { useDispatch } from "react-redux"
 import { AnyAction } from "redux"
 import { auth } from "../../firebase"
 import { setAuthLoading, setUser } from "../../store/auth/authActions"
-import { setNetworkLoading } from "../../store/networks/networksActions"
 import useAuth from "./useAuth"
 
 /* set user credentials in global state */
