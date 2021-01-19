@@ -1,27 +1,25 @@
 import { ActionCreator, AnyAction, Dispatch } from "redux"
 import { ThunkAction } from "redux-thunk"
-
 import { v4 as uuidv4 } from "uuid"
-
+import { db } from "../../firebase"
+import { store } from "../store"
 import {
-  INetworksState,
-  NetworkActionTypes,
-  INetworkLoadingAction,
   IAddPersonAction,
   IConnectPeopleAction,
   ICreateNetworkAction,
   IDeleteNetworkByIdAction,
   IDeletePersonByIdAction,
-  IGetAllNetworksAction,
-  IPerson,
-  INetwork,
-  ISetNetworkAction,
   IFirebaseData,
+  IGetAllNetworksAction,
+  INetwork,
+  INetworkLoadingAction,
+  INetworksState,
+  IPerson,
   IResetClientNetworksAction,
+  ISetNetworkAction,
+  NetworkActionTypes,
 } from "./networkTypes"
 
-import { store } from "../store"
-import { db } from "../../firebase"
 const collection = db.collection("networks")
 
 // -== ACTION CREATORS ==- //
@@ -217,7 +215,7 @@ export const setNetwork: ActionCreator<
 
       /* get all networks from Firebase */
       const data = (await collection.doc(uid).get()).data() as IFirebaseData
-      if (!data) throw new Error("data not found")
+      if (!data) throw new Error("no networks found")
 
       /* find the selected network */
       const networks: INetwork[] = data.networks
@@ -252,7 +250,7 @@ export const deleteNetwork: ActionCreator<
 
       /* get all networks from Firebase */
       const data = (await collection.doc(uid).get()).data() as IFirebaseData
-      if (!data) throw new Error("data not found")
+      if (!data) throw new Error("no networks found")
 
       /* filter out the network */
       const networks: INetwork[] = data.networks
@@ -289,7 +287,7 @@ export const deletePerson: ActionCreator<
 
       /* get all networks from Firebase */
       const data = (await collection.doc(uid).get()).data() as IFirebaseData
-      if (!data) throw new Error("data not found")
+      if (!data) throw new Error("no networks found")
 
       /* get the current network */
       const networks: INetwork[] = data.networks
@@ -349,7 +347,7 @@ export const getAllNetworks: ActionCreator<
       if (!uid) throw new Error("user not found")
 
       const data = (await collection.doc(uid).get()).data() as IFirebaseData
-      if (!data) throw new Error("data not found")
+      if (!data) throw new Error("no networks found")
 
       const networks: INetwork[] = data.networks
 

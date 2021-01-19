@@ -18,7 +18,7 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
   switch (action.type) {
     // SET LOADING TO true
     case NetworkActionTypes.LOADING: {
-      return { ...state, isLoading: true }
+      return { ...state, isLoading: action.isLoading }
     }
 
     // CREATE A NETWORK
