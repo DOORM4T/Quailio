@@ -17,8 +17,28 @@ import {
 } from "grommet"
 import { SettingsOption, TreeOption } from "grommet-icons"
 import React from "react"
+import { useDispatch } from "react-redux"
+import { ActionCreator, AnyAction } from "redux"
+import { deleteAccount } from "../store/auth/authActions"
+import { resetLocalNetworks } from "../store/networks/networksActions"
 
 const SettingsPage: React.FC = () => {
+  const dispatch: ActionCreator<AnyAction> = useDispatch()
+
+  const handleDeleteAccount = async () => {
+    const doDelete = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be reversed.",
+    )
+
+    if (!doDelete) return
+
+    try {
+      await dispatch(deleteAccount())
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <React.Fragment>
       <GrommetHeader
@@ -224,7 +244,10 @@ const SettingsPage: React.FC = () => {
                   </Text>
                   <TextInput />
                   <Box pad="large">
-                    <Button label="Delete Account" />
+                    <Button
+                      label="Delete Account"
+                      onClick={handleDeleteAccount}
+                    />
                   </Box>
                 </AccordionPanel>
                 <Box align="center" justify="center" pad="medium" />

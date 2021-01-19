@@ -1,9 +1,7 @@
 import { ActionCreator, AnyAction, Dispatch } from "redux"
 import { ThunkAction } from "redux-thunk"
-
-import { auth } from "../../firebase"
+import { auth, db } from "../../firebase"
 import { resetLocalNetworks } from "../networks/networksActions"
-
 import {
   AuthActionTypes,
   IAuthCreateAccountAction,
@@ -14,6 +12,8 @@ import {
   IAuthSetUserAction,
   IAuthState,
 } from "./authTypes"
+
+const collection = db.collection("networks")
 
 // -== ACTION CREATORS ==- //
 /* set isLoading state to true for async actions. Reducer will set isLoading to false for async actions.. */
@@ -96,9 +96,19 @@ export const deleteAccount: ActionCreator<
     dispatch(setAuthLoading(true))
 
     try {
-      /* try to delete the current user, if there is one */
-      if (auth.currentUser) await auth.currentUser.delete()
+      if (!auth.currentUser) throw new Error("no user is currently logged in")
+      const userId = auth.currentUser.uid
+
+      /* delete the current user */
+      await auth.currentUser.delete()
+
+      /* delete the user's Firebase document */
+      await collection.doc(userId).delete()
+
+      // TODO: FIX: local state not resetting after deleting account.
+      /* reset local network state */
       dispatch(resetLocalNetworks())
+
       return dispatch({
         type: AuthActionTypes.DELETE_ACCOUNT,
         didDelete: true,
