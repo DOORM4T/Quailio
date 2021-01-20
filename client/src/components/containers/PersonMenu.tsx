@@ -16,6 +16,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
     (state) => state.networks.currentNetwork,
   )
 
+  // -== MENU ACTIONS ==- //
   const viewPerson = (id: string) => () => {
     console.log(`View [${id}]`)
   }

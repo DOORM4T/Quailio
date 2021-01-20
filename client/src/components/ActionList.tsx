@@ -1,4 +1,4 @@
-import { List, Menu as GrommetMenu, ResponsiveContext } from "grommet"
+import { Box, List, Menu as GrommetMenu, ResponsiveContext } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 
@@ -18,6 +18,12 @@ const ActionList: React.FC<IProps> = (props) => {
           handleEdit={props.handleEdit}
           handleDelete={props.handleDelete}
         />
+      )}
+      children={(item: IListItem, index: number) => (
+        <Box dir="vertical" align="center">
+          <Icons.User />
+          {item.name}
+        </Box>
       )}
     />
   )
