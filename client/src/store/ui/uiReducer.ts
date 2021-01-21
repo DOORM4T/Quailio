@@ -17,7 +17,7 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
   switch (action.type) {
     // SET LOADING TO true
     case UserInterfaceActionTypes.FOCUS_ON_PERSON: {
-      return { ...state, personInFocus: action.id }
+      return { ...state, personInFocus: action.person }
     }
 
     case UserInterfaceActionTypes.TOGGLE_PERSON_EDIT_MENU: {
@@ -26,6 +26,9 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
         isPersonEditMenuOpen: action.isOpen,
       }
     }
+
+    default: {
+      return state
+    }
   }
-  return state
 }

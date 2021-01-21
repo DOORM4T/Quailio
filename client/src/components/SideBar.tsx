@@ -1,44 +1,34 @@
-import { Box, Button, Heading, Sidebar, Text } from "grommet"
+import { Button, Sidebar } from "grommet"
+import * as Icons from "grommet-icons"
 import React from "react"
 
-interface IProps {}
+interface IProps {
+  handleClose: () => void
+}
 
 const SideBar: React.FC<IProps> = (props) => {
   return (
     <Sidebar
-      align="stretch"
       direction="column"
-      flex={false}
-      gap="large"
-      pad="small"
-      header={140}
-      footer={141}
+      background="light-1"
+      width="medium"
+      elevation="xlarge"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        bottom: 0,
+        zIndex: 99,
+      }}
     >
-      <Box align="center" justify="start" direction="row">
-        <Heading>Person's name</Heading>
-        <Box align="end" justify="center" flex>
-          <Button label="Close" />
-        </Box>
-      </Box>
-      <Box align="start" justify="start" pad="small">
-        <Text size="xlarge">Name (or category 1)</Text>
-        <Text />
-      </Box>
-      <Box align="start" justify="start" pad="small">
-        <Text size="xlarge">Birthday (or category 2)</Text>
-        <Text />
-      </Box>
-      <Box align="start" justify="start" pad="small">
-        <Text size="xlarge">Hometown (or category 3)</Text>
-        <Text />
-      </Box>
-      <Box align="start" justify="start" pad="small">
-        <Text size="xlarge">Last Edit</Text>
-        <Text>1/9/21 or last edited date</Text>
-      </Box>
-      <Box align="center" justify="center" />
-      <Button label="Edit Information" />
-      <Button label="Create Connection" />
+      <Button
+        aria-label="Close menu"
+        icon={<Icons.Close />}
+        style={{ position: "absolute", top: 0, right: 0 }}
+        onClick={props.handleClose}
+        hoverIndicator
+      />
+      {props.children}
     </Sidebar>
   )
 }

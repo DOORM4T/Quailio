@@ -1,4 +1,5 @@
 import { ActionCreator } from "redux"
+import { IPerson } from "../networks/networkTypes"
 import {
   IFocusOnPersonAction,
   ITogglePersonEditMenu,
@@ -7,10 +8,10 @@ import {
 
 // -== ACTION CREATORS ==- //
 export const setPersonInFocus: ActionCreator<IFocusOnPersonAction> = (
-  id: string | null,
+  person: IPerson | null,
 ) => ({
   type: UserInterfaceActionTypes.FOCUS_ON_PERSON,
-  id,
+  person,
 })
 
 export const togglePersonEditMenu: ActionCreator<ITogglePersonEditMenu> = (

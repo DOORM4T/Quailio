@@ -1,6 +1,8 @@
+import { IPerson } from "../networks/networkTypes"
+
 // -== STATE TYPES ==- //
 export interface IUserInterfaceState {
-  readonly personInFocus: string | null
+  readonly personInFocus: IPerson | null
   readonly isPersonEditMenuOpen: boolean
 }
 
@@ -12,7 +14,7 @@ export enum UserInterfaceActionTypes {
 
 export interface IFocusOnPersonAction {
   type: UserInterfaceActionTypes.FOCUS_ON_PERSON
-  id: string | null
+  person: IPerson | null
 }
 
 export interface ITogglePersonEditMenu {
