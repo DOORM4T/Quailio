@@ -1,8 +1,10 @@
+import { Box, Image } from "grommet"
+import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { deletePerson as deletePersonById } from "../../store/networks/networksActions"
-import { INetwork } from "../../store/networks/networkTypes"
+import { INetwork, IPerson } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import ActionList from "../ActionList"
 
@@ -34,9 +36,26 @@ const PersonMenu: React.FC<IProps> = (props) => {
     }
   }
 
+  /* How the list renders the item */
+  const renderItem = (item: IPerson, index: number) => {
+    return (
+      <Box dir="vertical" align="center">
+        <Box onClick={() => console.log(item)}>
+          {item.thumbnail_url ? (
+            <Image src={item.thumbnail_url} />
+          ) : (
+            <Icons.User />
+          )}
+        </Box>
+        {item.name}
+      </Box>
+    )
+  }
+
   return (
     <ActionList
       data={props.data}
+      renderItem={renderItem}
       handleView={viewPerson}
       handleEdit={editPerson}
       handleDelete={deletePerson}
@@ -47,5 +66,5 @@ const PersonMenu: React.FC<IProps> = (props) => {
 export default PersonMenu
 
 interface IProps {
-  data: { id: string; name: string }[]
+  data: IPerson[]
 }

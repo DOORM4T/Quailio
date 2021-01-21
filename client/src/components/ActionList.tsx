@@ -1,4 +1,4 @@
-import { Box, List, Menu as GrommetMenu, ResponsiveContext } from "grommet"
+import { List, Menu as GrommetMenu, ResponsiveContext } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 
@@ -6,12 +6,11 @@ const ActionList: React.FC<IProps> = (props) => {
   return (
     <List
       data={props.data}
-      primaryKey="name"
       margin={{ bottom: "medium" }}
       style={{ overflowY: "auto" }}
       action={(item, index) => (
         <Menu
-          key={`${item}-index`}
+          key={`${item}-${index}`}
           index={index}
           item={item}
           handleView={props.handleView}
@@ -19,12 +18,7 @@ const ActionList: React.FC<IProps> = (props) => {
           handleDelete={props.handleDelete}
         />
       )}
-      children={(item: IListItem, index: number) => (
-        <Box dir="vertical" align="center">
-          <Icons.User />
-          {item.name}
-        </Box>
-      )}
+      children={props.renderItem}
     />
   )
 }
@@ -59,21 +53,19 @@ const Menu: React.FC<IMenuProps> = (props) => {
 
 export default ActionList
 
+type ListItem = { id: string; [key: string]: string } | any
+
 interface IProps {
-  data: IListItem[]
+  data: ListItem[]
+  renderItem: (item: ListItem, index: number) => void
   handleView: (name: string) => () => void
   handleEdit: (name: string) => () => void
   handleDelete: (name: string) => () => void
 }
 
-interface IListItem {
-  name: string
-  id: string
-}
-
 interface IMenuProps {
   index: number
-  item: IListItem
+  item: ListItem
   handleView: (name: string) => () => void
   handleEdit: (name: string) => () => void
   handleDelete: (name: string) => () => void

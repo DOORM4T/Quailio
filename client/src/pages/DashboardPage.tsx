@@ -173,16 +173,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
               onClick={addPersonHandler}
               disabled={!currentNetwork}
             />
-            <PersonMenu
-              data={
-                currentNetwork
-                  ? currentNetwork.people.map((p, index) => ({
-                      name: p.name,
-                      id: p.id || `${index}`,
-                    }))
-                  : []
-              }
-            />
+            <PersonMenu data={currentNetwork ? currentNetwork.people : []} />
           </Box>
         </Box>
         <ForceGraphCanvas
