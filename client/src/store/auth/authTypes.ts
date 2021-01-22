@@ -26,7 +26,6 @@ export interface IAuthCreateAccountAction {
 
 export interface IAuthDeleteAccountAction {
   type: AuthActionTypes.DELETE_ACCOUNT
-  didDelete: boolean
 }
 
 // TODO: Update user account details

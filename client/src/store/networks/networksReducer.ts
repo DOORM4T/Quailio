@@ -1,3 +1,4 @@
+import { Currency } from "grommet-icons"
 import { Reducer } from "redux"
 import {
   INetworksState,
@@ -6,9 +7,9 @@ import {
 } from "./networkTypes"
 
 const initialState: INetworksState = {
-  currentNetwork: null,
-  networks: [],
   isLoading: false,
+  networks: [],
+  currentNetwork: null,
 }
 
 export const networksReducer: Reducer<INetworksState, NetworksActions> = (
@@ -21,80 +22,131 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
       return { ...state, isLoading: action.isLoading }
     }
 
-    // CREATE A NETWORK
+    //
+    // NETWORKS
+    //
+
+    // -== CREATE A NETWORK ==- //
     case NetworkActionTypes.CREATE: {
       return {
         ...state,
-        networks: action.updatedNetworks,
-        currentNetwork: action.newNetwork,
+        networks: state.networks.concat(action.newNetwork), // add the ID to the current list of network IDs
+        currentNetwork: { ...action.newNetwork, people: [] }, // set the current network to the new network
         isLoading: false,
       }
     }
 
-    // SET THE CURRENT NETWORK
+    // -== SET THE CURRENT NETWORK ==- //
     case NetworkActionTypes.SET: {
       return {
         ...state,
-        currentNetwork: action.network,
+        currentNetwork: action.currentNetwork,
         isLoading: false,
       }
     }
 
-    // GET ALL NETWORKS
+    // -== GET ALL NETWORKS ==- //
     case NetworkActionTypes.GET_ALL: {
       return { ...state, networks: action.networks, isLoading: false }
     }
 
-    // DELETE A NETWORK
+    // -== DELETE A NETWORK ==- //
     case NetworkActionTypes.DELETE: {
-      /* delete a network */
+      const idsWithoutDeletedNetwork = state.networks.filter(
+        (network) => network.id !== action.networkId,
+      )
+
       return {
         ...state,
-        networks: action.updatedNetworks,
-        currentNetwork: null,
+        networks: idsWithoutDeletedNetwork,
+        currentNetwork: null, // clear network selection
         isLoading: false,
       }
     }
 
-    // ADD A PERSON TO THE CURRENT NETWORK
-    case NetworkActionTypes.ADD_PERSON: {
-      if (!state.currentNetwork) break
-
-      return {
-        ...state,
-        currentNetwork: action.updatedNetwork,
-        networks: action.updatedNetworks,
-        isLoading: false,
-      }
-    }
-
-    // CONNECT TWO PEOPLE IN THE CURRENT NETWORK
-    case NetworkActionTypes.CONNECT_PEOPLE: {
-      if (!state.currentNetwork) break
-
-      return {
-        ...state,
-        currentNetwork: action.updatedNetwork,
-        networks: action.updatedNetworks,
-        isLoading: false,
-      }
-    }
-
-    // DELETE A PERSON FROM A NETWORK
-    case NetworkActionTypes.DELETE_PERSON: {
-      if (!state.currentNetwork) break
-
-      return {
-        ...state,
-        currentNetwork: action.updatedNetwork,
-        networks: action.updatedNetworks,
-        isLoading: false,
-      }
-    }
-
-    // RESET CLIENT STATE (should happen after logging out)
+    // -== RESET CLIENT STATE (should happen after logging out) ==- //
     case NetworkActionTypes.RESET_CLIENT: {
       return initialState
+    }
+
+    //
+    // PEOPLE
+    //
+
+    // -== ADD A PERSON TO THE CURRENT NETWORK ==- //
+    case NetworkActionTypes.ADD_PERSON: {
+      /* Stop if there is no network selected */
+      if (!state.currentNetwork) break
+
+      /* Append the new person ID to the current network's list of person IDs */
+      const updatedPersonIds = state.currentNetwork.personIds.concat(
+        action.personId,
+      )
+
+      /* Network with the updated IDs */
+      const updatedNetwork = {
+        ...state.currentNetwork,
+        personIds: updatedPersonIds,
+      }
+
+      return {
+        ...state,
+        currentNetwork: updatedNetwork,
+        isLoading: false,
+      }
+    }
+
+    // -== CONNECT TWO PEOPLE IN THE CURRENT NETWORK ==- //
+    case NetworkActionTypes.CONNECT_PEOPLE: {
+      return {
+        ...state,
+        isLoading: false,
+      }
+    }
+
+    // -== DELETE A PERSON FROM THE CURRENT NETWORK ==- //
+    case NetworkActionTypes.DELETE_PERSON: {
+      /* Stop if no network is selected */
+      if (!state.currentNetwork) break
+
+      /* Removed the person from the current network? Update the current network IDs list */
+      const isCurrentNetwork = state.currentNetwork.id === action.networkId
+      if (isCurrentNetwork) {
+        /* Remove the person's ID from the current network's list of person IDs */
+        const idsWithoutDeletedPerson = state.currentNetwork.personIds.filter(
+          (id) => id !== action.personId,
+        )
+
+        /* Network with the updated IDs */
+        const updatedNetwork = {
+          ...state.currentNetwork,
+          personIds: idsWithoutDeletedPerson,
+        }
+
+        return {
+          ...state,
+          currentNetwork: updatedNetwork,
+          isLoading: false,
+        }
+      }
+
+      /* Otherwise, just end the loading state */
+      return {
+        ...state,
+        isLoading: false,
+      }
+    }
+
+    // -== GET ALL PEOPLE IN THE CURRENT NETWORK ==- //
+    case NetworkActionTypes.GET_ALL_PEOPLE: {
+      /* Stop if there's no Network selected */
+      if (!state.currentNetwork) break
+
+      return {
+        ...state,
+        currentNetwork: { ...state.currentNetwork, people: action.people },
+        isLoading: false,
+      }
     }
   }
   return state

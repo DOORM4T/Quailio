@@ -16,7 +16,7 @@ import React from "react"
 import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
-import { createAccount, setAuthLoading } from "../store/auth/authActions"
+import { createAccount } from "../store/auth/authActions"
 
 const RegisterPage: React.FC<IProps> = (props: IProps) => {
   const [values, setValues] = React.useState<IForm>(defaultFormValue)

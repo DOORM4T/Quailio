@@ -10,12 +10,13 @@ import {
   addPerson,
   createNetwork,
   deleteNetwork,
+  getAllPeople,
   setNetwork,
 } from "../store/networks/networksActions"
-import { INetwork } from "../store/networks/networkTypes"
+import { ICurrentNetwork, INetwork } from "../store/networks/networkTypes"
 import { IApplicationState } from "../store/store"
 
-const DashboardPage: React.FC<IProps> = (props: IProps) => {
+const DashboardPage: React.FC = () => {
   /* get all network data for an authenticated user */
   useGetNetworks()
 
@@ -23,7 +24,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
   const networks = useSelector<IApplicationState, INetwork[]>(
     (state) => state.networks.networks,
   )
-  const currentNetwork = useSelector<IApplicationState, INetwork | null>(
+  const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
     (state) => state.networks.currentNetwork,
   )
 
@@ -38,14 +39,9 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
       alert("Canceled network creation")
       return
     }
-    const doesNetworkExist = networks.some((n) => n.name === networkName)
-    if (doesNetworkExist) {
-      alert("[NOT CREATED] That network already exists.")
-      return
-    }
 
     try {
-      await dispatch(createNetwork(networkName))
+      dispatch(createNetwork(networkName))
     } catch (error) {
       console.error(error)
     }
@@ -68,6 +64,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
     /* update state */
     try {
       await dispatch(addPerson(currentNetwork.id, name))
+      await dispatch(getAllPeople(currentNetwork.id))
     } catch (error) {
       console.error(error)
     }
@@ -96,7 +93,7 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
   const handleNetworkSelect = (id: string) => {
     return async () => {
       try {
-        await dispatch(setNetwork(id))
+        dispatch(setNetwork(id))
       } catch (error) {
         console.error(error)
       }
@@ -109,10 +106,13 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
 
     return (
       <Box direction="column">
-        {networks.map((n, index) => {
+        {networks.map((network) => {
           return (
-            <Box key={`${n.id}-${index}`} onClick={handleNetworkSelect(n.id)}>
-              {n.name}
+            <Box
+              key={`${network.id}`}
+              onClick={handleNetworkSelect(network.id)}
+            >
+              {network.name}
             </Box>
           )
         })}
@@ -187,5 +187,3 @@ const DashboardPage: React.FC<IProps> = (props: IProps) => {
 }
 
 export default DashboardPage
-
-interface IProps {}

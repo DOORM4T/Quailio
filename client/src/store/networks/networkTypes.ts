@@ -1,30 +1,26 @@
 // -== STATE TYPES ==- //
 export interface INetworksState {
-  readonly currentNetwork: INetwork | null
-  readonly networks: INetwork[]
   readonly isLoading: boolean
+  readonly networks: INetwork[] // Networks belonging to the current user
+  readonly currentNetwork: ICurrentNetwork | null // State of the currently selected network
 }
 
 export interface INetwork {
   id: string
   name: string
-  people: IPerson[]
+  personIds: string[] // IDs of people in the network
+}
+
+export interface ICurrentNetwork extends INetwork {
+  people: IPerson[] // People in the current network
 }
 
 export interface IPerson {
   id: string
   name: string
   relationships: IRelationships
-  thumbnail_url?: string
-  properties?: IPersonProperties
-}
-
-export interface IPersonProperties {
-  name: string
-  birthday: Date | string
-  hometown: string
-  last_update: Date | string
-  [customProperty: string]: any
+  thumbnailUrl?: string
+  content?: string // User-generated rich text
 }
 
 /* string 1: this person in relation to the other person 
@@ -38,10 +34,11 @@ export enum NetworkActionTypes {
   SET = "NETWORK/SET_NETWORK",
   GET_ALL = "NETWORK/GET_ALL",
   DELETE = "NETWORK/DELETE",
+  RESET_CLIENT = "NETWORK/RESET_CLIENT",
   ADD_PERSON = "NETWORK/ADD_PERSON",
   CONNECT_PEOPLE = "NETWORK/CONNECT_PEOPLE",
   DELETE_PERSON = "NETWORK/DELETE_PERSON",
-  RESET_CLIENT = "NETWORK/RESET_CLIENT",
+  GET_ALL_PEOPLE = "NETWORK/GET_ALL_PEOPLE",
 }
 
 export interface INetworkLoadingAction {
@@ -52,44 +49,47 @@ export interface INetworkLoadingAction {
 export interface ICreateNetworkAction {
   type: NetworkActionTypes.CREATE
   newNetwork: INetwork
-  updatedNetworks: INetwork[]
 }
 
 export interface ISetNetworkAction {
   type: NetworkActionTypes.SET
-  network: INetwork
+  currentNetwork: ICurrentNetwork
 }
 
-export interface IGetAllNetworksAction {
+export interface IGetAllNetworksIdsAction {
   type: NetworkActionTypes.GET_ALL
   networks: INetwork[]
 }
 
 export interface IDeleteNetworkByIdAction {
   type: NetworkActionTypes.DELETE
-  updatedNetworks: INetwork[]
-}
-
-export interface IAddPersonAction {
-  type: NetworkActionTypes.ADD_PERSON
-  updatedNetwork: INetwork
-  updatedNetworks: INetwork[]
-}
-
-export interface IConnectPeopleAction {
-  type: NetworkActionTypes.CONNECT_PEOPLE
-  updatedNetwork: INetwork
-  updatedNetworks: INetwork[]
-}
-
-export interface IDeletePersonByIdAction {
-  type: NetworkActionTypes.DELETE_PERSON
-  updatedNetwork: INetwork
-  updatedNetworks: INetwork[]
+  networkId: string // ID of the deleted network
 }
 
 export interface IResetClientNetworksAction {
   type: NetworkActionTypes.RESET_CLIENT
+}
+
+export interface IAddPersonAction {
+  type: NetworkActionTypes.ADD_PERSON
+  personId: string // ID of the added person
+}
+
+export interface IConnectPeopleAction {
+  type: NetworkActionTypes.CONNECT_PEOPLE
+  /* No payload -- The current network refers to the IDs of these newly connected people. 
+     There is a separate action to get each person's document by their ID */
+}
+
+export interface IDeletePersonByIdAction {
+  type: NetworkActionTypes.DELETE_PERSON
+  networkId: string // ID of the network to delete the person from
+  personId: string // ID of the deleted person
+}
+
+export interface IGetAllPeopleAction {
+  type: NetworkActionTypes.GET_ALL_PEOPLE
+  people: IPerson[]
 }
 
 /* action types used by the networks reducer */
@@ -97,14 +97,10 @@ export type NetworksActions =
   | INetworkLoadingAction
   | ICreateNetworkAction
   | ISetNetworkAction
-  | IGetAllNetworksAction
+  | IGetAllNetworksIdsAction
   | IDeleteNetworkByIdAction
+  | IResetClientNetworksAction
   | IAddPersonAction
   | IConnectPeopleAction
   | IDeletePersonByIdAction
-  | IResetClientNetworksAction
-
-/* document type for data stored in Firebase */
-export interface IFirebaseData {
-  networks: INetwork[]
-}
+  | IGetAllPeopleAction

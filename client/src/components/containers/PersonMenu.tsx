@@ -4,7 +4,11 @@ import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { deletePerson as deletePersonById } from "../../store/networks/networksActions"
-import { INetwork, IPerson } from "../../store/networks/networkTypes"
+import {
+  ICurrentNetwork,
+  INetwork,
+  IPerson,
+} from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import {
   setPersonInFocus,
@@ -24,7 +28,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
   const isEditMenuOpen = useSelector<IApplicationState, boolean>(
     (state) => state.ui.isPersonEditMenuOpen,
   )
-  const currentNetwork = useSelector<IApplicationState, INetwork | null>(
+  const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
     (state) => state.networks.currentNetwork,
   )
 
@@ -34,7 +38,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
     console.log(`View [${id}]`)
   }
 
-  const editPerson = (id: string) => () => {
+  const editPerson = (id: string) => async () => {
     if (!currentNetwork) return
 
     console.log(`Edit [${id}]`)
@@ -42,10 +46,10 @@ const PersonMenu: React.FC<IProps> = (props) => {
     if (!person) return
 
     /* focus on the person */
-    dispatch(setPersonInFocus(person))
+    await dispatch(setPersonInFocus(person))
 
     /* open edit menu */
-    dispatch(togglePersonEditMenu(true))
+    await dispatch(togglePersonEditMenu(true))
   }
 
   const deletePerson = (id: string) => async () => {
@@ -62,8 +66,8 @@ const PersonMenu: React.FC<IProps> = (props) => {
     return (
       <Box dir="vertical" align="center">
         <Box onClick={() => console.log(item)}>
-          {item.thumbnail_url ? (
-            <Image src={item.thumbnail_url} />
+          {item.thumbnailUrl ? (
+            <Image src={item.thumbnailUrl} />
           ) : (
             <Icons.User />
           )}

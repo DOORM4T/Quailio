@@ -14,8 +14,8 @@ import SideBar from "../SideBar"
 const EditPersonSidebar: React.FC = () => {
   const dispatch: ActionCreator<AnyAction> = useDispatch()
 
-  const people = useSelector<IApplicationState, IPerson[]>(
-    (state) => state.networks.currentNetwork?.people || [],
+  const people = useSelector<IApplicationState, IPerson[]>((state) =>
+    state.networks.currentNetwork ? state.networks.currentNetwork.people : [],
   )
   const person = useSelector<IApplicationState, IPerson | null>(
     (state) => state.ui.personInFocus,
@@ -33,8 +33,8 @@ const EditPersonSidebar: React.FC = () => {
   return (
     <SideBar handleClose={handleClose}>
       <Box align="center" justify="center" pad={{ top: "large" }}>
-        {person.thumbnail_url ? (
-          <Avatar src={person.thumbnail_url} size="xlarge" />
+        {person.thumbnailUrl ? (
+          <Avatar src={person.thumbnailUrl} size="xlarge" />
         ) : (
           <Icons.User size="xlarge" />
         )}
@@ -67,40 +67,29 @@ const EditPersonSidebar: React.FC = () => {
         />
       </Box>
 
-      {/* // -== PROPERTIES ==- // */}
-      <Box>
-        {person.properties &&
-          Object.keys(person.properties).map((property, index) => {
-            return (
-              <Box key={`${property}-${index}`}>
-                {person.properties && person.properties[property]}
-              </Box>
-            )
-          })}
-      </Box>
-
       {/* // -== RELATIONSHIPS ==- // */}
       <Box pad={{ horizontal: "large" }}>
         <Heading level={2}>Relationships</Heading>
-        {Object.keys(person.relationships).map((relationshipId, index) => {
-          const [thisPersonRel, otherPersonRel] = person.relationships[
-            relationshipId
-          ]
-          const otherPerson = people.find((p) => p.id === relationshipId)
-          if (!otherPerson) return
+        {person.relationships &&
+          Object.keys(person.relationships).map((relationshipId, index) => {
+            const [thisPersonRel, otherPersonRel] = person.relationships[
+              relationshipId
+            ]
+            const otherPerson = people.find((p) => p.id === relationshipId)
+            if (!otherPerson) return
 
-          const relationshipString = `${otherPerson.name} [${otherPersonRel}]`
+            const relationshipString = `${otherPerson.name} [${otherPersonRel}]`
 
-          return (
-            <Anchor
-              // go to the on the related person's menu when clicked
-              onClick={() => dispatch(setPersonInFocus(otherPerson))}
-              key={`${relationshipId}-${index}`}
-            >
-              <Text>{relationshipString}</Text>
-            </Anchor>
-          )
-        })}
+            return (
+              <Anchor
+                // go to the on the related person's menu when clicked
+                onClick={() => dispatch(setPersonInFocus(otherPerson))}
+                key={`${relationshipId}-${index}`}
+              >
+                <Text>{relationshipString}</Text>
+              </Anchor>
+            )
+          })}
       </Box>
     </SideBar>
   )

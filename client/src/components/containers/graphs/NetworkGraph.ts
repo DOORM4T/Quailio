@@ -1,26 +1,49 @@
-import ForceGraph from "force-graph"
+import ForceGraph, { LinkObject, NodeObject } from "force-graph"
 import {
   addPerson,
   connectPeople,
+  getAllPeople,
 } from "../../../store/networks/networksActions"
+import {
+  ICurrentNetwork,
+  IRelationships,
+} from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
 
 const FOCUS_TIME = 1000
 const NODE_SIZE = 12
 
+interface IForceGraphData {
+  nodes: IPersonNode[]
+  links: LinkObject[]
+}
+
+interface IPersonNode {
+  id: string
+  name: string
+  thumbnail: HTMLImageElement | null
+  neighbors: IPersonNode[]
+  relationships: IRelationships
+}
+
 /**
  *
- * @param {HTMLDivElement} container
- * @param {import("../../../sketches/helpers/sketchTypes").INetworkSketchState} state
- * @param {*} disconnected whether the graph is connected to Network state or not. Set to false for standalone demo graphs.
+ * @param container
+ * @param state
+ * @param disconnected whether the graph is connected to Network state or not. Set to false for standalone demo graphs.
  */
-export function createNetworkGraph(container, state, disconnected) {
-  const gData = {
+export function createNetworkGraph(
+  container: HTMLDivElement,
+  state: ICurrentNetwork,
+  disconnected: boolean,
+) {
+  /* Create nodes from the People in the current Network */
+  const gData: IForceGraphData = {
     nodes: state.people.map((person) => {
-      let thumbnail = null
-      if (person.thumbnail_url) {
+      let thumbnail: HTMLImageElement | null = null
+      if (person.thumbnailUrl) {
         thumbnail = new Image()
-        thumbnail.src = person.thumbnail_url
+        thumbnail.src = person.thumbnailUrl
       }
 
       return {
@@ -34,10 +57,10 @@ export function createNetworkGraph(container, state, disconnected) {
     links: [],
   }
 
-  /* link people by their relationship fields */
+  /* Link people by their relationship fields */
   state.people.forEach((person) => {
     Object.keys(person.relationships).forEach((id) => {
-      if (!gData.nodes.some((person) => person.id === id)) return
+      if (!gData.nodes.some((otherPerson) => otherPerson.id === id)) return
       gData.links.push({
         source: person.id,
         target: id,
@@ -45,7 +68,7 @@ export function createNetworkGraph(container, state, disconnected) {
     })
   })
 
-  // set neighbors
+  // Set neighbors
   gData.links.forEach((link) => {
     const a = gData.nodes.find((node) => node.id === link.source)
     const b = gData.nodes.find((node) => node.id === link.target)
@@ -55,19 +78,19 @@ export function createNetworkGraph(container, state, disconnected) {
     b.neighbors.push(a)
   })
 
-  // for highlighted on hover
+  // For highlight on hover
   const highlightNodes = new Set()
   const highlightLinks = new Set()
-  let hoverNode = null
+  let hoverNode: IPersonNode | null = null
 
-  // for adding connections
-  let nodeToConnect = null
+  // For adding connections
+  let nodeToConnect: IPersonNode | null = null
 
   const Graph = ForceGraph()(container)
     .graphData(gData)
     .nodeRelSize(NODE_SIZE)
     .nodeCanvasObject((node, ctx) => {
-      const { thumbnail, x, y } = node
+      const { thumbnail, x = 0, y = 0 } = node as NodeObject & IPersonNode
 
       // add ring just for highlighted nodes
       if (highlightNodes.has(node)) {
@@ -116,17 +139,18 @@ export function createNetworkGraph(container, state, disconnected) {
         highlightNodes.add(link.target)
       }
     })
-    .linkLabel((link) => {
+    .linkLabel((link: any) => {
       const [rel1, rel2] = link.source.relationships[link.target.id]
       return `${link.source.name} (${rel1}) - ${link.target.name} (${rel2})`
     })
     .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
     .linkColor((link) => (highlightLinks.has(link) ? "yellow" : "black"))
-    .onNodeHover((node) => {
+    .onNodeHover((n) => {
+      const node = n as NodeObject & IPersonNode
       highlightNodes.clear()
       highlightLinks.clear()
       if (node) {
-        highlightNodes.add(node)
+        highlightNodes.add(n)
         node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
         gData.links.forEach((link) => {
           if (link.source === node.id || link.target === node.id)
@@ -135,7 +159,7 @@ export function createNetworkGraph(container, state, disconnected) {
       }
 
       hoverNode = node || null
-      container.style.cursor = node ? "-webkit-grab" : null
+      container.style.cursor = node ? "-webkit-grab" : ""
     })
     .onNodeClick((node) => {
       // TODO: Show modal via Redux dispatch
@@ -170,7 +194,10 @@ export function createNetworkGraph(container, state, disconnected) {
           return
         }
 
-        await store.dispatch(addPerson(state.id, name))
+        await store.dispatch<any>(addPerson(state.id, name))
+
+        /* Update global people state */
+        await store.dispatch<any>(getAllPeople(state.id))
       } catch (error) {
         console.error(error)
       }
@@ -180,7 +207,7 @@ export function createNetworkGraph(container, state, disconnected) {
 
       if (!nodeToConnect) {
         alert(`Link A: ${node.id}`)
-        nodeToConnect = node
+        nodeToConnect = node as NodeObject & IPersonNode
       } else {
         alert(`Link B: ${node.id}`)
         const p1Reason = prompt("What is Person 1 to Person 2?")
@@ -198,15 +225,17 @@ export function createNetworkGraph(container, state, disconnected) {
         }
 
         try {
-          await store.dispatch(
-            connectPeople(
-              state.id,
-              nodeToConnect.id,
-              node.id,
+          await store.dispatch<any>(
+            connectPeople(state.id, {
+              p1Id: nodeToConnect.id,
+              p2Id: node.id,
               p1Reason,
               p2Reason,
-            ),
+            }),
           )
+
+          /* Update global people state */
+          await store.dispatch<any>(getAllPeople(state.id))
         } catch (error) {
           console.error(error)
         }

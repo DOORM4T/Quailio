@@ -1,5 +1,4 @@
 import { Reducer } from "redux"
-import {} from "./authActions"
 import { AuthActions, AuthActionTypes, IAuthState } from "./authTypes"
 
 const initialState: IAuthState = {
@@ -42,9 +41,6 @@ export const authReducer: Reducer<IAuthState, AuthActions> = (
     }
 
     case AuthActionTypes.DELETE_ACCOUNT: {
-      /* stop if the user account deletion failed */
-      if (!action.didDelete) break
-
       return {
         ...state,
         userId: null,
@@ -59,6 +55,8 @@ export const authReducer: Reducer<IAuthState, AuthActions> = (
         isLoading: false,
       }
     }
+
+    default:
+      return state
   }
-  return state
 }

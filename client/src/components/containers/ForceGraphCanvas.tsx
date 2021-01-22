@@ -1,10 +1,9 @@
-import React from "react"
-
-import Canvas from "../Canvas"
-import { CSSProperties } from "styled-components"
-import { createNetworkGraph } from "./graphs/NetworkGraph"
 import { ForceGraphInstance } from "force-graph"
-import { INetwork } from "../../store/networks/networkTypes"
+import React from "react"
+import { CSSProperties } from "styled-components"
+import { ICurrentNetwork } from "../../store/networks/networkTypes"
+import Canvas from "../Canvas"
+import { createNetworkGraph } from "./graphs/NetworkGraph"
 
 const ForceGraphCanvas: React.FC<IProps> = (props) => {
   /* create a ref for forwarding to the Canvas presentational component */
@@ -17,11 +16,15 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     const container = canvasRef.current
 
     if (container) {
+      /* TODO: remove when anonymous networks are implemented 
+      Whether the graph Dispatches Redux actions or not */
+      const isDisconnected = Boolean(props.disconnected)
+
       /* set canvas width and height based on container dimensions */
       const forceGraph = createNetworkGraph(
         container,
         props.state,
-        props.disconnected,
+        isDisconnected,
       ) as ForceGraphInstance
 
       const handleResize = () => {
@@ -44,14 +47,10 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
 export default React.memo(ForceGraphCanvas)
 
-ForceGraphCanvas.defaultProps = {
-  disconnected: false,
-}
-
 // ==- TYPE DEFINITIONS -== //
 interface IProps {
   style?: CSSProperties
   id: string
-  state: INetwork | null
+  state: ICurrentNetwork | null
   disconnected?: boolean
 }

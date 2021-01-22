@@ -18,7 +18,7 @@ import { Dispatch } from "redux"
 import Logo from "../assets/logo.png"
 import { auth } from "../firebase"
 import useAuth from "../hooks/auth/useAuth"
-import { logout, setAuthLoading } from "../store/auth/authActions"
+import { logout } from "../store/auth/authActions"
 import { IApplicationState } from "../store/store"
 
 export const HEADER_HEIGHT = 60

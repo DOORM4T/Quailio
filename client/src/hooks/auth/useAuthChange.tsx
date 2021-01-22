@@ -2,7 +2,7 @@ import React, { Dispatch } from "react"
 import { useDispatch } from "react-redux"
 import { AnyAction } from "redux"
 import { auth } from "../../firebase"
-import { setAuthLoading, setUser } from "../../store/auth/authActions"
+import { setUser } from "../../store/auth/authActions"
 import useAuth from "./useAuth"
 
 /* set user credentials in global state */
@@ -14,7 +14,6 @@ function useAuthChange() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       const id = user ? user.uid : null
       try {
-        await dispatch(setAuthLoading(true))
         await dispatch(setUser(id))
       } catch (error) {
         console.error(error)

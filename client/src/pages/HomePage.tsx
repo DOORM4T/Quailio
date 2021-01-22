@@ -12,9 +12,7 @@ import {
 import React from "react"
 import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
-import { dummyState } from "../assets/dummyState.ts.DISABLED"
 import Logo from "../assets/logo.png"
-import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 import { auth } from "../firebase"
 import { IApplicationState } from "../store/store"
 

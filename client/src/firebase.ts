@@ -9,7 +9,25 @@ import { firebaseConfig } from "./.firebaseConfig"
 const app = firebase.initializeApp(firebaseConfig)
 
 // ==- FIRESTORE (DATABASE) -== //
-export const db = firebase.firestore()
+const db = firebase.firestore()
+
+/* Collection Types */
+enum firebaseCollections {
+  USERS = "users",
+  NETWORKS = "networks",
+  PEOPLE = "people",
+}
+
+export const usersCollection = db.collection(firebaseCollections.USERS)
+export const networksCollection = db.collection(firebaseCollections.NETWORKS)
+export const peopleCollection = db.collection(firebaseCollections.PEOPLE)
+
+/* Document Type Definitions */
+export interface IFirebaseUser {
+  id: string
+  email: string
+  networkIds: string[] // IDs of networks belonging to the user
+}
 
 // ==- AUTHENTICATION -== //
 export const auth = app.auth()
