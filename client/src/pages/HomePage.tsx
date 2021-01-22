@@ -12,7 +12,7 @@ import {
 import React from "react"
 import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
-import { dummyState } from "../assets/dummyState"
+import { dummyState } from "../assets/dummyState.ts.DISABLED"
 import Logo from "../assets/logo.png"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 import { auth } from "../firebase"
@@ -114,7 +114,8 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
             </Accordion>
           </Box>
 
-          <Box
+          {/* TODO: replace legacy demo with zero-login demo */}
+          {/* <Box
             align="center"
             justify="center"
             margin={{ top: "xlarge" }}
@@ -136,7 +137,7 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
               }}
               disconnected={true}
             />
-          </Box>
+          </Box> */}
           <Footer
             align="center"
             direction="row"
