@@ -13,6 +13,11 @@ const customTheme: ThemeType = {
       "accent-1": "#B1EACD",
     },
   },
+  tip: {
+    content: {
+      background: "dark-1",
+    },
+  },
 }
 
 function App() {

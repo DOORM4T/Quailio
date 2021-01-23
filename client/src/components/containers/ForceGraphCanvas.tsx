@@ -5,13 +5,21 @@ import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import Canvas from "../Canvas"
 import { createNetworkGraph } from "./graphs/NetworkGraph"
 
+/* Empty default state for when the Current Network is null */
+const emptyState: ICurrentNetwork = {
+  id: "",
+  name: "",
+  people: [],
+  personIds: [],
+}
+
 const ForceGraphCanvas: React.FC<IProps> = (props) => {
   /* create a ref for forwarding to the Canvas presentational component */
   const canvasRef = React.createRef<HTMLDivElement>()
 
   // ==- Load the P5 Sketch -== //
   React.useEffect(() => {
-    if (!props.state) return
+    const graphState = props.state ? props.state : emptyState
 
     const container = canvasRef.current
 
@@ -23,7 +31,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       /* set canvas width and height based on container dimensions */
       const forceGraph = createNetworkGraph(
         container,
-        props.state,
+        graphState,
         isDisconnected,
       ) as ForceGraphInstance
 
@@ -45,7 +53,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
   return <Canvas id={props.id} ref={canvasRef} style={props.style} />
 }
 
-export default React.memo(ForceGraphCanvas)
+export default ForceGraphCanvas
 
 // ==- TYPE DEFINITIONS -== //
 interface IProps {

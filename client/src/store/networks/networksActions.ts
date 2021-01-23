@@ -56,16 +56,19 @@ export const addPerson: ActionCreator<
 
     try {
       /* Database updates */
-      /* Create a document for the new Person */
-      await peopleCollection.doc(newPerson.id).set(newPerson)
-
       /* Get the network document that will add this new Person */
       const networkDoc = networksCollection.doc(networkId)
+      const networkData: INetwork = (await networkDoc.get()).data() as INetwork
+
+      /* Ensure the network exists */
+      if (!networkData) throw new Error("Network does not exist.")
 
       /* Update just the personIds field of the Network document */
-      const networkData: INetwork = (await networkDoc.get()).data() as INetwork
       const updatedPersonIds = networkData.personIds.concat(newPerson.id)
       await networkDoc.update({ personIds: updatedPersonIds })
+
+      /* Create a document for the new Person */
+      await peopleCollection.doc(newPerson.id).set(newPerson)
 
       return dispatch({
         type: NetworkActionTypes.ADD_PERSON,
@@ -298,7 +301,31 @@ export const deleteNetwork: ActionCreator<
 
     try {
       /* Database updates */
-      await networksCollection.doc(networkId).delete()
+      const networkDoc = networksCollection.doc(networkId)
+      const networkData = (await networkDoc.get()).data() as INetwork
+      if (!networkData) throw new Error("Network does not exist.")
+
+      /* Delete the network from User docs containing the networkId */
+      const userDocs = await usersCollection
+        .where("networkIds", "array-contains", networkId)
+        .get()
+      userDocs.docs.forEach((doc) => {
+        const data = doc.data() as IFirebaseUser
+        const updatedNetworkIds = data.networkIds.filter(
+          (id) => id !== networkId,
+        )
+        doc.ref.update({ networkIds: updatedNetworkIds })
+      })
+
+      /* Delete the Network */
+      await networkDoc.delete()
+
+      /* Delete all People in the Network */
+      const deleteList = networkData.personIds.map((id) =>
+        peopleCollection.doc(id).delete(),
+      )
+
+      await Promise.all(deleteList)
 
       return dispatch({
         type: NetworkActionTypes.DELETE,
@@ -334,8 +361,27 @@ export const deletePerson: ActionCreator<
       /* Update the Network's personIds field with the new list of person IDs */
       await networkDoc.update({ personIds: peopleWithoutDeletedPerson })
 
-      /* Delete the Person's document*/
-      await peopleCollection.doc(personId).delete()
+      /* Get the Person's document*/
+      const personDoc = peopleCollection.doc(personId)
+      const personData = (await (await personDoc.get()).data()) as IPerson
+
+      /* Remove all relationships including the deleted Person */
+      const relationshipUpdates: Promise<void>[] = Object.keys(
+        personData.relationships,
+      ).map(async (relationshipId) => {
+        const otherPersonDoc = peopleCollection.doc(relationshipId)
+        const otherPersonData = (await otherPersonDoc.get()).data() as IPerson
+        const updatedRelationship: IRelationships = {
+          ...otherPersonData.relationships,
+        }
+        delete updatedRelationship[personId]
+        return otherPersonDoc.update({ relationships: updatedRelationship })
+      })
+
+      await Promise.all(relationshipUpdates)
+
+      /* Delete the Person's document */
+      await personDoc.delete()
 
       return dispatch({
         type: NetworkActionTypes.DELETE_PERSON,
@@ -377,16 +423,19 @@ export const getAllNetworks: ActionCreator<
       if (!userData) throw new Error("User data not found.")
 
       /* Get the Networks corresponding to the IDs */
-      const networks: INetwork[] = await Promise.all(
+      const networkData: INetwork[] = await Promise.all(
         userData.networkIds.map(
           async (id) =>
             (await networksCollection.doc(id).get()).data() as INetwork,
         ),
       )
 
+      /* Ensure Network data exists for each Network */
+      const existingNetworkData = networkData.filter((data) => Boolean(data))
+
       return dispatch({
         type: NetworkActionTypes.GET_ALL,
-        networks,
+        networks: existingNetworkData,
       })
     } catch (error) {
       /* Failed to get list of network IDs */

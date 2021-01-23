@@ -1,9 +1,12 @@
-import { Box, Image } from "grommet"
+import { Box, Image, Text } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import { deletePerson as deletePersonById } from "../../store/networks/networksActions"
+import {
+  deletePerson as deletePersonById,
+  getAllPeople,
+} from "../../store/networks/networksActions"
 import {
   ICurrentNetwork,
   INetwork,
@@ -56,6 +59,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
     if (!currentNetwork) return
     try {
       await dispatch(deletePersonById(currentNetwork.id, id))
+      await dispatch(getAllPeople(currentNetwork.id))
     } catch (error) {
       console.error(error)
     }
@@ -64,7 +68,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
     return (
-      <Box dir="vertical" align="center">
+      <Box dir="column" align="start">
         <Box onClick={() => console.log(item)}>
           {item.thumbnailUrl ? (
             <Image src={item.thumbnailUrl} />
@@ -72,7 +76,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
             <Icons.User />
           )}
         </Box>
-        {item.name}
+        <Text>{item.name}</Text>
       </Box>
     )
   }

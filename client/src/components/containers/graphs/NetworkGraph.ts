@@ -241,5 +241,6 @@ export function createNetworkGraph(
         }
       }
     })
+
   return Graph
 }
