@@ -39,6 +39,7 @@ export enum NetworkActionTypes {
   CONNECT_PEOPLE = "NETWORK/CONNECT_PEOPLE",
   DELETE_PERSON = "NETWORK/DELETE_PERSON",
   GET_ALL_PEOPLE = "NETWORK/GET_ALL_PEOPLE",
+  SET_PERSON_THUMBNAIL = "NETWORK/SET_PERSON_THUMBNAIL",
 }
 
 export interface INetworkLoadingAction {
@@ -92,6 +93,12 @@ export interface IGetAllPeopleAction {
   people: IPerson[]
 }
 
+export interface ISetPersonThumbnailAction {
+  type: NetworkActionTypes.SET_PERSON_THUMBNAIL
+  personId: string
+  thumbnailUrl: string
+}
+
 /* action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -104,3 +111,4 @@ export type NetworksActions =
   | IConnectPeopleAction
   | IDeletePersonByIdAction
   | IGetAllPeopleAction
+  | ISetPersonThumbnailAction

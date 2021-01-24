@@ -24,6 +24,7 @@ import {
   IRelationships,
   IResetClientNetworksAction,
   ISetNetworkAction,
+  ISetPersonThumbnailAction,
   NetworkActionTypes,
 } from "./networkTypes"
 
@@ -439,6 +440,45 @@ export const getAllNetworks: ActionCreator<
       })
     } catch (error) {
       /* Failed to get list of network IDs */
+      dispatch(setNetworkLoading(false))
+      throw error
+    }
+  }
+}
+
+/**
+ * Set the user's thumbnail
+ * @param personId
+ * @param thumbnailUrl
+ */
+export const setPersonThumbnail: ActionCreator<
+  ThunkAction<
+    Promise<AnyAction>,
+    INetworksState,
+    null,
+    ISetPersonThumbnailAction
+  >
+> = (personId: string, thumbnailUrl: string) => {
+  return async (dispatch: Dispatch) => {
+    dispatch(setNetworkLoading(true))
+
+    try {
+      const personDoc = peopleCollection.doc(personId)
+
+      /* Ensure the Person exists */
+      const doesExist = (await personDoc.get()).exists
+      if (!doesExist) throw new Error("That person does not exist.")
+
+      /* Set the Person's thumbnail url field */
+      await personDoc.set({ thumbnailUrl }, { merge: true }) // set + merge in case the field is undefined
+
+      return dispatch({
+        type: NetworkActionTypes.SET_PERSON_THUMBNAIL,
+        personId,
+        thumbnailUrl,
+      })
+    } catch (error) {
+      /* Failed to set the Person's thumbnail url*/
       dispatch(setNetworkLoading(false))
       throw error
     }

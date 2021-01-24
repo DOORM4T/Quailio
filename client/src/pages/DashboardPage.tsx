@@ -150,7 +150,13 @@ const DashboardPage: React.FC = () => {
           <Box pad="small" gap="small" fill="horizontal" height="small">
             <Box direction="row" fill="horizontal" justify="center" gap="small">
               <DropButton
-                style={{ borderRadius: "4px" }}
+                style={{
+                  borderRadius: "4px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  padding: "0 1rem",
+                }}
                 aria-label="Select a network"
                 label={
                   currentNetwork

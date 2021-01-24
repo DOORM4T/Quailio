@@ -1,7 +1,10 @@
 import { Currency } from "grommet-icons"
 import { Reducer } from "redux"
+import { peopleCollection } from "../../firebase"
 import {
+  ICurrentNetwork,
   INetworksState,
+  IPerson,
   NetworkActionTypes,
   NetworksActions,
 } from "./networkTypes"
@@ -145,6 +148,44 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
       return {
         ...state,
         currentNetwork: { ...state.currentNetwork, people: action.people },
+        isLoading: false,
+      }
+    }
+
+    // -== UPDATE A PERSON'S THUMBNAIL URL ==- //
+    case NetworkActionTypes.SET_PERSON_THUMBNAIL: {
+      /* Stop if there's no Network selected */
+      if (!state.currentNetwork) break
+
+      /* Find the person whose thumbnail will be updated */
+      const person = state.currentNetwork.people.find(
+        (p) => p.id === action.personId,
+      )
+      if (!person) break
+
+      /* Create the updated person object */
+      const updatedPerson: IPerson = {
+        ...person,
+        thumbnailUrl: action.thumbnailUrl,
+      }
+
+      /* Create an updated people array */
+      const peopleWithoutUpdatedPerson: IPerson[] = state.currentNetwork.people.filter(
+        (p) => p.id !== action.personId,
+      )
+      const updatedPeople: IPerson[] = peopleWithoutUpdatedPerson.concat(
+        updatedPerson,
+      )
+
+      /* Update the current network with the updated people list*/
+      const updatedNetwork: ICurrentNetwork = {
+        ...state.currentNetwork,
+        people: updatedPeople,
+      }
+
+      return {
+        ...state,
+        currentNetwork: updatedNetwork,
         isLoading: false,
       }
     }

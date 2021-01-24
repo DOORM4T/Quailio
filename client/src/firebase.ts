@@ -33,36 +33,36 @@ export interface IFirebaseUser {
 export const auth = app.auth()
 
 // ==- STORAGE -== //
-const THUMBNAILS_PATH = "thumbnails"
+const THUMBNAILS_PATH = "thumbnails" // Root file name for storing thumbnails
 const storage = app.storage()
 
 /**
  * Upload a thumbnail to Firebase storage
- * @param thumbnail File or external link to the thumbnail
+ * @param thumbnail File
+ * @returns url to the uploaded thumbnail
+ * @throws error if upload fails
  */
-export async function uploadThumbnail(thumbnail: File | string) {
-  const path = generateThumbnailPath()
-  if (!path) return
+export async function uploadThumbnail(thumbnail: File): Promise<string | null> {
+  try {
+    /* Generate path */
+    const path = generateThumbnailPath()
+    if (!path) throw new Error("Failed to generate thumbnail path.")
 
-  const ref = storage.ref(path)
+    /* Upload the file to Firebase Storage */
+    const ref = storage.ref(path)
+    await ref.put(thumbnail)
 
-  if (typeof thumbnail === "string") {
-    const result = await ref.putString(thumbnail)
-    console.log(result)
-    console.log("Saved link.")
-  } else {
-    const result = await ref.put(thumbnail)
-    console.log(result)
-    console.log("Uploaded link.")
+    /* Get the resulting URL */
+    const url = await ref.getDownloadURL()
+    return url
+  } catch (error) {
+    /* Failed to upload thumbnail */
+    throw error
   }
-
-  const url = await ref.getDownloadURL()
-  // TODO: return result
-  console.log(url)
 }
 
 /**
- * Generate a thumbnail storage path based on the current logged in user's id
+ * Generate a thumbnail storage path based on the current logged in user's ID
  */
 export function generateThumbnailPath(): string | null {
   if (!auth.currentUser) {
@@ -76,18 +76,21 @@ export function generateThumbnailPath(): string | null {
   return path
 }
 
-/* get the list of all thumbnail urls uploadaed by the current user  */
-// TODO: return results
+/* Get the list of all thumbnail urls uploadaed by the current user  */
 export async function getCurrentUserThumbnails() {
-  if (!auth.currentUser) {
-    console.error("You must be logged in to view uploaded thumbnails.")
-    return
-  }
+  try {
+    if (!auth.currentUser) {
+      throw new Error("You must be logged in to view uploaded thumbnails.")
+    }
 
-  const userId = auth.currentUser.uid
-  const path = `${THUMBNAILS_PATH}/${userId}`
-  const thumbnails = await storage.ref(path).list()
-  const urls = thumbnails.items.map((item) => item.getDownloadURL())
-  const results = await Promise.all(urls)
-  console.log(results)
+    const userId = auth.currentUser.uid
+    const path = `${THUMBNAILS_PATH}/${userId}`
+    const thumbnails = await storage.ref(path).list()
+    const getUrls = thumbnails.items.map((item) => item.getDownloadURL())
+    const results = await Promise.all(getUrls)
+    return results
+  } catch (error) {
+    console.error(error)
+    return []
+  }
 }

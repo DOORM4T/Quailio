@@ -71,9 +71,9 @@ const PersonMenu: React.FC<IProps> = (props) => {
       <Box dir="column" align="start">
         <Box onClick={() => console.log(item)}>
           {item.thumbnailUrl ? (
-            <Image src={item.thumbnailUrl} />
+            <Image src={item.thumbnailUrl} width="48px" />
           ) : (
-            <Icons.User />
+            <Icons.User width="48px" />
           )}
         </Box>
         <Text>{item.name}</Text>
@@ -83,6 +83,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
 
   return (
     <React.Fragment>
+      {/* -== PERSON LIST ==- */}
       <ActionList
         data={props.data}
         renderItem={renderItem}
@@ -90,6 +91,8 @@ const PersonMenu: React.FC<IProps> = (props) => {
         handleEdit={editPerson}
         handleDelete={deletePerson}
       />
+
+      {/* -== SIDEBAR ==- */}
       {isEditMenuOpen && <EditPersonSidebar />}
     </React.Fragment>
   )
