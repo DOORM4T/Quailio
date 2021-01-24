@@ -1,4 +1,4 @@
-import { Anchor, Avatar, Box, Button, Heading, Text } from "grommet"
+import { Anchor, Avatar, Box, Button, Heading, Image, Text } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -92,6 +92,7 @@ const EditPersonSidebar: React.FC = () => {
             border: "none",
             padding: "1rem",
             borderRadius: "4px",
+            maxWidth: "128px",
           }}
         >
           <input
@@ -102,7 +103,7 @@ const EditPersonSidebar: React.FC = () => {
             onChange={handleChangeThumbnail}
           />
           {person.thumbnailUrl ? (
-            <Avatar src={person.thumbnailUrl} size="xlarge" round={false} />
+            <Image src={person.thumbnailUrl} fill />
           ) : (
             <Icons.User size="xlarge" />
           )}
