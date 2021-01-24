@@ -108,14 +108,23 @@ export function createNetworkGraph(
       }
 
       if (thumbnail) {
-        /* show profile pictures */
-        ctx.drawImage(
-          thumbnail,
-          x - NODE_SIZE / 2,
-          y - NODE_SIZE / 2,
-          NODE_SIZE,
-          NODE_SIZE,
-        )
+        try {
+          /* show profile pictures */
+          ctx.drawImage(
+            thumbnail,
+            x - NODE_SIZE / 2,
+            y - NODE_SIZE / 2,
+            NODE_SIZE,
+            NODE_SIZE,
+          )
+        } catch (error) {
+          ctx.beginPath()
+          ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+          ctx.fillStyle = "red"
+          ctx.fill()
+          ctx.strokeStyle = "black"
+          ctx.stroke()
+        }
       } else {
         ctx.beginPath()
         ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
