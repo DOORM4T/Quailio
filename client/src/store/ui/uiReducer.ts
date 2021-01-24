@@ -15,7 +15,6 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
   action,
 ): IUserInterfaceState => {
   switch (action.type) {
-    // SET LOADING TO true
     case UserInterfaceActionTypes.FOCUS_ON_PERSON: {
       return { ...state, personInFocus: action.person }
     }

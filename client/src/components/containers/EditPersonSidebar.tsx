@@ -4,8 +4,11 @@ import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
 import { uploadThumbnail } from "../../firebase"
-import { setPersonThumbnail } from "../../store/networks/networksActions"
-import { IPerson } from "../../store/networks/networkTypes"
+import {
+  getAllPeople,
+  setPersonThumbnail,
+} from "../../store/networks/networksActions"
+import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import {
   setPersonInFocus,
@@ -18,8 +21,8 @@ const EditPersonSidebar: React.FC = () => {
   const thumbnailUploadRef = React.useRef<HTMLInputElement>(null)
 
   /* Get all people in the current network */
-  const people = useSelector<IApplicationState, IPerson[]>((state) =>
-    state.networks.currentNetwork ? state.networks.currentNetwork.people : [],
+  const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
+    (state) => state.networks.currentNetwork,
   )
 
   /* Get the current person in focus */
@@ -27,8 +30,8 @@ const EditPersonSidebar: React.FC = () => {
     (state) => state.ui.personInFocus,
   )
 
-  /* Don't render if the Person does not exist */
-  if (!person) return null
+  /* Don't render if there is no selected Network or Person  */
+  if (!currentNetwork || !person) return null
 
   // -== FUNCTIONS ==- //
   /**
@@ -66,6 +69,8 @@ const EditPersonSidebar: React.FC = () => {
 
       /* Update the person in the database and in global state  */
       await dispatch(setPersonThumbnail(person.id, url))
+      await dispatch(getAllPeople(currentNetwork.id))
+      await dispatch(setPersonInFocus(person.id))
     } catch (error) {
       /* Failed to upload a thumbnail */
       console.error(error)
@@ -142,7 +147,9 @@ const EditPersonSidebar: React.FC = () => {
             ]
 
             /* Find people related to the selected person */
-            const otherPerson = people.find((p) => p.id === relationshipId)
+            const otherPerson = currentNetwork.people.find(
+              (p) => p.id === relationshipId,
+            )
             if (!otherPerson) return
 
             const relationshipString = `${otherPerson.name} [${otherPersonRel}]`
@@ -150,7 +157,7 @@ const EditPersonSidebar: React.FC = () => {
             return (
               <Anchor
                 /* Go to the related person's menu when clicked */
-                onClick={() => dispatch(setPersonInFocus(otherPerson))}
+                onClick={() => dispatch(setPersonInFocus(otherPerson.id))}
                 key={`${relationshipId}-${index}`}
               >
                 <Text>{relationshipString}</Text>

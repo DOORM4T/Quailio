@@ -49,7 +49,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
     if (!person) return
 
     /* focus on the person */
-    await dispatch(setPersonInFocus(person))
+    await dispatch(setPersonInFocus(person.id))
 
     /* open edit menu */
     await dispatch(togglePersonEditMenu(true))
@@ -68,12 +68,12 @@ const PersonMenu: React.FC<IProps> = (props) => {
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
     return (
-      <Box dir="column" align="start">
+      <Box dir="row" align="start" fill="horizontal">
         <Box onClick={() => console.log(item)}>
           {item.thumbnailUrl ? (
-            <Image src={item.thumbnailUrl} width="48px" />
+            <Image src={item.thumbnailUrl} height="64px" />
           ) : (
-            <Icons.User width="48px" />
+            <Icons.User height="64px" />
           )}
         </Box>
         <Text>{item.name}</Text>
