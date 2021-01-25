@@ -18,7 +18,7 @@ import {
   togglePersonEditMenu,
 } from "../../store/ui/uiActions"
 import ActionList from "../ActionList"
-import EditPersonSidebar from "./EditPersonSidebar"
+import EditPersonOverlay from "./PersonOverlay"
 
 /**
  * Container Menu for viewing, editing, and deleting individuals from a list of people
@@ -93,7 +93,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
       />
 
       {/* -== SIDEBAR ==- */}
-      {isEditMenuOpen && <EditPersonSidebar />}
+      {isEditMenuOpen && <EditPersonOverlay />}
     </React.Fragment>
   )
 }
