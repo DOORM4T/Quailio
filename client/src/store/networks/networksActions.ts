@@ -3,9 +3,11 @@ import { ThunkAction } from "redux-thunk"
 import { v4 as uuidv4 } from "uuid"
 import {
   auth,
+  deleteNetworkThumbnails,
   IFirebaseUser,
   networksCollection,
   peopleCollection,
+  uploadThumbnail,
   usersCollection,
 } from "../../firebase"
 import {
@@ -328,6 +330,14 @@ export const deleteNetwork: ActionCreator<
 
       await Promise.all(deleteList)
 
+      /* Delete all images used by the network */
+      try {
+        await deleteNetworkThumbnails(networkId)
+      } catch (error) {
+        /* Continue execution even if thumbnail deletion fails. An error here indicates the network had no uploaded thumbnails. */
+        console.error(error)
+      }
+
       return dispatch({
         type: NetworkActionTypes.DELETE,
         networkId,
@@ -458,7 +468,7 @@ export const setPersonThumbnail: ActionCreator<
     null,
     ISetPersonThumbnailAction
   >
-> = (personId: string, thumbnailUrl: string) => {
+> = (networkId: string, personId: string, thumbnailFile: File) => {
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
@@ -468,6 +478,9 @@ export const setPersonThumbnail: ActionCreator<
       /* Ensure the Person exists */
       const doesExist = (await personDoc.get()).exists
       if (!doesExist) throw new Error("That person does not exist.")
+
+      /* Upload the thumbnail file */
+      const thumbnailUrl = await uploadThumbnail(networkId, thumbnailFile)
 
       /* Set the Person's thumbnail url field */
       await personDoc.set({ thumbnailUrl }, { merge: true }) // set + merge in case the field is undefined

@@ -64,11 +64,10 @@ const EditPersonSidebar: React.FC = () => {
       /* Stop if no file was uploaded */
       if (!file) throw new Error("No file was uploaded.")
 
-      /* Upload the thumbnail file */
-      const url = await uploadThumbnail(file)
-
       /* Update the person in the database and in global state  */
-      await dispatch(setPersonThumbnail(person.id, url))
+      await dispatch(setPersonThumbnail(currentNetwork.id, person.id, file))
+
+      /* Refresh focused person global state */
       await dispatch(getAllPeople(currentNetwork.id))
       await dispatch(setPersonInFocus(person.id))
     } catch (error) {

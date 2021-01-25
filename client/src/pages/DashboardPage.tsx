@@ -23,6 +23,7 @@ import {
 import { ICurrentNetwork, INetwork } from "../store/networks/networkTypes"
 import { IApplicationState } from "../store/store"
 import * as Icons from "grommet-icons"
+import { getNetworkThumbnails } from "../firebase"
 
 const DashboardPage: React.FC = () => {
   /* get all network data for an authenticated user */
@@ -232,6 +233,13 @@ const DashboardPage: React.FC = () => {
               <PersonMenu data={currentNetwork ? currentNetwork.people : []} />
             </Box>
           )}
+          <Button
+            onClick={async () => {
+              if (!currentNetwork) return
+              const thumbnails = await getNetworkThumbnails(currentNetwork.id)
+              console.log(thumbnails)
+            }}
+          />
         </Box>
         <ForceGraphCanvas
           id="network-sketch"
