@@ -6,6 +6,7 @@ import {
   ResponsiveContext,
   Tip,
 } from "grommet"
+import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
@@ -22,7 +23,6 @@ import {
 } from "../store/networks/networksActions"
 import { ICurrentNetwork, INetwork } from "../store/networks/networkTypes"
 import { IApplicationState } from "../store/store"
-import * as Icons from "grommet-icons"
 
 const DashboardPage: React.FC = () => {
   /* get all network data for an authenticated user */
