@@ -162,27 +162,23 @@ const EditPersonOverlay: React.FC = () => {
     </Box>
   )
 
-  const LeftPanel: React.FC = () => (
-    <React.Fragment>
-      <Thumbnail />
-      <Heading textAlign="center">{person.name}</Heading>
-      <Buttons />
-      <Relationships />
-    </React.Fragment>
-  )
-
-  const RightPanel: React.FC = () => (
-    <Box fill>
-      <PersonEditor />
-    </Box>
-  )
-
   // TODO: Insert thumbnail, edit fields, create connections, delete
   return (
     <SplitOverlay
       handleClose={handleClose}
-      leftChildren={<LeftPanel />}
-      rightChildren={<RightPanel />}
+      leftChildren={
+        <React.Fragment>
+          <Thumbnail />
+          <Heading textAlign="center">{person.name}</Heading>
+          <Buttons />
+          <Relationships />
+        </React.Fragment>
+      }
+      rightChildren={
+        <Box fill>
+          <PersonEditor />
+        </Box>
+      }
     />
   )
 }
