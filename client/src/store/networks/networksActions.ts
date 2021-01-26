@@ -7,6 +7,7 @@ import {
   IFirebaseUser,
   networksCollection,
   peopleCollection,
+  personContentCollection,
   uploadThumbnail,
   usersCollection,
 } from "../../firebase"
@@ -328,7 +329,20 @@ export const deleteNetwork: ActionCreator<
         peopleCollection.doc(id).delete(),
       )
 
+      /* Delete all content belonging to people in the Network */
+      const deleteContentList = networkData.personIds
+        .map(async (id) => {
+          /* Ensure the document exists */
+          const contentDoc = personContentCollection.doc(id)
+          const doesExist = (await contentDoc.get()).exists
+          if (!doesExist) return null
+
+          return contentDoc.delete()
+        })
+        .filter((func) => func !== null)
+
       await Promise.all(deleteList)
+      await Promise.all(deleteContentList)
 
       /* Delete all images used by the network */
       try {
@@ -390,6 +404,13 @@ export const deletePerson: ActionCreator<
       })
 
       await Promise.all(relationshipUpdates)
+
+      /* Remove the Person's content document */
+      const contentDoc = personContentCollection.doc(personId)
+      const hasContentDoc = (await contentDoc.get()).exists
+      if (hasContentDoc) {
+        await contentDoc.delete()
+      }
 
       /* Delete the Person's document */
       await personDoc.delete()
@@ -457,7 +478,7 @@ export const getAllNetworks: ActionCreator<
 }
 
 /**
- * Set the user's thumbnail
+ * Set a person's thumbnail
  * @param personId
  * @param thumbnailUrl
  */

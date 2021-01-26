@@ -20,7 +20,6 @@ export interface IPerson {
   name: string
   relationships: IRelationships
   thumbnailUrl?: string
-  content?: string // User-generated rich text
 }
 
 /* string 1: this person in relation to the other person 

@@ -1,6 +1,4 @@
-import { Currency } from "grommet-icons"
 import { Reducer } from "redux"
-import { peopleCollection } from "../../firebase"
 import {
   ICurrentNetwork,
   INetworksState,

@@ -2,19 +2,31 @@ import { IPerson } from "../networks/networkTypes"
 
 // -== STATE TYPES ==- //
 export interface IUserInterfaceState {
-  readonly personInFocus: IPerson | null
+  readonly isLoading: boolean
+  readonly personInFocus: IPersonInFocus | null
   readonly isPersonEditMenuOpen: boolean
+}
+
+export interface IPersonInFocus extends IPerson {
+  content?: string
 }
 
 // -== ACTION TYPES ==- //
 export enum UserInterfaceActionTypes {
+  LOADING = "UI/LOADING",
   FOCUS_ON_PERSON = "UI/FOCUS_ON_PERSON",
-  TOGGLE_PERSON_EDIT_MENU = "NETWORK/TOGGLE_PERSON_EDIT_MENU",
+  SET_PERSON_CONTENT = "UI/SET_PERSON_CONTENT",
+  TOGGLE_PERSON_EDIT_MENU = "UI/TOGGLE_PERSON_EDIT_MENU",
+}
+
+export interface ISetUILoadingAction {
+  type: UserInterfaceActionTypes.LOADING
+  isLoading: boolean
 }
 
 export interface IFocusOnPersonAction {
   type: UserInterfaceActionTypes.FOCUS_ON_PERSON
-  person: IPerson | null
+  person: IPersonInFocus | null
 }
 
 export interface ITogglePersonEditMenu {
@@ -22,5 +34,15 @@ export interface ITogglePersonEditMenu {
   isOpen: boolean
 }
 
+export interface ISetPersonContentAction {
+  type: UserInterfaceActionTypes.SET_PERSON_CONTENT
+  personId: string
+  content: string
+}
+
 /* action types used by the networks reducer */
-export type UserInterfaceActions = IFocusOnPersonAction | ITogglePersonEditMenu
+export type UserInterfaceActions =
+  | ISetUILoadingAction
+  | IFocusOnPersonAction
+  | ITogglePersonEditMenu
+  | ISetPersonContentAction

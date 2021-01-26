@@ -7,14 +7,16 @@ import {
   getAllPeople,
   setPersonThumbnail,
 } from "../../store/networks/networksActions"
-import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
+import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import {
+  setPersonContent,
   setPersonInFocus,
   togglePersonEditMenu,
 } from "../../store/ui/uiActions"
+import { IPersonInFocus } from "../../store/ui/uiTypes"
 import SplitOverlay from "../SplitOverlay"
-import PersonEditor from "./PersonEditor"
+import ContentEditor from "../ContentEditor"
 
 const EditPersonOverlay: React.FC = () => {
   const dispatch: ActionCreator<AnyAction> = useDispatch()
@@ -26,7 +28,7 @@ const EditPersonOverlay: React.FC = () => {
   )
 
   /* Get the current person in focus */
-  const person = useSelector<IApplicationState, IPerson | null>(
+  const person = useSelector<IApplicationState, IPersonInFocus | null>(
     (state) => state.ui.personInFocus,
   )
 
@@ -153,14 +155,16 @@ const EditPersonOverlay: React.FC = () => {
             const otherPerson = currentNetwork.people.find(
               (p) => p.id === relationshipId,
             )
-            if (!otherPerson) return
+            if (!otherPerson) return null
 
             const relationshipString = `${otherPerson.name} [${otherPersonRel}]`
 
             return (
               <Anchor
                 /* Go to the related person's menu when clicked */
-                onClick={() => dispatch(setPersonInFocus(otherPerson.id))}
+                onClick={async () =>
+                  await dispatch(setPersonInFocus(otherPerson.id))
+                }
                 key={`${relationshipId}-${index}`}
               >
                 <Text>{relationshipString}</Text>
@@ -170,6 +174,11 @@ const EditPersonOverlay: React.FC = () => {
       </Box>
     </Box>
   )
+
+  /* Update the selected Person's content */
+  const updateContent = async (content: string) => {
+    await dispatch(setPersonContent(person.id, content))
+  }
 
   // TODO: Insert thumbnail, edit fields, create connections, delete
   return (
@@ -185,7 +194,7 @@ const EditPersonOverlay: React.FC = () => {
       }
       rightChildren={
         <Box fill>
-          <PersonEditor content={person.content} />
+          <ContentEditor content={person.content} handleSave={updateContent} />
         </Box>
       }
     />

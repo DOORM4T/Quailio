@@ -16,17 +16,25 @@ enum firebaseCollections {
   USERS = "users",
   NETWORKS = "networks",
   PEOPLE = "people",
+  PERSON_CONTENT = "person_content",
 }
 
 export const usersCollection = db.collection(firebaseCollections.USERS)
 export const networksCollection = db.collection(firebaseCollections.NETWORKS)
 export const peopleCollection = db.collection(firebaseCollections.PEOPLE)
+export const personContentCollection = db.collection(
+  firebaseCollections.PERSON_CONTENT,
+)
 
 /* Document Type Definitions */
 export interface IFirebaseUser {
   id: string
   email: string
   networkIds: string[] // IDs of networks belonging to the user
+}
+
+export interface IPersonContentData {
+  content: string
 }
 
 // ==- AUTHENTICATION -== //
