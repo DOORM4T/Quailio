@@ -10,7 +10,7 @@ interface IProps {
 
 const SplitOverlay: React.FC<IProps> = (props) => {
   const size = useContext(ResponsiveContext)
-  const doColumn = /(small\b|\bmedium\b)/.test(size) /* xsmall, small, medium */
+  const doColumn = /(small\b)/.test(size) /* xsmall, small, medium */
 
   return (
     <Layer
@@ -35,20 +35,13 @@ const SplitOverlay: React.FC<IProps> = (props) => {
           onClick={props.handleClose}
           hoverIndicator
         />
-        <Box
-          direction="column"
-          width="medium"
-          fill
-          justify="center"
-          style={{ flex: 1 }}
-        >
+        <Box direction="column" width="medium" fill style={{ flex: 1 }}>
           {props.leftChildren}
         </Box>
         <Box
           direction="column"
           width="medium"
           fill
-          justify="center"
           style={{ flex: 2 }}
           pad={{ top: "large" }}
         >

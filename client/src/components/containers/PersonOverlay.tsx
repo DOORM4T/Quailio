@@ -80,9 +80,9 @@ const EditPersonOverlay: React.FC = () => {
     <Box
       align="center"
       justify="center"
-      pad={{ top: "large" }}
       aria-label="Person thumbnail"
       role="Click to change thumbnail"
+      height={{ min: "small" }}
     >
       <button
         onClick={openFileInput}
@@ -133,32 +133,41 @@ const EditPersonOverlay: React.FC = () => {
   )
 
   const Relationships: React.FC = () => (
-    <Box overflow={{ vertical: "auto" }}>
-      <Heading level={2}>Relationships</Heading>
-      {person.relationships &&
-        Object.keys(person.relationships).map((relationshipId, index) => {
-          const [thisPersonRel, otherPersonRel] = person.relationships[
-            relationshipId
-          ]
+    <Box
+      overflow={{ vertical: "auto" }}
+      border={{ color: "brand", side: "top" }}
+      fill="vertical"
+      pad={{ bottom: "large", horizontal: "medium" }}
+      margin={{ top: "medium" }}
+      height={{ min: "xlarge" }}
+    >
+      <Heading level={2}>Connections</Heading>
+      <Box direction="column" overflow={{ vertical: "auto" }}>
+        {person.relationships &&
+          Object.keys(person.relationships).map((relationshipId, index) => {
+            const [thisPersonRel, otherPersonRel] = person.relationships[
+              relationshipId
+            ]
 
-          /* Find people related to the selected person */
-          const otherPerson = currentNetwork.people.find(
-            (p) => p.id === relationshipId,
-          )
-          if (!otherPerson) return
+            /* Find people related to the selected person */
+            const otherPerson = currentNetwork.people.find(
+              (p) => p.id === relationshipId,
+            )
+            if (!otherPerson) return
 
-          const relationshipString = `${otherPerson.name} [${otherPersonRel}]`
+            const relationshipString = `${otherPerson.name} [${otherPersonRel}]`
 
-          return (
-            <Anchor
-              /* Go to the related person's menu when clicked */
-              onClick={() => dispatch(setPersonInFocus(otherPerson.id))}
-              key={`${relationshipId}-${index}`}
-            >
-              <Text>{relationshipString}</Text>
-            </Anchor>
-          )
-        })}
+            return (
+              <Anchor
+                /* Go to the related person's menu when clicked */
+                onClick={() => dispatch(setPersonInFocus(otherPerson.id))}
+                key={`${relationshipId}-${index}`}
+              >
+                <Text>{relationshipString}</Text>
+              </Anchor>
+            )
+          })}
+      </Box>
     </Box>
   )
 
@@ -167,16 +176,16 @@ const EditPersonOverlay: React.FC = () => {
     <SplitOverlay
       handleClose={handleClose}
       leftChildren={
-        <React.Fragment>
+        <Box dir="column" fill height={{ min: "large" }}>
           <Thumbnail />
           <Heading textAlign="center">{person.name}</Heading>
           <Buttons />
           <Relationships />
-        </React.Fragment>
+        </Box>
       }
       rightChildren={
         <Box fill>
-          <PersonEditor />
+          <PersonEditor content={person.content} />
         </Box>
       }
     />

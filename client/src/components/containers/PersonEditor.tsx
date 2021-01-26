@@ -3,28 +3,28 @@ import { Editor } from "@tinymce/tinymce-react"
 import { Editor as TinyMCEEditor } from "tinymce"
 import { TINY_MCE_KEY } from "../../.tinyMCEKey"
 
-console.log(TINY_MCE_KEY)
-
-const PersonEditor: React.FC = () => {
-  const [content, setContent] = React.useState("")
+const INITIAL_VALUE = "<p>Write anything!</p>"
+const PersonEditor: React.FC<IProps> = (props) => {
+  const [content, setContent] = React.useState(props.content || INITIAL_VALUE)
   const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
     setContent(newContent)
   }
 
-  React.useEffect(() => console.log("rerender"))
-
   return (
     <Editor
       apiKey={TINY_MCE_KEY}
-      initialValue="<p>Initial editor content</p>"
       init={{
-        min_height: 500,
+        height: "100%",
         plugins: ["image"],
       }}
       onEditorChange={handleEditorChange}
       value={content}
     />
   )
+}
+
+interface IProps {
+  content?: string
 }
 
 export default PersonEditor
