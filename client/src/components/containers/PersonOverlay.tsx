@@ -6,6 +6,7 @@ import { ActionCreator, AnyAction } from "redux"
 import {
   getAllPeople,
   setPersonThumbnail,
+  deletePerson as deletePersonById,
 } from "../../store/networks/networksActions"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
@@ -19,6 +20,7 @@ import SplitOverlay from "../SplitOverlay"
 import ContentEditor from "../ContentEditor"
 
 const EditPersonOverlay: React.FC = () => {
+  const [isEditing, setIsEditing] = React.useState(false)
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const thumbnailUploadRef = React.useRef<HTMLInputElement>(null)
 
@@ -114,13 +116,45 @@ const EditPersonOverlay: React.FC = () => {
     </Box>
   )
 
+  // -== ACTION BUTTONS ==- //
+  const deletePerson = (id: string) => async () => {
+    if (!currentNetwork) return
+
+    /* Confirm deletion */
+    const doDelete = window.confirm(
+      `Delete ${person.name}? This action cannot be reversed.`,
+    )
+    if (!doDelete) return
+
+    /* Close the Person overlay */
+    dispatch(togglePersonEditMenu(false))
+
+    /* Delete the person */
+    try {
+      await dispatch(deletePersonById(currentNetwork.id, id))
+      await dispatch(getAllPeople(currentNetwork.id))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const Buttons: React.FC = () => (
     <Box direction="row" align="center" justify="center">
-      <Button
-        icon={<Icons.Edit color="status-ok" />}
-        aria-label="Edit information"
-        hoverIndicator
-      />
+      {isEditing ? (
+        <Button
+          icon={<Icons.View color="status-ok" />}
+          aria-label="Viewer mode"
+          hoverIndicator
+          onClick={() => setIsEditing(false)}
+        />
+      ) : (
+        <Button
+          icon={<Icons.Edit color="neutral-3" />}
+          aria-label="Edit information"
+          hoverIndicator
+          onClick={() => setIsEditing(true)}
+        />
+      )}
       <Button
         icon={<Icons.Connect color="neutral-3" />}
         aria-label="Create ponnection"
@@ -130,6 +164,7 @@ const EditPersonOverlay: React.FC = () => {
         icon={<Icons.Trash color="status-critical" />}
         aria-label="Delete person"
         hoverIndicator
+        onClick={deletePerson(person.id)}
       />
     </Box>
   )
@@ -180,7 +215,7 @@ const EditPersonOverlay: React.FC = () => {
     await dispatch(setPersonContent(person.id, content))
   }
 
-  // TODO: Insert thumbnail, edit fields, create connections, delete
+  // TODO: edit fields, create connections, delete
   return (
     <SplitOverlay
       handleClose={handleClose}

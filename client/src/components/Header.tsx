@@ -31,7 +31,8 @@ const Header: React.FC<IProps> = (props) => {
   const history = useHistory()
 
   const isLoading = useSelector<IApplicationState>(
-    (state) => state.auth.isLoading || state.networks.isLoading,
+    (state) =>
+      state.auth.isLoading || state.networks.isLoading || state.ui.isLoading,
   ) as boolean
 
   const logoutFunction = async () => {

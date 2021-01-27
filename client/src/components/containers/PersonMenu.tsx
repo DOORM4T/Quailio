@@ -1,30 +1,16 @@
-import { Box, Image, Text } from "grommet"
+import { Box, Button, Image, List, Text } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import {
-  deletePerson as deletePersonById,
-  getAllPeople,
-} from "../../store/networks/networksActions"
-import {
-  ICurrentNetwork,
-  INetwork,
-  IPerson,
-} from "../../store/networks/networkTypes"
+import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import {
   setPersonInFocus,
   togglePersonEditMenu,
 } from "../../store/ui/uiActions"
-import ActionList from "../ActionList"
 import EditPersonOverlay from "./PersonOverlay"
 
-/**
- * Container Menu for viewing, editing, and deleting individuals from a list of people
- * Uses Redux actions & updates the app's database
- */
-// TODO: replace action icon menu with a single button that opens the Person sidebar
 const PersonMenu: React.FC<IProps> = (props) => {
   // -== STATE ==- //
   const dispatch: Dispatch<any> = useDispatch()
@@ -35,31 +21,17 @@ const PersonMenu: React.FC<IProps> = (props) => {
     (state) => state.networks.currentNetwork,
   )
 
-  // -== MENU ACTIONS ==- //
-  const viewPerson = (id: string) => () => {
-    // TODO: view details
-    console.log(`View [${id}]`)
-  }
-
-  const editPerson = (id: string) => async () => {
+  /* Open a Person's content menu */
+  const viewPerson = (id: string) => async () => {
     if (!currentNetwork) return
-
-    console.log(`Edit [${id}]`)
     const person = currentNetwork.people.find((p) => p.id === id)
     if (!person) return
 
     /* focus on the person */
-    await dispatch(setPersonInFocus(person.id))
-
-    /* open edit menu */
-    await dispatch(togglePersonEditMenu(true))
-  }
-
-  const deletePerson = (id: string) => async () => {
-    if (!currentNetwork) return
     try {
-      await dispatch(deletePersonById(currentNetwork.id, id))
-      await dispatch(getAllPeople(currentNetwork.id))
+      await dispatch(setPersonInFocus(person.id))
+      /* open edit menu */
+      dispatch(togglePersonEditMenu(true))
     } catch (error) {
       console.error(error)
     }
@@ -68,7 +40,12 @@ const PersonMenu: React.FC<IProps> = (props) => {
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
     return (
-      <Box dir="row" align="start" fill="horizontal">
+      <Box
+        dir="row"
+        align="start"
+        fill="horizontal"
+        key={`${item.id}-${index}`}
+      >
         <Box onClick={() => console.log(item)}>
           {item.thumbnailUrl ? (
             <Image src={item.thumbnailUrl} height="64px" />
@@ -84,12 +61,14 @@ const PersonMenu: React.FC<IProps> = (props) => {
   return (
     <React.Fragment>
       {/* -== PERSON LIST ==- */}
-      <ActionList
+      <List
         data={props.data}
-        renderItem={renderItem}
-        handleView={viewPerson}
-        handleEdit={editPerson}
-        handleDelete={deletePerson}
+        margin={{ bottom: "medium" }}
+        style={{ overflowY: "auto" }}
+        action={(person: IPerson) => (
+          <Button icon={<Icons.View />} onClick={viewPerson(person.id)} />
+        )}
+        children={renderItem}
       />
 
       {/* -== SIDEBAR ==- */}
