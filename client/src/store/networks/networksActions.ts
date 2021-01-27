@@ -321,28 +321,18 @@ export const deleteNetwork: ActionCreator<
         doc.ref.update({ networkIds: updatedNetworkIds })
       })
 
+      /* Delete all People in the Network */
+      const deletePeopleList = networkData.personIds.map(async (personId) => {
+        try {
+          await dispatch<any>(deletePerson(networkId, personId))
+        } catch (error) {
+          console.error(error)
+        }
+      })
+      await Promise.all(deletePeopleList)
+
       /* Delete the Network */
       await networkDoc.delete()
-
-      /* Delete all People in the Network */
-      const deleteList = networkData.personIds.map((id) =>
-        peopleCollection.doc(id).delete(),
-      )
-
-      /* Delete all content belonging to people in the Network */
-      const deleteContentList = networkData.personIds
-        .map(async (id) => {
-          /* Ensure the document exists */
-          const contentDoc = personContentCollection.doc(id)
-          const doesExist = (await contentDoc.get()).exists
-          if (!doesExist) return null
-
-          return contentDoc.delete()
-        })
-        .filter((func) => func !== null)
-
-      await Promise.all(deleteList)
-      await Promise.all(deleteContentList)
 
       /* Delete all images used by the network */
       try {
