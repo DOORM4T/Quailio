@@ -105,12 +105,7 @@ export const connectPeople: ActionCreator<
   return async (dispatch: Dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    const {
-      p1Id,
-      p2Id,
-      p1Reason: p1Rel = "",
-      p2Reason: p2Rel = "",
-    } = relationship
+    const { p1Id, p2Id, p1Reason = "", p2Reason = "" } = relationship
 
     try {
       /* Database updates */
@@ -124,8 +119,8 @@ export const connectPeople: ActionCreator<
         throw new Error("One or both persons do not exist in that network.")
 
       /* Get the Firestore documents for each Person */
-      const p1Doc = await peopleCollection.doc(p1Id)
-      const p2Doc = await peopleCollection.doc(p2Id)
+      const p1Doc = peopleCollection.doc(p1Id)
+      const p2Doc = peopleCollection.doc(p2Id)
 
       /* Get the document data for each person */
       const p1Data: IPerson = (await p1Doc.get()).data() as IPerson
@@ -134,11 +129,11 @@ export const connectPeople: ActionCreator<
       /* Copy existing relationships and add the new relationship for each person */
       const updatedP1Rels: IRelationships = {
         ...p1Data.relationships,
-        [p2Id]: [p1Rel, p2Rel],
+        [p2Id]: [p1Reason, p2Reason],
       }
       const updatedP2Rels: IRelationships = {
         ...p2Data.relationships,
-        [p1Id]: [p2Rel, p1Rel],
+        [p1Id]: [p2Reason, p1Reason],
       }
 
       /* Update just the "relationships" field in each Person document */
