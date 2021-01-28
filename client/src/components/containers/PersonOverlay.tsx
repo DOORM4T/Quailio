@@ -126,28 +126,6 @@ const EditPersonOverlay: React.FC = () => {
     </Box>
   )
 
-  // -== ACTION BUTTONS ==- //
-  const deletePerson = (id: string) => async () => {
-    if (!currentNetwork) return
-
-    /* Confirm deletion */
-    const doDelete = window.confirm(
-      `Delete ${person.name}? This action cannot be reversed.`,
-    )
-    if (!doDelete) return
-
-    /* Close the Person overlay */
-    dispatch(togglePersonEditMenu(false))
-
-    /* Delete the person */
-    try {
-      await dispatch(deletePersonById(currentNetwork.id, id))
-      await dispatch(getAllPeople(currentNetwork.id))
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
   const Relationships: React.FC = () => (
     <Box
       overflow={{ vertical: "auto" }}
@@ -206,7 +184,6 @@ const EditPersonOverlay: React.FC = () => {
             person={person}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
-            deletePerson={deletePerson}
           />
           <Relationships />
         </Box>
@@ -226,7 +203,6 @@ interface IOverlayButtonProps {
   person: IPersonInFocus
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
-  deletePerson: (id: string) => () => Promise<void>
 }
 const Buttons: React.FC<IOverlayButtonProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
@@ -288,6 +264,31 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
     }
   }
 
+  /**
+   * Delete a person by their ID
+   * @param id
+   */
+  const deletePerson = (id: string) => async () => {
+    if (!currentNetwork) return
+
+    /* Confirm deletion */
+    const doDelete = window.confirm(
+      `Delete ${props.person.name}? This action cannot be reversed.`,
+    )
+    if (!doDelete) return
+
+    /* Close the Person overlay */
+    dispatch(togglePersonEditMenu(false))
+
+    /* Delete the person */
+    try {
+      await dispatch(deletePersonById(currentNetwork.id, id))
+      await dispatch(getAllPeople(currentNetwork.id))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <Box direction="row" align="center" justify="center">
       {props.isEditing ? (
@@ -330,7 +331,7 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
             icon={<Icons.Trash color="status-critical" />}
             aria-label="Delete person"
             hoverIndicator
-            onClick={props.deletePerson(props.person.id)}
+            onClick={deletePerson(props.person.id)}
           />
         </React.Fragment>
       )}
