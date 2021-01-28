@@ -2,7 +2,7 @@ import { Editor } from "@tinymce/tinymce-react"
 import React from "react"
 import { Editor as TinyMCEEditor } from "tinymce"
 import { TINY_MCE_KEY } from "../.tinyMCEKey"
-import { Text } from "grommet"
+import { Box, Text } from "grommet"
 
 const INITIAL_VALUE = "<p>Write anything!</p>"
 const ContentEditor: React.FC<IProps> = (props) => {
@@ -62,7 +62,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
   }
 
   return (
-    <React.Fragment>
+    <article style={{ overflowY: "auto", height: "100%" }}>
       {props.editMode ? (
         <React.Fragment>
           {isSaved ? (
@@ -74,7 +74,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
             disabled={props.editMode ? false : true}
             apiKey={TINY_MCE_KEY}
             init={{
-              height: "100%",
+              height: "90%",
               plugins: ["image", "save"],
               toolbar: ["save"],
               removed_menuitems: "newdocument visualaid",
@@ -88,9 +88,9 @@ const ContentEditor: React.FC<IProps> = (props) => {
           />
         </React.Fragment>
       ) : (
-        <main dangerouslySetInnerHTML={{ __html: content }} />
+        <div dangerouslySetInnerHTML={{ __html: content }} />
       )}
-    </React.Fragment>
+    </article>
   )
 }
 

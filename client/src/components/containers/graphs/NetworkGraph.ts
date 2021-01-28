@@ -9,6 +9,10 @@ import {
   IRelationships,
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
+import {
+  setPersonInFocus,
+  togglePersonEditMenu,
+} from "../../../store/ui/uiActions"
 
 const FOCUS_TIME = 1000
 const NODE_SIZE = 12
@@ -170,12 +174,15 @@ export function createNetworkGraph(
       hoverNode = node || null
       container.style.cursor = node ? "-webkit-grab" : ""
     })
-    .onNodeClick((node) => {
-      // TODO: Show modal via Redux dispatch
-
-      /* zoom & center on click */
-      Graph.centerAt(node.x, node.y, FOCUS_TIME / 2)
-      Graph.zoom(10, FOCUS_TIME)
+    .onNodeClick(async (n) => {
+      const node = n as NodeObject & IPersonNode
+      try {
+        // Focus on the clicked person & show their details
+        await store.dispatch<any>(setPersonInFocus(node.id))
+        store.dispatch<any>(togglePersonEditMenu(true))
+      } catch (error) {
+        console.error(error)
+      }
     })
     .onNodeDragEnd((node) => {
       /* fix at end drag position */
