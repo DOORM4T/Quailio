@@ -11,7 +11,8 @@ const ContentEditor: React.FC<IProps> = (props) => {
 
   const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
     setContent(newContent)
-    setIsSaved(false)
+    /* Content should be already saved outside of edit mode */
+    if (props.editMode) setIsSaved(false)
   }
 
   const preventUnsavedChanges = (e: Event) => {
@@ -42,6 +43,18 @@ const ContentEditor: React.FC<IProps> = (props) => {
     setIsSaved(true)
   }, [props.content])
 
+  React.useEffect(() => {
+    if (isSaved || props.editMode) return
+
+    /* Ask to save unsaved changes when exiting Edit Mode */
+    const doSave = window.confirm(
+      "You have unsaved changes. Save current changes before exiting Edit Mode?",
+    )
+    if (doSave) {
+      handleSave()
+    }
+  }, [props.editMode])
+
   /* Call the save method from props */
   const handleSave = async () => {
     await props.handleSave(content)
@@ -50,31 +63,39 @@ const ContentEditor: React.FC<IProps> = (props) => {
 
   return (
     <React.Fragment>
-      {isSaved ? (
-        <Text color="status-success">Saved</Text>
+      {props.editMode ? (
+        <React.Fragment>
+          {isSaved ? (
+            <Text color="status-success">Saved</Text>
+          ) : (
+            <Text color="status-critical">Unsaved Changes</Text>
+          )}
+          <Editor
+            disabled={props.editMode ? false : true}
+            apiKey={TINY_MCE_KEY}
+            init={{
+              height: "100%",
+              plugins: ["image", "save"],
+              toolbar: ["save"],
+              removed_menuitems: "newdocument visualaid",
+              save_onsavecallback: () => {
+                console.log("Saved.")
+              },
+            }}
+            onSaveContent={handleSave}
+            onEditorChange={handleEditorChange}
+            value={content}
+          />
+        </React.Fragment>
       ) : (
-        <Text color="status-critical">Unsaved Changes</Text>
+        <main dangerouslySetInnerHTML={{ __html: content }} />
       )}
-      <Editor
-        apiKey={TINY_MCE_KEY}
-        init={{
-          height: "100%",
-          plugins: ["image", "save"],
-          toolbar: ["save"],
-          removed_menuitems: "newdocument visualaid",
-          save_onsavecallback: () => {
-            console.log("Saved.")
-          },
-        }}
-        onSaveContent={handleSave}
-        onEditorChange={handleEditorChange}
-        value={content}
-      />
     </React.Fragment>
   )
 }
 
 interface IProps {
+  editMode: boolean
   content?: string
   handleSave: (content: string) => void
 }

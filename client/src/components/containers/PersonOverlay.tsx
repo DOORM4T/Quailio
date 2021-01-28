@@ -12,6 +12,7 @@ import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction, Dispatch } from "redux"
+import { personContentCollection } from "../../firebase"
 import {
   connectPeople,
   deletePerson as deletePersonById,
@@ -43,6 +44,13 @@ const EditPersonOverlay: React.FC = () => {
   const person = useSelector<IApplicationState, IPersonInFocus | null>(
     (state) => state.ui.personInFocus,
   )
+
+  React.useEffect(() => {
+    if (!person) return
+    personContentCollection.doc(person.id).onSnapshot(async (snapshot) => {
+      await dispatch(setPersonInFocus(person.id))
+    })
+  }, [])
 
   /* Don't render if there is no selected Network or Person  */
   if (!currentNetwork || !person) return null
@@ -154,9 +162,10 @@ const EditPersonOverlay: React.FC = () => {
             return (
               <Anchor
                 /* Go to the related person's menu when clicked */
-                onClick={async () =>
+                onClick={async () => {
                   await dispatch(setPersonInFocus(otherPerson.id))
-                }
+                  setIsEditing(false)
+                }}
                 key={`${relationshipId}-${index}`}
               >
                 <Text>{relationshipString}</Text>
@@ -190,7 +199,11 @@ const EditPersonOverlay: React.FC = () => {
       }
       rightChildren={
         <Box fill>
-          <ContentEditor content={person.content} handleSave={updateContent} />
+          <ContentEditor
+            editMode={isEditing}
+            content={person.content}
+            handleSave={updateContent}
+          />
         </Box>
       }
     />
