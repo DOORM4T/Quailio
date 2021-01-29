@@ -137,10 +137,8 @@ const EditPersonOverlay: React.FC = () => {
     <Box
       overflow={{ vertical: "auto" }}
       border={{ color: "brand", side: "top" }}
-      fill="vertical"
       pad={{ bottom: "large", horizontal: "medium" }}
-      margin={{ top: "medium" }}
-      height={{ min: "xlarge" }}
+      fill
     >
       <Heading level={2}>Connections</Heading>
       <Box direction="column" overflow={{ vertical: "auto" }}>
@@ -186,18 +184,22 @@ const EditPersonOverlay: React.FC = () => {
       handleClose={handleClose}
       leftChildren={
         <Box dir="column" fill height={{ min: "large" }}>
-          <Thumbnail />
-          <Heading textAlign="center">{person.name}</Heading>
-          <Buttons
-            person={person}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
-          <Relationships />
+          <Box height="50%" overflow="auto">
+            <Thumbnail />
+            <Heading textAlign="center">{person.name}</Heading>
+            <Buttons
+              person={person}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+            />
+          </Box>
+          <Box height="40%" overflow="auto" margin={{ top: "medium" }}>
+            <Relationships />
+          </Box>
         </Box>
       }
       rightChildren={
-        <Box fill>
+        <Box fill height="100%" background="light-2" pad="medium">
           <ContentEditor
             editMode={isEditing}
             content={person.content}

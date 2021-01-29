@@ -40,20 +40,23 @@ const PersonMenu: React.FC<IProps> = (props) => {
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
     return (
-      <Box
-        dir="row"
-        align="start"
-        fill="horizontal"
-        key={`${item.id}-${index}`}
-      >
-        <Box onClick={() => console.log(item)}>
+      <Box dir="column" align="start" key={`${item.id}-${index}`}>
+        <Box>
           {item.thumbnailUrl ? (
             <Image src={item.thumbnailUrl} height="64px" />
           ) : (
             <Icons.User height="64px" />
           )}
         </Box>
-        <Text>{item.name}</Text>
+        <Text
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "20ch",
+          }}
+        >
+          {item.name}
+        </Text>
       </Box>
     )
   }
@@ -63,7 +66,6 @@ const PersonMenu: React.FC<IProps> = (props) => {
       {/* -== PERSON LIST ==- */}
       <List
         data={props.data}
-        margin={{ bottom: "medium" }}
         style={{ overflowY: "auto" }}
         action={(person: IPerson) => (
           <Button

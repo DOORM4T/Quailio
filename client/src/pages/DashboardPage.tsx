@@ -139,105 +139,117 @@ const DashboardPage: React.FC = () => {
         style={{ height: `calc(100vh - ${HEADER_HEIGHT}px)` }}
         background="light-1"
       >
+        {/* Network Actions & Details */}
         <Box
           direction="column"
-          pad={{ horizontal: "small", bottom: "large" }}
+          justify="start"
+          align="stretch"
           background="light-1"
-          width={{ min: "360px" }}
+          width="large"
+          gap="none"
         >
-          <Box pad="small" gap="small" fill="horizontal" height="small">
-            <Box direction="row" fill="horizontal" justify="center" gap="small">
-              <DropButton
-                style={{
-                  borderRadius: "4px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  padding: "0 1rem",
-                }}
-                aria-label="Select a network"
-                label={
-                  currentNetwork
-                    ? `Network: ${currentNetwork.name}`
-                    : "Select Network"
-                }
-                dropAlign={{ top: "bottom" }}
-                dropContent={NetworkMenu()}
-                disabled={networks.length === 0}
-                fill="horizontal"
-              />
+          <Box
+            direction="row"
+            justify="start"
+            gap="small"
+            height="50px"
+            margin="small"
+          >
+            <DropButton
+              style={{
+                borderRadius: "4px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                padding: "0 1rem",
+                height: "50px",
+              }}
+              aria-label="Select a network"
+              label={
+                currentNetwork
+                  ? `Network: ${currentNetwork.name}`
+                  : "Select Network"
+              }
+              dropAlign={{ top: "bottom" }}
+              dropContent={NetworkMenu()}
+              disabled={networks.length === 0}
+              fill="horizontal"
+            />
 
-              <Tip
-                content="Create a new network"
-                children={
-                  <Button
-                    aria-label="Create a new network"
-                    icon={<Icons.Add color="brand" />}
-                    onClick={handleCreateNetwork}
-                    hoverIndicator
-                    style={{
-                      border: "1px solid green",
-                      width: "50px",
-                      height: "50px",
-                    }}
-                  />
-                }
-              />
-            </Box>
+            <Tip
+              content="Create a new network"
+              children={
+                <Button
+                  aria-label="Create a new network"
+                  icon={<Icons.Add color="brand" />}
+                  onClick={handleCreateNetwork}
+                  hoverIndicator
+                  style={{
+                    border: "1px solid green",
+                    width: "50px",
+                    height: "50px",
+                  }}
+                />
+              }
+            />
           </Box>
-          {currentNetwork && (
-            <Box fill="vertical">
-              {/* Network title */}
-              <Heading level={3} textAlign="center">
-                {currentNetwork.name}
-              </Heading>
+          <Box direction="column" fill>
+            {currentNetwork && (
+              <Box>
+                {/* Network actions */}
+                <Box
+                  direction="row"
+                  fill="horizontal"
+                  justify="start"
+                  pad={{ horizontal: "small" }}
+                  margin={{ vertical: "small" }}
+                  height="50px"
+                >
+                  <Tip
+                    content="Add person"
+                    children={
+                      <Button
+                        aria-label="Add a person to the network"
+                        icon={<Icons.UserAdd color="brand" />}
+                        onClick={addPersonHandler}
+                        disabled={!currentNetwork}
+                        hoverIndicator
+                      />
+                    }
+                  />
 
-              {/* Network actions */}
-              <Box
-                direction="row"
-                fill="horizontal"
-                justify="start"
-                pad={{ horizontal: "small" }}
-                height="xsmall"
-              >
-                <Tip
-                  content="Add person"
-                  children={
-                    <Button
-                      aria-label="Add a person to the network"
-                      icon={<Icons.UserAdd color="brand" />}
-                      onClick={addPersonHandler}
-                      disabled={!currentNetwork}
-                      hoverIndicator
-                    />
-                  }
-                />
-
-                <Tip
-                  content="Delete current network"
-                  children={
-                    <Button
-                      aria-label="Delete current network"
-                      icon={<Icons.Threats color="status-critical" />}
-                      onClick={handleDeleteNetwork}
-                      disabled={!currentNetwork}
-                      hoverIndicator
-                      margin={{ left: "auto" }}
-                    />
-                  }
-                />
+                  <Tip
+                    content="Delete current network"
+                    children={
+                      <Button
+                        aria-label="Delete current network"
+                        icon={<Icons.Threats color="status-critical" />}
+                        onClick={handleDeleteNetwork}
+                        disabled={!currentNetwork}
+                        hoverIndicator
+                        margin={{ left: "auto" }}
+                      />
+                    }
+                  />
+                </Box>
+                <Box
+                  background="light-2"
+                  margin="small"
+                  style={{ boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)" }}
+                >
+                  <PersonMenu
+                    data={
+                      currentNetwork
+                        ? currentNetwork.people.sort((p1, p2) =>
+                            p1.name.localeCompare(p2.name),
+                          )
+                        : []
+                    }
+                  />
+                </Box>
               </Box>
-              <PersonMenu
-                data={
-                  currentNetwork
-                    ? currentNetwork.people.sort((p1, p2) =>
-                        p1.name.localeCompare(p2.name),
-                      )
-                    : []
-                }
-              />
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
         <ForceGraphCanvas
           id="network-sketch"

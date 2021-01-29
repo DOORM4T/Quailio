@@ -19,31 +19,45 @@ const SplitOverlay: React.FC<IProps> = (props) => {
         zIndex: 99,
       }}
     >
+      {/* Close Button */}
+      <Button
+        aria-label="Close menu"
+        icon={<Icons.Close />}
+        style={{
+          position: "absolute",
+          top: "1rem",
+          right: "2rem",
+          zIndex: 100,
+        }}
+        onClick={props.handleClose}
+        hoverIndicator
+      />
+
+      {/* Content */}
       <Box
         direction={doColumn ? "column" : "row"}
         background="light-1"
-        elevation="xlarge"
+        elevation={doColumn ? "none" : "xlarge"}
         pad="small"
         gap="small"
         width="xlarge"
-        height="large"
+        height={doColumn ? "100vh" : "large"}
       >
-        <Button
-          aria-label="Close menu"
-          icon={<Icons.Close />}
-          style={{ position: "absolute", top: 0, right: 0, zIndex: 100 }}
-          onClick={props.handleClose}
-          hoverIndicator
-        />
-        <Box direction="column" width="medium" fill style={{ flex: 1 }}>
+        <Box
+          direction="column"
+          style={{ flex: 1 }}
+          fill
+          height={doColumn ? "40%" : "100%"}
+          overflow={doColumn ? "auto" : "hidden"}
+        >
           {props.leftChildren}
         </Box>
         <Box
           direction="column"
-          width="medium"
+          style={{ flex: doColumn ? 1 : 2 }}
           fill
-          style={{ flex: 2 }}
-          pad={{ top: "large" }}
+          height={doColumn ? "40%" : "100%"}
+          overflow={doColumn ? "auto" : "hidden"}
         >
           {props.rightChildren}
         </Box>
