@@ -3,8 +3,10 @@ import {
   Button,
   DropButton,
   Heading,
+  List,
   ResponsiveContext,
   Tip,
+  Text,
 } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
@@ -95,41 +97,14 @@ const DashboardPage: React.FC = () => {
   }
 
   /* Select Network Function */
-  const handleNetworkSelect = (id: string) => {
-    return async () => {
-      try {
-        dispatch(setNetwork(id))
-      } catch (error) {
-        console.error(error)
-      }
+
+  const handleNetworkSelect = async (event: any) => {
+    try {
+      if (!event.item) throw new Error("Network not found.")
+      await dispatch(setNetwork(event.item.id))
+    } catch (error) {
+      console.error(error)
     }
-  }
-
-  /* Menu component of the user's Networks for the Select Network dropdown */
-  const NetworkMenu = () => {
-    if (!networks || networks.length === 0) return <Box />
-
-    return (
-      <Box
-        direction="column"
-        style={{ maxHeight: "240px", overflowY: "auto", overflowX: "hidden" }}
-      >
-        {networks.map((network) => {
-          if (!network) return
-
-          return (
-            <Box
-              pad={{ horizontal: "medium", vertical: "small" }}
-              key={`${network.id}`}
-              onClick={handleNetworkSelect(network.id)}
-              hoverIndicator
-            >
-              {network.name}
-            </Box>
-          )
-        })}
-      </Box>
-    )
   }
 
   return (
@@ -171,7 +146,17 @@ const DashboardPage: React.FC = () => {
                   : "Select Network"
               }
               dropAlign={{ top: "bottom" }}
-              dropContent={NetworkMenu()}
+              dropContent={
+                networks ? (
+                  <List
+                    primaryKey={"name"}
+                    data={networks}
+                    onClickItem={handleNetworkSelect}
+                  />
+                ) : (
+                  <Text>You haven't created any networks... yet!</Text>
+                )
+              }
               disabled={networks.length === 0}
               fill="horizontal"
             />
