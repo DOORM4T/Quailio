@@ -227,7 +227,7 @@ export function createNetworkGraph(
         nodeToConnect = node as NodeObject & IPersonNode
       } else {
         /* Connect the second node */
-        alert(`Link B: ${node.id}`)
+        alert(`Link B: ${node.name}`)
 
         /* Ask for relationship reasons */
         const p1Reason = prompt("What is Person 1 to Person 2?")
