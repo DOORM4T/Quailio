@@ -1,5 +1,3 @@
-import { ActionCreator, AnyAction, Dispatch } from "redux"
-import { ThunkAction } from "redux-thunk"
 import { v4 as uuidv4 } from "uuid"
 import {
   auth,
@@ -11,6 +9,7 @@ import {
   uploadThumbnail,
   usersCollection,
 } from "../../firebase"
+import { AppThunk } from "../store"
 import {
   IAddPersonAction,
   IConnectPeopleAction,
@@ -22,7 +21,6 @@ import {
   IGetAllPeopleAction,
   INetwork,
   INetworkLoadingAction,
-  INetworksState,
   IPerson,
   IRelationships,
   IResetClientNetworksAction,
@@ -33,9 +31,9 @@ import {
 
 // -== ACTION CREATORS ==- //
 /* set isLoading state to true for async actions. Reducer will set isLoading to false for async actions.. */
-export const setNetworkLoading: ActionCreator<INetworkLoadingAction> = (
+export const setNetworkLoading = (
   isLoading: boolean,
-) => ({
+): INetworkLoadingAction => ({
   type: NetworkActionTypes.LOADING,
   isLoading,
 })
@@ -45,10 +43,8 @@ export const setNetworkLoading: ActionCreator<INetworkLoadingAction> = (
  * @param networkId ID of the network to add the person to
  * @param name new person's name
  */
-export const addPerson: ActionCreator<
-  ThunkAction<Promise<AnyAction>, INetworksState, null, IAddPersonAction>
-> = (networkId: string, name: string) => {
-  return async (dispatch: Dispatch) => {
+export const addPerson = (networkId: string, name: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     /* Initialize the new Person's document */
@@ -74,10 +70,13 @@ export const addPerson: ActionCreator<
       /* Create a document for the new Person */
       await peopleCollection.doc(newPerson.id).set(newPerson)
 
-      return dispatch({
+      /* Update state with the new person */
+      const action: IAddPersonAction = {
         type: NetworkActionTypes.ADD_PERSON,
         personId: newPerson.id,
-      })
+        personData: newPerson,
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to add the new Person */
       dispatch(setNetworkLoading(false))
@@ -91,9 +90,7 @@ export const addPerson: ActionCreator<
  * @param networkId
  * @param relationship
  */
-export const connectPeople: ActionCreator<
-  ThunkAction<Promise<AnyAction>, INetworksState, null, IConnectPeopleAction>
-> = (
+export const connectPeople = (
   networkId: string,
   relationship: {
     p1Id: string
@@ -101,8 +98,8 @@ export const connectPeople: ActionCreator<
     p1Reason: string
     p2Reason: string
   },
-) => {
-  return async (dispatch: Dispatch) => {
+): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     const { p1Id, p2Id, p1Reason = "", p2Reason = "" } = relationship
@@ -140,9 +137,16 @@ export const connectPeople: ActionCreator<
       await p1Doc.update({ relationships: updatedP1Rels })
       await p2Doc.update({ relationships: updatedP2Rels })
 
-      return dispatch({
+      const updatedP1Data: IPerson = { ...p1Data, relationships: updatedP1Rels }
+      const updatedP2Data: IPerson = { ...p2Data, relationships: updatedP2Rels }
+
+      /* Update state to reflect the new connection */
+      const action: IConnectPeopleAction = {
         type: NetworkActionTypes.CONNECT_PEOPLE,
-      })
+        updatedP1Data,
+        updatedP2Data,
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to connect */
       dispatch(setNetworkLoading(false))
@@ -155,10 +159,8 @@ export const connectPeople: ActionCreator<
  * Create a new network
  * @param name
  */
-export const createNetwork: ActionCreator<
-  ThunkAction<Promise<AnyAction>, INetworksState, null, ICreateNetworkAction>
-> = (name: string) => {
-  return async (dispatch: Dispatch) => {
+export const createNetwork = (name: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     /* Initialize the Network */
@@ -183,10 +185,12 @@ export const createNetwork: ActionCreator<
       /* Create a document for the Network in the Networks collection */
       await networksCollection.doc(newNetwork.id).set(newNetwork)
 
-      return dispatch({
+      /* Update state with the newNetwork */
+      const action: ICreateNetworkAction = {
         type: NetworkActionTypes.CREATE,
         newNetwork,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to create the Network */
       dispatch(setNetworkLoading(false))
@@ -204,10 +208,8 @@ export const createNetwork: ActionCreator<
  * Gets all People in a Network
  * @param networkId
  */
-export const getAllPeople: ActionCreator<
-  ThunkAction<Promise<AnyAction>, INetworksState, null, IGetAllPeopleAction>
-> = (networkId: string) => {
-  return async (dispatch: Dispatch) => {
+export const getAllPeople = (networkId: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     try {
@@ -226,10 +228,12 @@ export const getAllPeople: ActionCreator<
         ),
       )
 
-      return dispatch({
+      /* Update state with peopleData */
+      const action: IGetAllPeopleAction = {
         type: NetworkActionTypes.GET_ALL_PEOPLE,
         people: peopleData,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to get the network */
       dispatch(setNetworkLoading(false))
@@ -242,10 +246,8 @@ export const getAllPeople: ActionCreator<
  * Select a network by its ID, setting the "currentNetwork" field in global state
  * @param networkId
  */
-export const setNetwork: ActionCreator<
-  ThunkAction<Promise<AnyAction>, INetworksState, null, ISetNetworkAction>
-> = (networkId: string) => {
-  return async (dispatch: Dispatch) => {
+export const setNetwork = (networkId: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     try {
@@ -271,10 +273,12 @@ export const setNetwork: ActionCreator<
         people: peopleData,
       }
 
-      return dispatch({
+      /* Update state with the currentNetwork */
+      const action: ISetNetworkAction = {
         type: NetworkActionTypes.SET,
         currentNetwork,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to get the network */
       dispatch(setNetworkLoading(false))
@@ -287,15 +291,8 @@ export const setNetwork: ActionCreator<
  * Delete a Network by its ID
  * @param networkId
  */
-export const deleteNetwork: ActionCreator<
-  ThunkAction<
-    Promise<AnyAction>,
-    INetworksState,
-    null,
-    IDeleteNetworkByIdAction
-  >
-> = (networkId: string) => {
-  return async (dispatch: Dispatch) => {
+export const deleteNetwork = (networkId: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     try {
@@ -337,10 +334,12 @@ export const deleteNetwork: ActionCreator<
         console.error(error)
       }
 
-      return dispatch({
+      /* Update state accordingly with networkId */
+      const action: IDeleteNetworkByIdAction = {
         type: NetworkActionTypes.DELETE,
         networkId,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to delete the Network */
       dispatch(setNetworkLoading(false))
@@ -354,10 +353,8 @@ export const deleteNetwork: ActionCreator<
  * @param networkId
  * @param personId
  */
-export const deletePerson: ActionCreator<
-  ThunkAction<Promise<AnyAction>, INetworksState, null, IDeletePersonByIdAction>
-> = (networkId: string, personId: string) => {
-  return async (dispatch: Dispatch) => {
+export const deletePerson = (networkId: string, personId: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     try {
@@ -400,11 +397,13 @@ export const deletePerson: ActionCreator<
       /* Delete the Person's document */
       await personDoc.delete()
 
-      return dispatch({
+      /* Update state accordingly with networkId and personId */
+      const action: IDeletePersonByIdAction = {
         type: NetworkActionTypes.DELETE_PERSON,
         networkId,
         personId,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to delete the Person */
       dispatch(setNetworkLoading(false))
@@ -416,15 +415,8 @@ export const deletePerson: ActionCreator<
 /**
  * Get all Networks belonging to the currently authenticated user
  */
-export const getAllNetworks: ActionCreator<
-  ThunkAction<
-    Promise<AnyAction>,
-    INetworksState,
-    null,
-    IGetAllNetworksIdsAction
-  >
-> = () => {
-  return async (dispatch: Dispatch) => {
+export const getAllNetworks = (): AppThunk => {
+  return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
     try {
@@ -450,10 +442,12 @@ export const getAllNetworks: ActionCreator<
       /* Ensure Network data exists for each Network */
       const existingNetworkData = networkData.filter((data) => Boolean(data))
 
-      return dispatch({
+      /* Update state accordingly with networks data */
+      const action: IGetAllNetworksIdsAction = {
         type: NetworkActionTypes.GET_ALL,
         networks: existingNetworkData,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to get list of network IDs */
       dispatch(setNetworkLoading(false))
@@ -467,46 +461,46 @@ export const getAllNetworks: ActionCreator<
  * @param personId
  * @param thumbnailUrl
  */
-export const setPersonThumbnail: ActionCreator<
-  ThunkAction<
-    Promise<AnyAction>,
-    INetworksState,
-    null,
-    ISetPersonThumbnailAction
-  >
-> = (networkId: string, personId: string, thumbnailFile: File) => {
-  return async (dispatch: Dispatch) => {
-    dispatch(setNetworkLoading(true))
+export const setPersonThumbnail = (
+  networkId: string,
+  personId: string,
+  thumbnailFile: File,
+): AppThunk => async (dispatch) => {
+  dispatch(setNetworkLoading(true))
 
-    try {
-      const personDoc = peopleCollection.doc(personId)
+  try {
+    const personDoc = peopleCollection.doc(personId)
 
-      /* Ensure the Person exists */
-      const doesExist = (await personDoc.get()).exists
-      if (!doesExist) throw new Error("That person does not exist.")
+    /* Ensure the Person exists */
+    const doesExist = (await personDoc.get()).exists
+    if (!doesExist) throw new Error("That person does not exist.")
 
-      /* Upload the thumbnail file */
-      const thumbnailUrl = await uploadThumbnail(networkId, thumbnailFile)
+    /* Upload the thumbnail file */
+    const thumbnailUrl = await uploadThumbnail(networkId, thumbnailFile)
+    if (thumbnailUrl === null)
+      throw new Error("Failed to upload the thumbnail.")
 
-      /* Set the Person's thumbnail url field */
-      await personDoc.set({ thumbnailUrl }, { merge: true }) // set + merge in case the field is undefined
+    /* Set the Person's thumbnail url field */
+    await personDoc.set({ thumbnailUrl }, { merge: true }) // set + merge in case the field is undefined
 
-      return dispatch({
-        type: NetworkActionTypes.SET_PERSON_THUMBNAIL,
-        personId,
-        thumbnailUrl,
-      })
-    } catch (error) {
-      /* Failed to set the Person's thumbnail url*/
-      dispatch(setNetworkLoading(false))
-      throw error
+    /* Update state accordingly with personId and thumbnailUrl */
+    const action: ISetPersonThumbnailAction = {
+      type: NetworkActionTypes.SET_PERSON_THUMBNAIL,
+      personId,
+      thumbnailUrl,
     }
+
+    return dispatch(action)
+  } catch (error) {
+    /* Failed to set the Person's thumbnail url*/
+    dispatch(setNetworkLoading(false))
+    throw error
   }
 }
 
 /**
  * Reset local network state. Called when the logout/delete account actions are successful.
  */
-export const resetLocalNetworks: ActionCreator<IResetClientNetworksAction> = () => ({
+export const resetLocalNetworks = (): IResetClientNetworksAction => ({
   type: NetworkActionTypes.RESET_CLIENT,
 })

@@ -1,14 +1,7 @@
-import { ActionCreator, AnyAction, Dispatch } from "redux"
-import { ThunkAction } from "redux-thunk"
-import {
-  auth,
-  IFirebaseUser,
-  networksCollection,
-  peopleCollection,
-  usersCollection,
-} from "../../firebase"
-import { resetLocalNetworks } from "../networks/networksActions"
-import { INetwork } from "../networks/networkTypes"
+import { ActionCreator } from "redux"
+import { auth, IFirebaseUser, usersCollection } from "../../firebase"
+import { deleteNetwork, resetLocalNetworks } from "../networks/networksActions"
+import { AppThunk } from "../store"
 import {
   AuthActionTypes,
   IAuthCreateAccountAction,
@@ -17,12 +10,11 @@ import {
   IAuthLoginAction,
   IAuthLogoutAction,
   IAuthSetUserAction,
-  IAuthState,
 } from "./authTypes"
 
 // -== ACTION CREATORS ==- //
 /* Set isLoading state. Used by asynchronous auth action. */
-const setAuthLoading: ActionCreator<IAuthLoading> = (isLoading: boolean) => ({
+const setAuthLoading = (isLoading: boolean): IAuthLoading => ({
   type: AuthActionTypes.LOADING,
   isLoading,
 })
@@ -32,10 +24,8 @@ const setAuthLoading: ActionCreator<IAuthLoading> = (isLoading: boolean) => ({
  * @param email
  * @param password
  */
-export const createAccount: ActionCreator<
-  ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthCreateAccountAction>
-> = (email: string, password: string) => {
-  return async (dispatch: Dispatch) => {
+export const createAccount = (email: string, password: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setAuthLoading(true))
 
     try {
@@ -59,10 +49,12 @@ export const createAccount: ActionCreator<
       /* Save the user document */
       await usersCollection.doc(credentials.user.uid).set(userDocument)
 
-      return dispatch({
+      /* Update state with the logged in user ID */
+      const action: IAuthCreateAccountAction = {
         type: AuthActionTypes.CREATE_ACCOUNT,
         id,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       dispatch(setAuthLoading(false))
       throw error
@@ -75,23 +67,25 @@ export const createAccount: ActionCreator<
  * @param email
  * @param password
  */
-export const login: ActionCreator<
-  ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthLoginAction>
-> = (email: string, password: string) => {
-  return async (dispatch: Dispatch) => {
+export const login = (email: string, password: string): AppThunk => {
+  return async (dispatch) => {
     dispatch(setAuthLoading(true))
 
     try {
+      /* Sign in */
       const credentials = await auth.signInWithEmailAndPassword(email, password)
       if (!credentials.user) throw new Error("Failed to get credentials.")
 
+      /* Get ID */
       const id = credentials.user.uid
       if (!id) throw new Error("Failed to get the user's id.")
 
-      return dispatch({
+      /* Update state with the logged in user's ID */
+      const action: IAuthLoginAction = {
         type: AuthActionTypes.LOGIN,
         id,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       dispatch(setAuthLoading(false))
       throw error
@@ -102,41 +96,39 @@ export const login: ActionCreator<
 /**
  * Sign out the currently authenticated user
  */
-export const logout: ActionCreator<
-  ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthLogoutAction>
-> = () => {
-  return async (dispatch: Dispatch) => {
+export const logout = (): AppThunk => {
+  return async (dispatch) => {
     dispatch(setAuthLoading(true))
 
     try {
       await auth.signOut()
+
+      /* Clear current network data after logging out */
       dispatch(resetLocalNetworks())
     } catch (error) {
       dispatch(setAuthLoading(false))
       throw error
     }
 
-    return dispatch({
+    /* Update global auth state by dispatching the logout action */
+    const action: IAuthLogoutAction = {
       type: AuthActionTypes.LOGOUT,
-    })
+    }
+    return dispatch(action)
   }
 }
 
 /**
  * Delete the currently authenticated user account, along with their related network documents
  */
-export const deleteAccount: ActionCreator<
-  ThunkAction<Promise<AnyAction>, IAuthState, null, IAuthDeleteAccountAction>
-> = () => {
-  return async (dispatch: Dispatch) => {
+export const deleteAccount = (): AppThunk => {
+  return async (dispatch) => {
     dispatch(setAuthLoading(true))
 
     try {
+      /* Ensure a user is logged in */
       if (!auth.currentUser) throw new Error("No user is currently logged in.")
       const userId = auth.currentUser.uid
-
-      /* Delete the current user from Firebase Auth */
-      await auth.currentUser.delete()
 
       /* Access the user's Firebase document */
       const userDoc = usersCollection.doc(userId)
@@ -145,26 +137,22 @@ export const deleteAccount: ActionCreator<
       ).data() as IFirebaseUser
 
       /* Delete all network documents created by the user */
-      userData.networkIds.forEach(async (networkId) => {
-        const networkDoc = networksCollection.doc(networkId)
-        const networkData = (await networkDoc.get()).data() as INetwork
-
-        /* delete all person documents belonging to the network */
-        networkData.personIds.forEach(
-          async (personId) => await peopleCollection.doc(personId).delete(),
-        )
-
-        /* delete this network document */
-        await networkDoc.delete()
+      const networkDeleteList = userData.networkIds.map(async (id) => {
+        return await dispatch(deleteNetwork(id))
       })
+      await Promise.all(networkDeleteList)
 
       /* Delete the user document */
       await userDoc.delete()
 
+      /* Delete the current user from Firebase Auth */
+      await auth.currentUser.delete()
+
       /* Update state */
-      return dispatch({
+      const action: IAuthDeleteAccountAction = {
         type: AuthActionTypes.DELETE_ACCOUNT,
-      })
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to delete the user */
       dispatch(setAuthLoading(false))

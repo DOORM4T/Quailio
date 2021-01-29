@@ -2,7 +2,6 @@ import ForceGraph, { LinkObject, NodeObject } from "force-graph"
 import {
   addPerson,
   connectPeople,
-  getAllPeople,
 } from "../../../store/networks/networksActions"
 import {
   ICurrentNetwork,
@@ -211,21 +210,26 @@ export function createNetworkGraph(
         }
 
         await store.dispatch<any>(addPerson(state.id, name))
-
-        /* Update global people state */
-        await store.dispatch<any>(getAllPeople(state.id))
       } catch (error) {
         console.error(error)
       }
     })
-    .onNodeRightClick(async (node) => {
+    .onNodeRightClick(async (n) => {
+      const node = n as NodeObject & IPersonNode
+
+      /* Stop if "disconnected" from Redux -- TODO: disconnect should only cancel database persistence for a demo dashboard */
       if (disconnected) return
 
+      /* Connect nodes */
       if (!nodeToConnect) {
-        alert(`Link A: ${node.id}`)
+        /* First node in the connection */
+        alert(`Link A: ${node.name}`)
         nodeToConnect = node as NodeObject & IPersonNode
       } else {
+        /* Connect the second node */
         alert(`Link B: ${node.id}`)
+
+        /* Ask for relationship reasons */
         const p1Reason = prompt("What is Person 1 to Person 2?")
         if (p1Reason === null) {
           alert("Canceled node connection.")
@@ -249,9 +253,6 @@ export function createNetworkGraph(
               p2Reason,
             }),
           )
-
-          /* Update global people state */
-          await store.dispatch<any>(getAllPeople(state.id))
         } catch (error) {
           console.error(error)
         }

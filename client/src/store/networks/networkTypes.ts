@@ -73,12 +73,13 @@ export interface IResetClientNetworksAction {
 export interface IAddPersonAction {
   type: NetworkActionTypes.ADD_PERSON
   personId: string // ID of the added person
+  personData: IPerson
 }
 
 export interface IConnectPeopleAction {
   type: NetworkActionTypes.CONNECT_PEOPLE
-  /* No payload -- The current network refers to the IDs of these newly connected people. 
-     There is a separate action to get each person's document by their ID */
+  updatedP1Data: IPerson
+  updatedP2Data: IPerson
 }
 
 export interface IDeletePersonByIdAction {

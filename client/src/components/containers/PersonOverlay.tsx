@@ -11,7 +11,7 @@ import {
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { ActionCreator, AnyAction, Dispatch } from "redux"
+import { Dispatch } from "redux"
 import { personContentCollection } from "../../firebase"
 import {
   connectPeople,
@@ -32,7 +32,7 @@ import SplitOverlay from "../SplitOverlay"
 
 const EditPersonOverlay: React.FC = () => {
   const [isEditing, setIsEditing] = React.useState(false)
-  const dispatch: ActionCreator<AnyAction> = useDispatch()
+  const dispatch: Dispatch<any> = useDispatch()
   const thumbnailUploadRef = React.useRef<HTMLInputElement>(null)
 
   /* Get all people in the current network */
@@ -90,7 +90,6 @@ const EditPersonOverlay: React.FC = () => {
       await dispatch(setPersonThumbnail(currentNetwork.id, person.id, file))
 
       /* Refresh focused person global state */
-      await dispatch(getAllPeople(currentNetwork.id))
       await dispatch(setPersonInFocus(person.id))
     } catch (error) {
       /* Failed to upload a thumbnail */
@@ -270,7 +269,6 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
       )
 
       /* Load updated data */
-      await dispatch(getAllPeople(currentNetwork.id))
       await dispatch(setPersonInFocus(props.person.id))
     } catch (error) {
       console.error(error)
@@ -334,7 +332,6 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
                   primaryKey="name"
                   onClickItem={connectToPerson}
                   data={relationshipOptions}
-                  step={5}
                 />
               </React.Fragment>
             }

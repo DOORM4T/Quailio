@@ -18,7 +18,6 @@ import {
   addPerson,
   createNetwork,
   deleteNetwork,
-  getAllPeople,
   setNetwork,
 } from "../store/networks/networksActions"
 import { ICurrentNetwork, INetwork } from "../store/networks/networkTypes"
@@ -72,7 +71,6 @@ const DashboardPage: React.FC = () => {
     /* update state */
     try {
       await dispatch(addPerson(currentNetwork.id, name))
-      await dispatch(getAllPeople(currentNetwork.id))
     } catch (error) {
       console.error(error)
     }
@@ -229,7 +227,15 @@ const DashboardPage: React.FC = () => {
                   }
                 />
               </Box>
-              <PersonMenu data={currentNetwork ? currentNetwork.people : []} />
+              <PersonMenu
+                data={
+                  currentNetwork
+                    ? currentNetwork.people.sort((p1, p2) =>
+                        p1.name.localeCompare(p2.name),
+                      )
+                    : []
+                }
+              />
             </Box>
           )}
         </Box>

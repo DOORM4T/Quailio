@@ -84,10 +84,16 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
         action.personId,
       )
 
-      /* Network with the updated IDs */
-      const updatedNetwork = {
+      /* Append the new person data to the current netowkr's list of person data */
+      const updatedPeopleData = state.currentNetwork.people.concat(
+        action.personData,
+      )
+
+      /* Network with the updated IDs and data */
+      const updatedNetwork: ICurrentNetwork = {
         ...state.currentNetwork,
         personIds: updatedPersonIds,
+        people: updatedPeopleData,
       }
 
       return {
@@ -99,8 +105,32 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
 
     // -== CONNECT TWO PEOPLE IN THE CURRENT NETWORK ==- //
     case NetworkActionTypes.CONNECT_PEOPLE: {
+      /* Stop if no network is selected */
+      if (!state.currentNetwork) break
+
+      /* Get the person data without the updated, newly connected people */
+      const peopleWithoutUpdatedPeople: IPerson[] = [
+        ...state.currentNetwork.people.filter(
+          (p) =>
+            p.id !== action.updatedP1Data.id &&
+            p.id !== action.updatedP2Data.id,
+        ),
+      ]
+
+      /* Append the updated peopel to the list */
+      const updatedPeople = peopleWithoutUpdatedPeople
+        .concat(action.updatedP1Data)
+        .concat(action.updatedP2Data)
+
+      /* Create an updated current network object */
+      const updatedNetwork: ICurrentNetwork = {
+        ...state.currentNetwork,
+        people: updatedPeople,
+      }
+
       return {
         ...state,
+        currentNetwork: updatedNetwork,
         isLoading: false,
       }
     }

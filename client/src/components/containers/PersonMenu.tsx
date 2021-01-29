@@ -66,7 +66,11 @@ const PersonMenu: React.FC<IProps> = (props) => {
         margin={{ bottom: "medium" }}
         style={{ overflowY: "auto" }}
         action={(person: IPerson) => (
-          <Button icon={<Icons.View />} onClick={viewPerson(person.id)} />
+          <Button
+            icon={<Icons.View />}
+            onClick={viewPerson(person.id)}
+            key={`view-${person.id}`}
+          />
         )}
         children={renderItem}
       />
