@@ -16,6 +16,7 @@ import { personContentCollection } from "../../firebase"
 import {
   connectPeople,
   deletePerson as deletePersonById,
+  disconnectPeople,
   getAllPeople,
   setPersonThumbnail,
 } from "../../store/networks/networksActions"
@@ -133,6 +134,41 @@ const EditPersonOverlay: React.FC = () => {
     </Box>
   )
 
+  interface IOtherPersonData {
+    id: string
+    name: string
+    reason: string
+  }
+
+  const otherPersonData: IOtherPersonData[] = person
+    ? (Object.keys(person.relationships)
+        .map((relationshipId) => {
+          /* Get relationship details */
+          const [thisPersonReason, otherPersonReason] = person.relationships[
+            relationshipId
+          ]
+
+          /* Find people related to the selected person */
+          const otherPerson = currentNetwork.people.find(
+            (p) => p.id === relationshipId,
+          )
+          if (!otherPerson) return null
+
+          /* Create OtherPersonData object */
+          return {
+            id: otherPerson.id,
+            name: otherPerson.name,
+            reason: otherPersonReason,
+          }
+        })
+        /* Remove null items */
+        .filter((item) => item !== null) as IOtherPersonData[])
+        /* Sort by name */
+        .sort((p1, p2) => p1.name.localeCompare(p2.name))
+    : []
+
+  console.log(otherPersonData)
+
   const Relationships: React.FC = () => (
     <Box
       overflow={{ vertical: "auto" }}
@@ -141,35 +177,56 @@ const EditPersonOverlay: React.FC = () => {
       fill
     >
       <Heading level={2}>Connections</Heading>
-      <Box direction="column" overflow={{ vertical: "auto" }}>
-        {person.relationships &&
-          Object.keys(person.relationships).map((relationshipId, index) => {
-            const [thisPersonRel, otherPersonRel] = person.relationships[
-              relationshipId
-            ]
-
-            /* Find people related to the selected person */
-            const otherPerson = currentNetwork.people.find(
-              (p) => p.id === relationshipId,
-            )
-            if (!otherPerson) return null
-
-            const relationshipString = `${otherPerson.name} [${otherPersonRel}]`
-
-            return (
+      <List
+        data={otherPersonData}
+        children={(item: IOtherPersonData, index: number) => {
+          return (
+            <Box fill="horizontal" key={`${item.id}-${index}`}>
               <Anchor
                 /* Go to the related person's menu when clicked */
                 onClick={async () => {
-                  await dispatch(setPersonInFocus(otherPerson.id))
-                  setIsEditing(false)
+                  try {
+                    await dispatch(setPersonInFocus(item.id))
+                    setIsEditing(false)
+                  } catch (error) {
+                    console.error(error)
+                  }
                 }}
-                key={`${relationshipId}-${index}`}
               >
-                <Text>{relationshipString}</Text>
+                {item.name}
               </Anchor>
-            )
-          })}
-      </Box>
+              <Text style={{ fontStyle: "italic" }}>{item.reason}</Text>
+            </Box>
+          )
+        }}
+        action={(otherPerson: IOtherPersonData) => {
+          if (!isEditing) return null
+          return (
+            <Button
+              key={`delete-connection-${otherPerson.id}`}
+              aria-label="Delete connection"
+              icon={<Icons.Unlink color="status-critical" />}
+              hoverIndicator
+              onClick={async () => {
+                /* Delete a relationship with the other person*/
+                try {
+                  await dispatch(
+                    disconnectPeople(currentNetwork.id, {
+                      p1Id: person.id,
+                      p2Id: otherPerson.id,
+                    }),
+                  )
+
+                  /* Get updated current person data */
+                  await dispatch(setPersonInFocus(person.id))
+                } catch (error) {
+                  console.error(error)
+                }
+              }}
+            />
+          )
+        }}
+      />
     </Box>
   )
 

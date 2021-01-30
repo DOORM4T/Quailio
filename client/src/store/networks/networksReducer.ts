@@ -103,12 +103,13 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
       }
     }
 
-    // -== CONNECT TWO PEOPLE IN THE CURRENT NETWORK ==- //
-    case NetworkActionTypes.CONNECT_PEOPLE: {
+    // -== CONNECT/DISCONNECT TWO PEOPLE IN THE CURRENT NETWORK ==- //
+    case NetworkActionTypes.CONNECT_PEOPLE:
+    case NetworkActionTypes.DISCONNECT_PEOPLE: {
       /* Stop if no network is selected */
       if (!state.currentNetwork) break
 
-      /* Get the person data without the updated, newly connected people */
+      /* Get the person data without the updated, newly (dis)connected people */
       const peopleWithoutUpdatedPeople: IPerson[] = [
         ...state.currentNetwork.people.filter(
           (p) =>
@@ -117,7 +118,7 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
         ),
       ]
 
-      /* Append the updated peopel to the list */
+      /* Append the updated people to the list */
       const updatedPeople = peopleWithoutUpdatedPeople
         .concat(action.updatedP1Data)
         .concat(action.updatedP2Data)
