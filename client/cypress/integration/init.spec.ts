@@ -1,4 +1,3 @@
-import { base } from "grommet"
 import { store } from "../../src/store/store"
 
 const baseUrl = Cypress.config().baseUrl || ""
@@ -67,6 +66,7 @@ describe("User authentication", () => {
       .type(TEST_PASSWORD)
       .get("#login-button")
       .click()
+      .wait(5000)
       .url()
       /* A successful sign in should send the user to the Dashboard route */
       .should("equal", `${baseUrl}/dashboard`)
@@ -75,6 +75,7 @@ describe("User authentication", () => {
   it("Deletes a user account", () => {
     cy.on("window:confirm", (str) => {
       expect(str).to.equal(CONFIRM_DELETE_ACCOUNT_MESSAGE)
+      return true
     })
 
     cy.get("#navigation-menu")
