@@ -45,14 +45,14 @@ const Routes: React.FC = () => {
               )}
             </Route>
 
-            {/* Dashboard Route. Redirects to Login Page if not authenticated. */}
+            {/* Dashboard Route. Redirects to Home Page if not authenticated. */}
             <Route path="/dashboard">
-              {isAuthenticated ? <DashboardPage /> : <Redirect to="/login" />}
+              {isAuthenticated ? <DashboardPage /> : <Redirect to="/" />}
             </Route>
 
-            {/* Settings Route. Redirects to Login Page if not authenticated. */}
+            {/* Settings Route. Redirects to Home Page if not authenticated. */}
             <Route path="/settings">
-              {isAuthenticated ? <SettingsPage /> : <Redirect to="/login" />}
+              {isAuthenticated ? <SettingsPage /> : <Redirect to="/" />}
             </Route>
             <Redirect to="/" />
           </Switch>
