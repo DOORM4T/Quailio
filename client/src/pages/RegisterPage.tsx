@@ -18,7 +18,7 @@ import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
 import { createAccount } from "../store/auth/authActions"
 
-const RegisterPage: React.FC<IProps> = (props: IProps) => {
+const RegisterPage: React.FC = (props) => {
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
   const dispatch: ActionCreator<AnyAction> = useDispatch()
@@ -87,14 +87,22 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
               validate="blur"
             >
               <FormField name="email" label="Email">
-                <TextInput name="email" type="email" />
+                <TextInput name="email" type="email" id="email-field" />
               </FormField>
 
               <FormField name="password" label="Password">
-                <TextInput name="password" type="password" />
+                <TextInput
+                  name="password"
+                  type="password"
+                  id="password-field"
+                />
               </FormField>
               <FormField name="confirmPassword" label="Confirm Password">
-                <TextInput name="confirmPassword" type="password" />
+                <TextInput
+                  name="confirmPassword"
+                  type="password"
+                  id="confirm-password-field"
+                />
               </FormField>
 
               <Box direction="column" gap="medium" pad={{ bottom: "large" }}>
@@ -105,7 +113,7 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
                     </Text>
                   </Box>
                 )}
-                <Button type="submit" label="Register" />
+                <Button type="submit" label="Register" id="register-button" />
               </Box>
             </Form>
           </CardBody>
@@ -124,8 +132,6 @@ const RegisterPage: React.FC<IProps> = (props: IProps) => {
 }
 
 export default RegisterPage
-
-interface IProps {}
 
 interface IForm {
   email: string

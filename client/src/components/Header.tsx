@@ -60,6 +60,7 @@ const Header: React.FC<IProps> = (props) => {
       </Box>
       <Nav direction="row" pad="xsmall">
         <Menu
+          id="navigation-menu"
           icon={<Icons.Menu />}
           items={MenuItems({ logoutFunction, isLoggedIn })}
           dropAlign={{ top: "bottom", right: "left" }}
@@ -122,7 +123,11 @@ function MenuItems(props: IMenuProps) {
 
     labels.push({
       label: (
-        <Link to="/settings" style={{ display: "inline-block", width: "100%" }}>
+        <Link
+          to="/settings"
+          id="settings-anchor"
+          style={{ display: "inline-block", width: "100%" }}
+        >
           <Box fill pad="small" direction="row">
             <Text margin={{ right: "small" }}>
               <Icons.UserSettings color="accent-1" />
@@ -140,11 +145,12 @@ function MenuItems(props: IMenuProps) {
             <Box direction="column" align="center">
               <Text size="small">Logged in as: {auth.currentUser.email}</Text>
               <Anchor
+                id="logout-anchor"
                 color="light-1"
                 size="small"
                 onClick={props.logoutFunction}
               >
-                Log out
+                Sign out
               </Anchor>
             </Box>
           )}
@@ -155,12 +161,16 @@ function MenuItems(props: IMenuProps) {
     /* otherwise, show register & login links */
     labels.push({
       label: (
-        <Link to="/login" style={{ display: "inline-block", width: "100%" }}>
+        <Link
+          to="/login"
+          id="login-anchor"
+          style={{ display: "inline-block", width: "100%" }}
+        >
           <Box fill pad="small" direction="row">
             <Text margin={{ right: "small" }}>
               <Icons.User color="accent-1" />
             </Text>
-            <Text color="light-1">Log in</Text>
+            <Text color="light-1">Sign in</Text>
           </Box>
         </Link>
       ),

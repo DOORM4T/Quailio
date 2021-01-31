@@ -132,18 +132,21 @@ export const deleteAccount = (): AppThunk => {
 
       /* Access the user's Firebase document */
       const userDoc = usersCollection.doc(userId)
-      const userData: IFirebaseUser = (
-        await userDoc.get()
-      ).data() as IFirebaseUser
+      const userDataDoesExist = (await userDoc.get()).exists
+      if (userDataDoesExist) {
+        const userData: IFirebaseUser = (
+          await userDoc.get()
+        ).data() as IFirebaseUser
 
-      /* Delete all network documents created by the user */
-      const networkDeleteList = userData.networkIds.map(async (id) => {
-        return await dispatch(deleteNetwork(id))
-      })
-      await Promise.all(networkDeleteList)
+        /* Delete all network documents created by the user */
+        const networkDeleteList = userData.networkIds.map(async (id) => {
+          return await dispatch(deleteNetwork(id))
+        })
+        await Promise.all(networkDeleteList)
 
-      /* Delete the user document */
-      await userDoc.delete()
+        /* Delete the user document */
+        await userDoc.delete()
+      }
 
       /* Delete the current user from Firebase Auth */
       await auth.currentUser.delete()

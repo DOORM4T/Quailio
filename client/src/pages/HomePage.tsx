@@ -73,10 +73,10 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
             ) : (
               <Box direction="row" gap="small">
                 <Link to="/login">
-                  <Button label="Sign In" />
+                  <Button label="Sign In" id="sign-in-button" />
                 </Link>
                 <Link to="/register">
-                  <Button label="Register" />
+                  <Button label="Register" id="register-button" />
                 </Link>
               </Box>
             )}

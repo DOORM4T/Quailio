@@ -18,7 +18,7 @@ import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
 import { login } from "../store/auth/authActions"
 
-const LoginPage: React.FC<IProps> = (props: IProps) => {
+const LoginPage: React.FC = () => {
   const [values, setValues] = React.useState<IForm>(defaultFormValue)
   const [errorMessage, setMessage] = React.useState<string>("")
   const dispatch: ActionCreator<AnyAction> = useDispatch()
@@ -61,10 +61,10 @@ const LoginPage: React.FC<IProps> = (props: IProps) => {
               onSubmit={handleSubmit}
               validate="blur"
             >
-              <FormField name="email" label="Email">
+              <FormField name="email" label="Email" id="email-field">
                 <TextInput name="email" type="email" />
               </FormField>
-              <FormField name="password" label="Password">
+              <FormField name="password" label="Password" id="password-field">
                 <TextInput name="password" type="password" />
               </FormField>
               <Box direction="column" gap="medium" pad={{ bottom: "large" }}>
@@ -75,7 +75,7 @@ const LoginPage: React.FC<IProps> = (props: IProps) => {
                     </Text>
                   </Box>
                 )}
-                <Button type="submit" label="Log in" />
+                <Button type="submit" label="Log in" id="login-button" />
               </Box>
             </Form>
           </CardBody>
@@ -94,8 +94,6 @@ const LoginPage: React.FC<IProps> = (props: IProps) => {
 }
 
 export default LoginPage
-
-interface IProps {}
 
 interface IForm {
   email: string
