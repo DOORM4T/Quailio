@@ -131,6 +131,7 @@ const DashboardPage: React.FC = () => {
             margin="small"
           >
             <DropButton
+              id="select-network-dropbutton"
               style={{
                 borderRadius: "4px",
                 whiteSpace: "nowrap",
@@ -149,6 +150,7 @@ const DashboardPage: React.FC = () => {
               dropContent={
                 networks ? (
                   <List
+                    id="select-network-list"
                     primaryKey={"name"}
                     data={networks}
                     onClickItem={handleNetworkSelect}
@@ -165,6 +167,7 @@ const DashboardPage: React.FC = () => {
               content="Create a new network"
               children={
                 <Button
+                  id="create-network-button"
                   aria-label="Create a new network"
                   icon={<Icons.Add color="brand" />}
                   onClick={handleCreateNetwork}
