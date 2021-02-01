@@ -46,6 +46,8 @@ describe("User authentication", () => {
       .url()
       /* Successful registration should send the user to the Dashboard route */
       .should("equal", `${BASE_URL}/dashboard`)
+      /* Wait for the user doc to be created */
+      .wait(5000)
   })
 
   it("Signs out a user", () => {
