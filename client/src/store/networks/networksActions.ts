@@ -245,6 +245,9 @@ export const createNetwork = (name: string): AppThunk => {
 
       /* Add the Network's ID to the User's list of Network IDs */
       const userDoc = usersCollection.doc(uid)
+      const doesUserDataExist = (await userDoc.get()).exists
+      if (!doesUserDataExist) throw new Error("User document does not exist.")
+
       const userData = (await userDoc.get()).data() as IFirebaseUser
       const updatedUserNetworkIds = userData.networkIds.concat(newNetwork.id)
       userDoc.update({ networkIds: updatedUserNetworkIds })
