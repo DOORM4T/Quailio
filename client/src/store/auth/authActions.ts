@@ -130,6 +130,9 @@ export const deleteAccount = (): AppThunk => {
       if (!auth.currentUser) throw new Error("No user is currently logged in.")
       const userId = auth.currentUser.uid
 
+      /* Delete the current user from Firebase Auth */
+      await auth.currentUser.delete()
+
       /* Access the user's Firebase document */
       const userDoc = usersCollection.doc(userId)
       const userDataDoesExist = (await userDoc.get()).exists
@@ -147,9 +150,6 @@ export const deleteAccount = (): AppThunk => {
         /* Delete the user document */
         await userDoc.delete()
       }
-
-      /* Delete the current user from Firebase Auth */
-      await auth.currentUser.delete()
 
       /* Update state */
       const action: IAuthDeleteAccountAction = {
