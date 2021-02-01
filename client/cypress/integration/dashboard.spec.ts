@@ -8,7 +8,7 @@ const FIRST_NETWORK_NAME = "First Test Network"
 const SECOND_NETWORK_NAME = "Second Test Network"
 
 describe("Dashboard", () => {
-  it("Sends registered user to /dashboard", () => {
+  it("Sends a registered user to /dashboard", () => {
     cy.visit("/register")
       .get("#email-field")
       .type(TEST_EMAIL)
@@ -21,10 +21,10 @@ describe("Dashboard", () => {
       .url()
       /* Successful registration should send the user to the Dashboard route */
       .should("equal", `${BASE_URL}/dashboard`)
-      .wait(2000) // wait for the user doc to be created
+      .wait(5000) // wait for the user doc to be created
   })
 
-  it("Creates a network", () => {
+  it("Creates a network and selects it", () => {
     cy.visit("/dashboard", {
       onBeforeLoad(win) {
         /* Stub the output of "Create Network" prompt  */
@@ -41,7 +41,7 @@ describe("Dashboard", () => {
       .should("contain.text", FIRST_NETWORK_NAME)
   })
 
-  it("Creates a second network", () => {
+  it("Creates a second network and selects it", () => {
     cy.window()
       .then((win) => {
         /* Stub the output of "Create Network" prompt  */
@@ -57,7 +57,7 @@ describe("Dashboard", () => {
       .should("contain.text", SECOND_NETWORK_NAME)
   })
 
-  it("Can select another network", () => {
+  it("Selects the first network from the drop list", () => {
     cy.window()
       .get("#select-network-dropbutton")
       .click()
