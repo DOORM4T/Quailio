@@ -1,6 +1,10 @@
 import { store } from "../../src/store/store"
-
-const baseUrl = Cypress.config().baseUrl || ""
+import {
+  BASE_URL,
+  TEST_EMAIL,
+  TEST_PASSWORD,
+  CONFIRM_DELETE_ACCOUNT_MESSAGE,
+} from "../fixtures/constants"
 
 describe("Cypress", () => {
   it("Is working", () => {
@@ -14,12 +18,12 @@ describe("Cypress", () => {
 
 describe("Home page", () => {
   it('Navigates to Login page upon "Sign In" button click', () => {
-    const loginUrl = `${baseUrl}/login`
+    const loginUrl = `${BASE_URL}/login`
     cy.visit("/").get("#sign-in-button").click().url().should("eq", loginUrl)
   })
 
   it('Navigates to Register page upon "Register" button click', () => {
-    const registerUrl = `${baseUrl}/register`
+    const registerUrl = `${BASE_URL}/register`
     cy.visit("/")
       .get("#register-button")
       .click()
@@ -28,10 +32,6 @@ describe("Home page", () => {
   })
 })
 
-const TEST_EMAIL = "test@example.com"
-const TEST_PASSWORD = "test123"
-const CONFIRM_DELETE_ACCOUNT_MESSAGE =
-  "Are you sure you want to delete your account? This action cannot be reversed."
 describe("User authentication", () => {
   it("Registers a user", () => {
     cy.visit("/register")
@@ -45,7 +45,7 @@ describe("User authentication", () => {
       .click()
       .url()
       /* Successful registration should send the user to the Dashboard route */
-      .should("equal", `${baseUrl}/dashboard`)
+      .should("equal", `${BASE_URL}/dashboard`)
   })
 
   it("Signs out a user", () => {
@@ -55,7 +55,7 @@ describe("User authentication", () => {
       .click()
       .url()
       /* A successful sign-out should send the user to the Home route */
-      .should("equal", `${baseUrl}/`)
+      .should("equal", `${BASE_URL}/`)
   })
 
   it("Signs in a user", () => {
@@ -66,10 +66,9 @@ describe("User authentication", () => {
       .type(TEST_PASSWORD)
       .get("#login-button")
       .click()
-      .wait(5000)
       .url()
       /* A successful sign in should send the user to the Dashboard route */
-      .should("equal", `${baseUrl}/dashboard`)
+      .should("equal", `${BASE_URL}/dashboard`)
   })
 
   it("Deletes a user account", () => {
@@ -86,14 +85,8 @@ describe("User authentication", () => {
       .click()
       .get("#delete-account-button")
       .click()
-      .wait(1000)
-      .should(() => {
-        const userId = store.getState().auth.userId
-        // tslint:disable-next-line:no-unused-expression
-        expect(userId).to.not.be.ok
-      })
       .url()
-      .should("equal", `${baseUrl}/`)
+      .should("equal", `${BASE_URL}/`)
   })
 })
 
