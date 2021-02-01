@@ -31,3 +31,9 @@ function App() {
 }
 
 export default App
+
+/* Cypress testing: Attach the store to window when testing  */
+const customWindow: Window & { [key: string]: any } = window
+if (customWindow.Cypress) {
+  customWindow.store = store
+}
