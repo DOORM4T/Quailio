@@ -31,7 +31,11 @@ import { IPersonInFocus } from "../../store/ui/uiTypes"
 import ContentEditor from "../ContentEditor"
 import SplitOverlay from "../SplitOverlay"
 
-const EditPersonOverlay: React.FC = () => {
+interface IProps {
+  [key: string]: any
+}
+
+const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const [isEditing, setIsEditing] = React.useState(false)
   const dispatch: Dispatch<any> = useDispatch()
   const thumbnailUploadRef = React.useRef<HTMLInputElement>(null)
@@ -238,6 +242,7 @@ const EditPersonOverlay: React.FC = () => {
   // TODO: edit fields, create connections, delete
   return (
     <SplitOverlay
+      {...props}
       handleClose={handleClose}
       leftChildren={
         <Box dir="column" fill height={{ min: "large" }}>
@@ -268,7 +273,7 @@ const EditPersonOverlay: React.FC = () => {
   )
 }
 
-export default EditPersonOverlay
+export default ViewPersonOverlay
 
 interface IOverlayButtonProps {
   person: IPersonInFocus

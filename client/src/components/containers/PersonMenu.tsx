@@ -9,14 +9,10 @@ import {
   setPersonInFocus,
   togglePersonEditMenu,
 } from "../../store/ui/uiActions"
-import EditPersonOverlay from "./PersonOverlay"
 
 const PersonMenu: React.FC<IProps> = (props) => {
   // -== STATE ==- //
   const dispatch: Dispatch<any> = useDispatch()
-  const isEditMenuOpen = useSelector<IApplicationState, boolean>(
-    (state) => state.ui.isPersonEditMenuOpen,
-  )
   const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
     (state) => state.networks.currentNetwork,
   )
@@ -65,10 +61,12 @@ const PersonMenu: React.FC<IProps> = (props) => {
     <React.Fragment>
       {/* -== PERSON LIST ==- */}
       <List
+        {...props}
         data={props.data}
         style={{ overflowY: "auto" }}
         action={(person: IPerson) => (
           <Button
+            className="view-person-button"
             icon={<Icons.View />}
             onClick={viewPerson(person.id)}
             key={`view-${person.id}`}
@@ -76,9 +74,6 @@ const PersonMenu: React.FC<IProps> = (props) => {
         )}
         children={renderItem}
       />
-
-      {/* -== SIDEBAR ==- */}
-      {isEditMenuOpen && <EditPersonOverlay />}
     </React.Fragment>
   )
 }
@@ -87,4 +82,5 @@ export default PersonMenu
 
 interface IProps {
   data: IPerson[]
+  [key: string]: any
 }

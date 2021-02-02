@@ -2,11 +2,10 @@ import {
   Box,
   Button,
   DropButton,
-  Heading,
   List,
   ResponsiveContext,
-  Tip,
   Text,
+  Tip,
 } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
@@ -14,6 +13,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 import PersonMenu from "../components/containers/PersonMenu"
+import ViewPersonOverlay from "../components/containers/ViewPersonOverlay"
 import { HEADER_HEIGHT } from "../components/Header"
 import useGetNetworks from "../hooks/networks/useGetNetworks"
 import {
@@ -40,6 +40,14 @@ const DashboardPage: React.FC = () => {
   /* responsive breakpoints */
   const size = React.useContext(ResponsiveContext)
   const isSmall = size === "xsmall" || size === "small"
+
+  /* Network select button ref */
+  const networkSelectRef = React.useRef<any>(null)
+
+  /* View person menu open state */
+  const isEditMenuOpen = useSelector<IApplicationState, boolean>(
+    (state) => state.ui.isPersonEditMenuOpen,
+  )
 
   /* Create Network Function */
   const handleCreateNetwork = async () => {
@@ -97,11 +105,14 @@ const DashboardPage: React.FC = () => {
   }
 
   /* Select Network Function */
-
   const handleNetworkSelect = async (event: any) => {
     try {
       if (!event.item) throw new Error("Network not found.")
       await dispatch(setNetwork(event.item.id))
+
+      if (networkSelectRef.current) {
+        ;(networkSelectRef.current as HTMLButtonElement).click()
+      }
     } catch (error) {
       console.error(error)
     }
@@ -132,6 +143,7 @@ const DashboardPage: React.FC = () => {
           >
             <DropButton
               id="select-network-dropbutton"
+              ref={networkSelectRef}
               style={{
                 borderRadius: "4px",
                 whiteSpace: "nowrap",
@@ -197,6 +209,7 @@ const DashboardPage: React.FC = () => {
                     content="Add person"
                     children={
                       <Button
+                        id="add-person-button"
                         aria-label="Add a person to the network"
                         icon={<Icons.UserAdd color="brand" />}
                         onClick={addPersonHandler}
@@ -226,6 +239,7 @@ const DashboardPage: React.FC = () => {
                   style={{ boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)" }}
                 >
                   <PersonMenu
+                    id="person-menu"
                     data={
                       currentNetwork
                         ? currentNetwork.people.sort((p1, p2) =>
@@ -245,6 +259,9 @@ const DashboardPage: React.FC = () => {
           style={{ overflow: "hidden", backgroundColor: "#DDD" }}
         />
       </Box>
+
+      {/* -== VIEW PERSON OVERLAY ==- */}
+      {isEditMenuOpen && <ViewPersonOverlay id="view-person-overlay" />}
     </React.Fragment>
   )
 }

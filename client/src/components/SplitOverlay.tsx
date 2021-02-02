@@ -6,6 +6,7 @@ interface IProps {
   handleClose: () => void
   leftChildren?: React.ReactNode
   rightChildren?: React.ReactNode
+  [key: string]: any
 }
 
 const SplitOverlay: React.FC<IProps> = (props) => {
@@ -14,6 +15,7 @@ const SplitOverlay: React.FC<IProps> = (props) => {
 
   return (
     <Layer
+      {...props}
       style={{
         position: "absolute",
         zIndex: 99,
