@@ -63,7 +63,18 @@ export function createNetworkGraph(
   /* Link people by their relationship fields */
   state.people.forEach((person) => {
     Object.keys(person.relationships).forEach((id) => {
-      if (!gData.nodes.some((otherPerson) => otherPerson.id === id)) return
+      /* Ensure the other person in the relationship has a node */
+      const doesOtherPersonExist = gData.nodes.some(
+        (otherPerson) => otherPerson.id === id,
+      )
+
+      /* Ensure the link won't be duplicated */
+      const doesLinkExist = gData.links.some(
+        (link) => link.source === id && link.target === person.id,
+      )
+      if (!doesOtherPersonExist || doesLinkExist) return
+
+      /* Add the link */
       gData.links.push({
         source: person.id,
         target: id,
