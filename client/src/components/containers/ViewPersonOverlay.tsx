@@ -182,11 +182,13 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     >
       <Heading level={2}>Connections</Heading>
       <List
+        id="relationships-list"
         data={otherPersonData}
         children={(item: IOtherPersonData, index: number) => {
           return (
             <Box fill="horizontal" key={`${item.id}-${index}`}>
               <Anchor
+                className="relationship-anchor"
                 /* Go to the related person's menu when clicked */
                 onClick={async () => {
                   try {
@@ -207,6 +209,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
           if (!isEditing) return null
           return (
             <Button
+              className="delete-connection-button"
               key={`delete-connection-${otherPerson.id}`}
               aria-label="Delete connection"
               icon={<Icons.Unlink color="status-critical" />}
@@ -239,7 +242,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     await dispatch(setPersonContent(person.id, content))
   }
 
-  // TODO: edit fields, create connections, delete
+  // TODO: edit fields
   return (
     <SplitOverlay
       {...props}
@@ -263,6 +266,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
       rightChildren={
         <Box fill height="100%" background="light-2" pad="medium">
           <ContentEditor
+            id="person-content-editor"
             editMode={isEditing}
             content={person.content}
             handleSave={updateContent}
@@ -275,6 +279,9 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
 
 export default ViewPersonOverlay
 
+//                 //
+// -== BUTTONS ==- //
+//                 //
 interface IOverlayButtonProps {
   person: IPersonInFocus
   isEditing: boolean
@@ -367,6 +374,7 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
   return (
     <Box direction="row" align="center" justify="center">
       {props.isEditing ? (
+        // Toggle view mode
         <Button
           icon={<Icons.View color="status-ok" />}
           aria-label="Viewer mode"
@@ -374,7 +382,9 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
           onClick={() => props.setIsEditing(false)}
         />
       ) : (
+        // Toggle edit mode
         <Button
+          id="edit-button"
           icon={<Icons.Edit color="neutral-3" />}
           aria-label="Edit information"
           hoverIndicator
@@ -383,7 +393,9 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
       )}
       {props.isEditing && (
         <React.Fragment>
+          {/* Connect to another person */}
           <DropButton
+            id="add-relationship-dropdown"
             icon={<Icons.Connect color="neutral-3" />}
             aria-label="Create connection"
             hoverIndicator
@@ -393,6 +405,7 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
                   Connect with:
                 </Heading>
                 <List
+                  id="add-relationship-buttons"
                   primaryKey="name"
                   onClickItem={connectToPerson}
                   data={relationshipOptions}
@@ -401,6 +414,8 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
             }
             dropAlign={{ top: "bottom" }}
           />
+
+          {/* Delete the person */}
           <Button
             icon={<Icons.Trash color="status-critical" />}
             aria-label="Delete person"

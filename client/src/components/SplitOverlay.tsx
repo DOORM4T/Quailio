@@ -23,7 +23,8 @@ const SplitOverlay: React.FC<IProps> = (props) => {
     >
       {/* Close Button */}
       <Button
-        aria-label="Close menu"
+        className="close-overlay-button"
+        aria-label="Close overlay"
         icon={<Icons.Close />}
         style={{
           position: "absolute",

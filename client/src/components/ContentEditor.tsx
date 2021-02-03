@@ -1,8 +1,8 @@
 import { Editor } from "@tinymce/tinymce-react"
+import { Text } from "grommet"
 import React from "react"
 import { Editor as TinyMCEEditor } from "tinymce"
 import { TINY_MCE_KEY } from "../.tinyMCEKey"
-import { Box, Text } from "grommet"
 
 const INITIAL_VALUE = "<p>Write anything!</p>"
 const ContentEditor: React.FC<IProps> = (props) => {
@@ -62,14 +62,15 @@ const ContentEditor: React.FC<IProps> = (props) => {
   }
 
   return (
-    <article style={{ overflowY: "auto", height: "100%" }}>
+    <article id={props.id} style={{ overflowY: "auto", height: "100%" }}>
       {props.editMode ? (
         <React.Fragment>
-          {isSaved ? (
-            <Text color="status-success">Saved</Text>
-          ) : (
-            <Text color="status-critical">Unsaved Changes</Text>
-          )}
+          <Text
+            className="content-editor-save-status"
+            color={isSaved ? "status-success" : "status-critical"}
+          >
+            {isSaved ? "Saved" : "Unsaved Changes"}
+          </Text>
           <Editor
             disabled={props.editMode ? false : true}
             apiKey={TINY_MCE_KEY}
@@ -81,6 +82,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
               save_onsavecallback: () => {
                 console.log("Saved.")
               },
+              auto_focus: true,
             }}
             onSaveContent={handleSave}
             onEditorChange={handleEditorChange}
@@ -95,6 +97,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
 }
 
 interface IProps {
+  id: string
   editMode: boolean
   content?: string
   handleSave: (content: string) => void

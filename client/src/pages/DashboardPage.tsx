@@ -45,7 +45,7 @@ const DashboardPage: React.FC = () => {
   const networkSelectRef = React.useRef<any>(null)
 
   /* View person menu open state */
-  const isEditMenuOpen = useSelector<IApplicationState, boolean>(
+  const isOverlayOpen = useSelector<IApplicationState, boolean>(
     (state) => state.ui.isPersonEditMenuOpen,
   )
 
@@ -261,7 +261,7 @@ const DashboardPage: React.FC = () => {
       </Box>
 
       {/* -== VIEW PERSON OVERLAY ==- */}
-      {isEditMenuOpen && <ViewPersonOverlay id="view-person-overlay" />}
+      {isOverlayOpen && <ViewPersonOverlay id="view-person-overlay" />}
     </React.Fragment>
   )
 }
