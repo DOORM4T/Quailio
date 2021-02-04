@@ -20,8 +20,6 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
   // ==- Load the P5 Sketch -== //
   React.useEffect(() => {
-    console.log(props.state)
-
     const graphState = props.state ? props.state : emptyState
 
     const container = canvasRef.current
