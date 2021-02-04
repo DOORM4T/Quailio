@@ -111,6 +111,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
       height={{ min: "small" }}
     >
       <button
+        id="change-thumbnail-button"
         onClick={openFileInput}
         style={{
           background: "transparent",
@@ -123,6 +124,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         }}
       >
         <input
+          id="thumbnail-upload-input"
           ref={thumbnailUploadRef}
           type="file"
           name="thumbnail-upload"

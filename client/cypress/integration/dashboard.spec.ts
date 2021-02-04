@@ -197,6 +197,14 @@ describe("People", () => {
       .get("#relationships-list li")
       .should("not.exist")
   })
+
+  it("Uploads a thumbnail", () => {
+    cy.get("#thumbnail-upload-input")
+      .attachFile("PLACEHOLDER_IMAGE.png")
+      .wait(2000)
+      .get("#change-thumbnail-button img")
+      .should("exist")
+  })
 })
 
 describe("Cleanup", () => {
