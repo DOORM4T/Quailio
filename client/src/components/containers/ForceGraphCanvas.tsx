@@ -4,6 +4,7 @@ import { CSSProperties } from "styled-components"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import Canvas from "../Canvas"
 import { createNetworkGraph } from "./graphs/NetworkGraph"
+import deepEqual from "deep-equal"
 
 /* Empty default state for when the Current Network is null */
 const emptyState: ICurrentNetwork = {
@@ -19,6 +20,8 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
   // ==- Load the P5 Sketch -== //
   React.useEffect(() => {
+    console.log(props.state)
+
     const graphState = props.state ? props.state : emptyState
 
     const container = canvasRef.current
@@ -53,7 +56,13 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
   return <Canvas id={props.id} ref={canvasRef} style={props.style} />
 }
 
-export default ForceGraphCanvas
+export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
+  const skipRerender = deepEqual(
+    prevProps.state?.people,
+    nextProps.state?.people,
+  )
+  return skipRerender
+})
 
 // ==- TYPE DEFINITIONS -== //
 interface IProps {
