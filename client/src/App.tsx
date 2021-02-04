@@ -5,6 +5,7 @@ import { ThemeType } from "grommet/themes"
 import Routes from "./Routes"
 import { Provider } from "react-redux"
 import { store } from "./store/store"
+import LoadingOverlay from "./components/containers/LoadingOverlay"
 
 const customTheme: ThemeType = {
   global: {
@@ -25,6 +26,7 @@ function App() {
     <Provider store={store}>
       <Grommet theme={customTheme}>
         <Routes />
+        <LoadingOverlay />
       </Grommet>
     </Provider>
   )

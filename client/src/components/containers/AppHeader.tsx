@@ -1,16 +1,13 @@
 import { Anchor, Box, Heading, Image, Text } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
-import { useDispatch, useSelector } from "react-redux"
+import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
-import Spinner from "react-spinner"
-import "react-spinner/react-spinner.css"
 import Logo from "../../assets/logo.png"
 import { HEADER_HEIGHT } from "../../constants"
 import { auth } from "../../firebase"
 import useAuth from "../../hooks/auth/useAuth"
 import { logout } from "../../store/auth/authActions"
-import { IApplicationState } from "../../store/store"
 import Header from "../Header"
 
 interface IProps {
@@ -21,11 +18,6 @@ const AppHeader: React.FC<IProps> = (props) => {
   const { isAuthenticated: isLoggedIn } = useAuth()
   const dispatch: Dispatch<any> = useDispatch()
   const history = useHistory()
-
-  const isLoading = useSelector<IApplicationState>(
-    (state) =>
-      state.auth.isLoading || state.networks.isLoading || state.ui.isLoading,
-  ) as boolean
 
   const logoutFunction = async () => {
     try {
@@ -53,7 +45,6 @@ const AppHeader: React.FC<IProps> = (props) => {
           <Heading level={2} margin={{ left: "xsmall" }}>
             {props.title}
           </Heading>
-          <Box pad={{ top: "medium" }}>{isLoading && <Spinner />}</Box>
         </React.Fragment>
       }
     />
