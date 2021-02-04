@@ -7,7 +7,7 @@ import {
   useHistory,
 } from "react-router-dom"
 import { CSSTransition, TransitionGroup } from "react-transition-group"
-import Header from "./components/Header"
+import AppHeader from "./components/containers/AppHeader"
 import useAuthChange from "./hooks/auth/useAuthChange"
 import DashboardPage from "./pages/DashboardPage"
 import HomePage from "./pages/HomePage"
@@ -23,7 +23,7 @@ const Routes: React.FC = () => {
 
   return (
     <div>
-      <Header title="Quailio" />
+      <AppHeader title="Quailio" />
       <TransitionGroup>
         <CSSTransition
           key={history.location.key}

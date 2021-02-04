@@ -14,7 +14,7 @@ import { ActionCreator, AnyAction } from "redux"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas"
 import PersonMenu from "../components/containers/PersonMenu"
 import ViewPersonOverlay from "../components/containers/ViewPersonOverlay"
-import { HEADER_HEIGHT } from "../components/Header"
+import { HEADER_HEIGHT } from "../constants"
 import useGetNetworks from "../hooks/networks/useGetNetworks"
 import {
   addPerson,
