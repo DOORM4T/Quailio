@@ -173,8 +173,6 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         .sort((p1, p2) => p1.name.localeCompare(p2.name))
     : []
 
-  console.log(otherPersonData)
-
   const Relationships: React.FC = () => (
     <Box
       overflow={{ vertical: "auto" }}
