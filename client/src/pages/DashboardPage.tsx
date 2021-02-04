@@ -223,6 +223,7 @@ const DashboardPage: React.FC = () => {
                     content="Delete current network"
                     children={
                       <Button
+                        id="delete-network-button"
                         aria-label="Delete current network"
                         icon={<Icons.Threats color="status-critical" />}
                         onClick={handleDeleteNetwork}

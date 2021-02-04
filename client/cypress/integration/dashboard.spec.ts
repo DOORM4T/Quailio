@@ -1,9 +1,4 @@
-import {
-  BASE_URL,
-  CONFIRM_DELETE_ACCOUNT_MESSAGE,
-  TEST_EMAIL,
-  TEST_PASSWORD,
-} from "../fixtures/constants"
+import { BASE_URL, TEST_EMAIL, TEST_PASSWORD } from "../fixtures/constants"
 
 const FIRST_NETWORK_NAME = "First Test Network"
 const SECOND_NETWORK_NAME = "Second Test Network"
@@ -205,14 +200,40 @@ describe("People", () => {
       .get("#change-thumbnail-button img")
       .should("exist")
   })
+
+  it("Deletes a person", () => {
+    /* Accept the confirm prompt when asked to delete the person*/
+    cy.on("window:confirm", () => true)
+
+    /* */
+    cy.get("#edit-button")
+      .click()
+      .get("#delete-person-button")
+      .click()
+      /* Wait for the person to be deleted */
+      .wait(2000)
+      .get("#person-menu > li")
+      /* Only person 2 remains  */
+      .should("have.length", 1)
+  })
 })
 
 describe("Cleanup", () => {
+  it("Deletes a network", () => {
+    /* Accept the confirm prompt when asked to delete the network */
+    cy.on("window:confirm", () => true)
+
+    cy.get("#delete-network-button")
+      .click()
+      /* Wait for the network to be deleted */
+      .wait(2000)
+      /* No network should selected now; Person menu should not render */
+      .get("#person-menu > li")
+      .should("not.exist")
+  })
+
   it("Deletes the user account", () => {
-    cy.on("window:confirm", (str) => {
-      expect(str).to.equal(CONFIRM_DELETE_ACCOUNT_MESSAGE)
-      return true
-    })
+    cy.on("window:confirm", () => true)
 
     cy.visit("/settings")
       .get("#manage-accordion")

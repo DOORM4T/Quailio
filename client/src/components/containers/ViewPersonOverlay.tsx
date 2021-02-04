@@ -419,6 +419,7 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
 
           {/* Delete the person */}
           <Button
+            id="delete-person-button"
             icon={<Icons.Trash color="status-critical" />}
             aria-label="Delete person"
             hoverIndicator
