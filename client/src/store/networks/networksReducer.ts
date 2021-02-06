@@ -218,6 +218,51 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
         isLoading: false,
       }
     }
+
+    // -== UPDATE A RELATIONSHIP REASON ==- //
+    case NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP: {
+      /* Stop if no network is selected */
+      if (!state.currentNetwork) break
+
+      /* Get each person */
+      const p1Data = state.currentNetwork.people.find(
+        (p) => p.id === action.p1Id,
+      )
+      const p2Data = state.currentNetwork.people.find(
+        (p) => p.id === action.p2Id,
+      )
+      if (!p1Data || !p2Data) break
+
+      /* Update each person */
+      const updatedP1: IPerson = {
+        ...p1Data,
+        relationships: action.updatedP1Relationships,
+      }
+      const updatedP2: IPerson = {
+        ...p2Data,
+        relationships: action.updatedP2Relationships,
+      }
+
+      /* Update the current network */
+      const peopleWithoutUpdated: IPerson[] = [
+        ...state.currentNetwork.people,
+      ].filter((p) => p.id !== action.p1Id && p.id !== action.p2Id)
+
+      const updatedPeople = peopleWithoutUpdated
+        .concat(updatedP1)
+        .concat(updatedP2)
+
+      const updatedNetwork: ICurrentNetwork = {
+        ...state.currentNetwork,
+        people: updatedPeople,
+      }
+
+      return {
+        ...state,
+        currentNetwork: updatedNetwork,
+        isLoading: false,
+      }
+    }
   }
   return state
 }

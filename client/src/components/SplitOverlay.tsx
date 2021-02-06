@@ -20,6 +20,7 @@ const SplitOverlay: React.FC<IProps> = (props) => {
         position: "absolute",
         zIndex: 99,
       }}
+      animation="slide"
     >
       {/* Close Button */}
       <Button

@@ -40,6 +40,7 @@ export enum NetworkActionTypes {
   GET_ALL_PEOPLE = "NETWORK/GET_ALL_PEOPLE",
   SET_PERSON_THUMBNAIL = "NETWORK/SET_PERSON_THUMBNAIL",
   DISCONNECT_PEOPLE = "NETWORK/DISCONNECT_PEOPLE",
+  UPDATE_PERSON_RELATIONSHIP = "NETWORK/UPDATE_PERSON_RELATIONSHIP",
 }
 
 export interface INetworkLoadingAction {
@@ -106,6 +107,14 @@ export interface IDisconnectPeopleAction {
   updatedP2Data: IPerson
 }
 
+export interface IUpdateRelationshipReasonAction {
+  type: NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP
+  p1Id: string
+  p2Id: string
+  updatedP1Relationships: IRelationships
+  updatedP2Relationships: IRelationships
+}
+
 /* action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -120,3 +129,4 @@ export type NetworksActions =
   | IGetAllPeopleAction
   | ISetPersonThumbnailAction
   | IDisconnectPeopleAction
+  | IUpdateRelationshipReasonAction

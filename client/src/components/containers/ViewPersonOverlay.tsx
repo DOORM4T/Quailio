@@ -1,4 +1,6 @@
 import {
+  Accordion,
+  AccordionPanel,
   Anchor,
   Box,
   Button,
@@ -7,6 +9,7 @@ import {
   Image,
   List,
   Text,
+  TextInput,
 } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
@@ -19,8 +22,9 @@ import {
   disconnectPeople,
   getAllPeople,
   setPersonThumbnail,
+  updateRelationshipReason,
 } from "../../store/networks/networksActions"
-import { ICurrentNetwork } from "../../store/networks/networkTypes"
+import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import {
   setPersonContent,
@@ -36,9 +40,8 @@ interface IProps {
 }
 
 const ViewPersonOverlay: React.FC<IProps> = (props) => {
-  const [isEditing, setIsEditing] = React.useState(false)
+  // -== GLOBAL STORE HOOKS ==- //
   const dispatch: Dispatch<any> = useDispatch()
-  const thumbnailUploadRef = React.useRef<HTMLInputElement>(null)
 
   /* Get all people in the current network */
   const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
@@ -50,12 +53,46 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     (state) => state.ui.personInFocus,
   )
 
+  // -== LOCAL STATE & OTHER HOOKS ==- //
+  const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
+  const thumbnailUploadRef = React.useRef<HTMLInputElement>(null) // Reference to the thumbnail file input DOM element
+
+  /* Relationship state based on the selected person */
+  const [relatedPeopleData, setRelatedPeopleData] = React.useState<
+    IRelatedPersonData[]
+  >(getRelatedPeople(person, currentNetwork))
+
+  /* Update relatedPeopleData state every time the selected person changes */
   React.useEffect(() => {
     if (!person) return
+    setRelatedPeopleData(getRelatedPeople(person, currentNetwork))
     personContentCollection.doc(person.id).onSnapshot(async (snapshot) => {
       await dispatch(setPersonInFocus(person.id))
     })
-  }, [])
+  }, [person])
+
+  /* Handle updates to individual relationship reasons, updating relatedPeoplData state */
+  const handleReasonChange = (personId: string) => (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    /* Find the person to update */
+    const personToUpdate = relatedPeopleData.find((p) => p.id === personId)
+    if (!personToUpdate) return
+
+    /* Update their relationship reason */
+    const updatedPerson: IRelatedPersonData = {
+      ...personToUpdate,
+      reason: e.currentTarget.value,
+    }
+    /* Update the relatedPeople array */
+    const peopleWithoutUpdated = relatedPeopleData.filter(
+      (p) => p.id !== personId,
+    )
+    const updatedPeople = peopleWithoutUpdated
+      .concat(updatedPerson)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    setRelatedPeopleData(updatedPeople)
+  }
 
   /* Don't render if there is no selected Network or Person  */
   if (!currentNetwork || !person) return null
@@ -140,109 +177,11 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     </Box>
   )
 
-  interface IOtherPersonData {
-    id: string
-    name: string
-    reason: string
-  }
-
-  const otherPersonData: IOtherPersonData[] = person
-    ? (Object.keys(person.relationships)
-        .map((relationshipId) => {
-          /* Get relationship details */
-          const [thisPersonReason, otherPersonReason] = person.relationships[
-            relationshipId
-          ]
-
-          /* Find people related to the selected person */
-          const otherPerson = currentNetwork.people.find(
-            (p) => p.id === relationshipId,
-          )
-          if (!otherPerson) return null
-
-          /* Create OtherPersonData object */
-          return {
-            id: otherPerson.id,
-            name: otherPerson.name,
-            reason: otherPersonReason,
-          }
-        })
-        /* Remove null items */
-        .filter((item) => item !== null) as IOtherPersonData[])
-        /* Sort by name */
-        .sort((p1, p2) => p1.name.localeCompare(p2.name))
-    : []
-
-  const Relationships: React.FC = () => (
-    <Box
-      overflow={{ vertical: "auto" }}
-      border={{ color: "brand", side: "top" }}
-      pad={{ bottom: "large", horizontal: "medium" }}
-      fill
-    >
-      <Heading level={2}>Connections</Heading>
-      <List
-        id="relationships-list"
-        data={otherPersonData}
-        children={(item: IOtherPersonData, index: number) => {
-          return (
-            <Box fill="horizontal" key={`${item.id}-${index}`}>
-              <Anchor
-                className="relationship-anchor"
-                /* Go to the related person's menu when clicked */
-                onClick={async () => {
-                  try {
-                    await dispatch(setPersonInFocus(item.id))
-                    setIsEditing(false)
-                  } catch (error) {
-                    console.error(error)
-                  }
-                }}
-              >
-                {item.name}
-              </Anchor>
-              <Text style={{ fontStyle: "italic" }}>{item.reason}</Text>
-            </Box>
-          )
-        }}
-        action={(otherPerson: IOtherPersonData) => {
-          if (!isEditing) return null
-          return (
-            <Button
-              className="delete-connection-button"
-              key={`delete-connection-${otherPerson.id}`}
-              aria-label="Delete connection"
-              icon={<Icons.Unlink color="status-critical" />}
-              hoverIndicator
-              onClick={async () => {
-                /* Delete a relationship with the other person*/
-                try {
-                  await dispatch(
-                    disconnectPeople(currentNetwork.id, {
-                      p1Id: person.id,
-                      p2Id: otherPerson.id,
-                    }),
-                  )
-
-                  /* Get updated current person data */
-                  await dispatch(setPersonInFocus(person.id))
-                } catch (error) {
-                  console.error(error)
-                }
-              }}
-            />
-          )
-        }}
-      />
-    </Box>
-  )
-
   /* Update the selected Person's content */
   const updateContent = async (content: string) => {
     await dispatch(setPersonContent(person.id, content))
   }
 
-  // TODO: edit fields
   return (
     <SplitOverlay
       {...props}
@@ -259,7 +198,14 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
             />
           </Box>
           <Box height="40%" overflow="auto" margin={{ top: "medium" }}>
-            <Relationships />
+            <Relationships
+              currentNetwork={currentNetwork}
+              relatedPeopleData={relatedPeopleData}
+              handleReasonChange={handleReasonChange}
+              currentPerson={person}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+            />
           </Box>
         </Box>
       }
@@ -278,6 +224,192 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
 }
 
 export default ViewPersonOverlay
+
+/* Get the array of people related to the selected person */
+function getRelatedPeople(
+  person: IPerson | null,
+  currentNetwork: ICurrentNetwork | null,
+): IRelatedPersonData[] {
+  if (!person || !currentNetwork) return []
+
+  return (
+    (Object.keys(person.relationships)
+      .map((relationshipId) => {
+        /* Get relationship details */
+        const [thisPersonReason, otherPersonReason] = person.relationships[
+          relationshipId
+        ]
+
+        /* Find people related to the selected person */
+        const otherPerson = currentNetwork.people.find(
+          (p) => p.id === relationshipId,
+        )
+        if (!otherPerson) return null
+
+        /* Create OtherPersonData object */
+        return {
+          id: otherPerson.id,
+          name: otherPerson.name,
+          reason: otherPersonReason,
+        }
+      })
+      /* Remove null items */
+      .filter((item) => item !== null) as IRelatedPersonData[]).sort((p1, p2) =>
+      p1.name.localeCompare(p2.name),
+    )
+  )
+}
+
+//                            //
+// -== RELATIONSHIPS LIST ==- //
+//                            //
+interface IRelatedPersonData {
+  id: string
+  name: string
+  reason: string
+}
+
+interface IRelationshipsProps {
+  currentNetwork: ICurrentNetwork
+  currentPerson: IPersonInFocus
+  relatedPeopleData: IRelatedPersonData[]
+  handleReasonChange: (
+    id: string,
+  ) => (e: React.ChangeEvent<HTMLInputElement>) => void
+  isEditing: boolean
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const Relationships: React.FC<IRelationshipsProps> = (props) => {
+  const dispatch: Dispatch<any> = useDispatch()
+  const [didChangeReason, setDidChangeReason] = React.useState<boolean>(false)
+
+  React.useEffect(() => {
+    console.log(didChangeReason)
+  }, [didChangeReason])
+
+  return (
+    <Box
+      overflow={{ vertical: "auto" }}
+      border={{ color: "brand", side: "top" }}
+      pad={{ bottom: "large" }}
+      fill
+    >
+      <Heading level={2} textAlign="center">
+        Connections
+      </Heading>
+      <List
+        id="relationships-list"
+        data={props.relatedPeopleData}
+        border={false}
+        children={(person: IRelatedPersonData, index: number) => {
+          return (
+            <Accordion key={`${person.id}-${index}`} width="large">
+              <AccordionPanel
+                label={
+                  <Box dir="column">
+                    <Anchor
+                      className="relationship-anchor"
+                      /* Go to the related person's menu when clicked */
+                      onClick={async () => {
+                        try {
+                          await dispatch(setPersonInFocus(person.id))
+                          props.setIsEditing(false)
+                        } catch (error) {
+                          console.error(error)
+                        }
+                      }}
+                      label={person.name}
+                    />
+                    <Box>
+                      {props.isEditing ? (
+                        // Edit relationship reason
+                        <TextInput
+                          style={{
+                            padding: "0 1rem",
+                            border: "none",
+                            borderBottom: "1px solid black",
+                          }}
+                          value={person.reason}
+                          onChange={props.handleReasonChange(person.id)}
+                          onFocus={(e) => e.currentTarget.select()}
+                          onKeyPress={(e) => {
+                            setDidChangeReason(true)
+
+                            if (/(Enter|Escape)/.test(e.key))
+                              e.currentTarget.blur()
+                          }}
+                          onBlur={async (e) => {
+                            if (!didChangeReason) return
+
+                            /* Update the relationship */
+                            try {
+                              await dispatch(
+                                updateRelationshipReason(
+                                  props.currentPerson.id,
+                                  person.id,
+                                  e.currentTarget.value,
+                                ),
+                              )
+                            } catch (error) {
+                              console.error(error)
+                            }
+                            setDidChangeReason(false)
+                          }}
+                        />
+                      ) : (
+                        // Display read-only relationship reason
+                        <Text
+                          size="medium"
+                          style={{
+                            fontStyle: "italic",
+                          }}
+                        >
+                          {person.reason || "-"}
+                        </Text>
+                      )}
+                    </Box>
+                  </Box>
+                }
+              >
+                {/* TODO: Additional content */}
+                <Box pad="small">Additional content: Coming Soon!</Box>
+              </AccordionPanel>
+            </Accordion>
+          )
+        }}
+        action={(otherPerson: IRelatedPersonData) => {
+          if (!props.isEditing) return null
+          return (
+            <Button
+              className="delete-connection-button"
+              key={`delete-connection-${otherPerson.id}`}
+              aria-label="Delete connection"
+              icon={<Icons.Unlink color="status-critical" />}
+              hoverIndicator
+              onClick={async () => {
+                /* Delete a relationship with the other person*/
+                try {
+                  await dispatch(
+                    disconnectPeople(props.currentNetwork.id, {
+                      p1Id: props.currentPerson.id,
+                      p2Id: otherPerson.id,
+                    }),
+                  )
+
+                  /* Get updated current person data */
+                  await dispatch(setPersonInFocus(props.currentPerson.id))
+                } catch (error) {
+                  console.error(error)
+                }
+              }}
+            />
+          )
+        }}
+      />
+    </Box>
+  )
+}
 
 //                 //
 // -== BUTTONS ==- //
