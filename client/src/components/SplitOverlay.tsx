@@ -1,6 +1,7 @@
-import { Box, Button, Layer, ResponsiveContext } from "grommet"
+import { Box, Button, Layer } from "grommet"
 import * as Icons from "grommet-icons"
-import React, { useContext } from "react"
+import React from "react"
+import useSmallBreakpoint from "../hooks/useSmallBreakpoint"
 
 interface IProps {
   handleClose: () => void
@@ -10,8 +11,7 @@ interface IProps {
 }
 
 const SplitOverlay: React.FC<IProps> = (props) => {
-  const size = useContext(ResponsiveContext)
-  const doColumn = /(small\b)/.test(size) /* xsmall, small, medium */
+  const doColumn = useSmallBreakpoint()
 
   return (
     <Layer
@@ -40,29 +40,14 @@ const SplitOverlay: React.FC<IProps> = (props) => {
       {/* Content */}
       <Box
         direction={doColumn ? "column" : "row"}
-        background="light-1"
         elevation={doColumn ? "none" : "xlarge"}
-        pad="small"
-        gap="small"
-        width="xlarge"
+        width="xxlarge"
         height={doColumn ? "100vh" : "large"}
       >
-        <Box
-          direction="column"
-          style={{ flex: 1 }}
-          fill
-          height={doColumn ? "40%" : "100%"}
-          overflow={doColumn ? "auto" : "hidden"}
-        >
+        <Box direction="column" style={{ flex: 1 }}>
           {props.leftChildren}
         </Box>
-        <Box
-          direction="column"
-          style={{ flex: doColumn ? 1 : 2 }}
-          fill
-          height={doColumn ? "40%" : "100%"}
-          overflow={doColumn ? "auto" : "hidden"}
-        >
+        <Box direction="column" style={{ flex: 2 }}>
           {props.rightChildren}
         </Box>
       </Box>

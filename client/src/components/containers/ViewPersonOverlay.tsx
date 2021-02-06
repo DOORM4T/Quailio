@@ -1,6 +1,4 @@
 import {
-  Accordion,
-  AccordionPanel,
   Anchor,
   Box,
   Button,
@@ -10,12 +8,15 @@ import {
   List,
   Text,
   TextInput,
+  ThemeType,
 } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
+import { ThemeContext } from "styled-components"
 import { personContentCollection } from "../../firebase"
+import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
   connectPeople,
   deletePerson as deletePersonById,
@@ -42,6 +43,8 @@ interface IProps {
 const ViewPersonOverlay: React.FC<IProps> = (props) => {
   // -== GLOBAL STORE HOOKS ==- //
   const dispatch: Dispatch<any> = useDispatch()
+  const isSmall = useSmallBreakpoint()
+  const theme = React.useContext<ThemeType>(ThemeContext)
 
   /* Get all people in the current network */
   const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
@@ -140,41 +143,37 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   }
 
   const Thumbnail: React.FC = () => (
-    <Box
-      align="center"
-      justify="center"
+    <button
+      id="change-thumbnail-button"
+      onClick={openFileInput}
+      style={{
+        background:
+          theme.global?.colors?.["light-1"]?.toString() || "transparent",
+        cursor: "pointer",
+        boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)",
+        border: "none",
+        borderRadius: "4px",
+        width: "128px",
+        height: "128px",
+        padding: "2px",
+      }}
       aria-label="Person thumbnail"
       role="Click to change thumbnail"
-      height={{ min: "small" }}
     >
-      <button
-        id="change-thumbnail-button"
-        onClick={openFileInput}
-        style={{
-          background: "transparent",
-          cursor: "pointer",
-          boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)",
-          border: "none",
-          padding: "1rem",
-          borderRadius: "4px",
-          maxWidth: "128px",
-        }}
-      >
-        <input
-          id="thumbnail-upload-input"
-          ref={thumbnailUploadRef}
-          type="file"
-          name="thumbnail-upload"
-          hidden
-          onChange={handleChangeThumbnail}
-        />
-        {person.thumbnailUrl ? (
-          <Image src={person.thumbnailUrl} fill />
-        ) : (
-          <Icons.User size="xlarge" />
-        )}
-      </button>
-    </Box>
+      <input
+        id="thumbnail-upload-input"
+        ref={thumbnailUploadRef}
+        type="file"
+        name="thumbnail-upload"
+        hidden
+        onChange={handleChangeThumbnail}
+      />
+      {person.thumbnailUrl ? (
+        <Image src={person.thumbnailUrl} fill />
+      ) : (
+        <Icons.User size="xlarge" color="dark-1" />
+      )}
+    </button>
   )
 
   /* Update the selected Person's content */
@@ -187,17 +186,50 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
       {...props}
       handleClose={handleClose}
       leftChildren={
-        <Box dir="column" fill height={{ min: "large" }}>
-          <Box height="50%" overflow="auto">
-            <Thumbnail />
-            <Heading textAlign="center">{person.name}</Heading>
-            <Buttons
-              person={person}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
-            />
+        <Box
+          direction="column"
+          background="dark-1"
+          height="100%"
+          pad={{ bottom: "small" }}
+          overflow={{ vertical: isSmall ? "auto" : undefined }}
+        >
+          <Box
+            direction="row"
+            background="brand"
+            height={{ min: "150px" }}
+            style={{ boxSizing: "border-box" }}
+            pad={{ horizontal: "medium" }}
+            gap="large"
+            align="center"
+            fill="horizontal"
+          >
+            <Box>
+              <Thumbnail />
+            </Box>
+            <Box
+              direction="column"
+              align="center"
+              justify="center"
+              fill
+              pad={{ vertical: "small" }}
+            >
+              <h1
+                contentEditable={isEditing}
+                aria-label={isEditing ? "Edit name" : "Name"}
+              >
+                {person.name}
+              </h1>
+              <Buttons
+                person={person}
+                isEditing={isEditing}
+                setIsEditing={setIsEditing}
+              />
+            </Box>
           </Box>
-          <Box height="40%" overflow="auto" margin={{ top: "medium" }}>
+          <Box
+            overflow={{ vertical: isSmall ? undefined : "auto" }}
+            height={isSmall ? "100%" : "auto"}
+          >
             <Relationships
               currentNetwork={currentNetwork}
               relatedPeopleData={relatedPeopleData}
@@ -210,7 +242,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         </Box>
       }
       rightChildren={
-        <Box fill height="100%" background="light-2" pad="medium">
+        <Box fill background="light-2" pad="medium">
           <ContentEditor
             id="person-content-editor"
             editMode={isEditing}
@@ -289,93 +321,85 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
   }, [didChangeReason])
 
   return (
-    <Box
-      overflow={{ vertical: "auto" }}
-      border={{ color: "brand", side: "top" }}
-      pad={{ bottom: "large" }}
-      fill
-    >
-      <Heading level={2} textAlign="center">
-        Connections
-      </Heading>
+    <React.Fragment>
+      <h3 style={{ textAlign: "center" }}>Connections</h3>
       <List
         id="relationships-list"
         data={props.relatedPeopleData}
         border={false}
         children={(person: IRelatedPersonData, index: number) => {
           return (
-            <Accordion key={`${person.id}-${index}`} width="large">
-              <AccordionPanel
-                label={
-                  <Box dir="column">
-                    <Anchor
-                      className="relationship-anchor"
-                      /* Go to the related person's menu when clicked */
-                      onClick={async () => {
-                        try {
-                          await dispatch(setPersonInFocus(person.id))
-                          props.setIsEditing(false)
-                        } catch (error) {
-                          console.error(error)
-                        }
-                      }}
-                      label={person.name}
-                    />
-                    <Box>
-                      {props.isEditing ? (
-                        // Edit relationship reason
-                        <TextInput
-                          style={{
-                            padding: "0 1rem",
-                            border: "none",
-                            borderBottom: "1px solid black",
-                          }}
-                          value={person.reason}
-                          onChange={props.handleReasonChange(person.id)}
-                          onFocus={(e) => e.currentTarget.select()}
-                          onKeyPress={(e) => {
-                            setDidChangeReason(true)
+            <Box
+              key={`${person.id}-${index}`}
+              width="large"
+              border={{ side: "bottom" }}
+            >
+              {
+                <Box direction="column">
+                  <Anchor
+                    className="relationship-anchor"
+                    /* Go to the related person's menu when clicked */
+                    onClick={async () => {
+                      try {
+                        await dispatch(setPersonInFocus(person.id))
+                        props.setIsEditing(false)
+                      } catch (error) {
+                        console.error(error)
+                      }
+                    }}
+                    label={person.name}
+                  />
+                  <Box>
+                    {props.isEditing ? (
+                      // Edit relationship reason
+                      <TextInput
+                        style={{
+                          padding: "0 1rem",
+                          border: "none",
+                          borderBottom: "1px solid black",
+                        }}
+                        value={person.reason}
+                        onChange={props.handleReasonChange(person.id)}
+                        onFocus={(e) => e.currentTarget.select()}
+                        onKeyPress={(e) => {
+                          setDidChangeReason(true)
 
-                            if (/(Enter|Escape)/.test(e.key))
-                              e.currentTarget.blur()
-                          }}
-                          onBlur={async (e) => {
-                            if (!didChangeReason) return
+                          if (/(Enter|Escape)/.test(e.key))
+                            e.currentTarget.blur()
+                        }}
+                        onBlur={async (e) => {
+                          if (!didChangeReason) return
 
-                            /* Update the relationship */
-                            try {
-                              await dispatch(
-                                updateRelationshipReason(
-                                  props.currentPerson.id,
-                                  person.id,
-                                  e.currentTarget.value,
-                                ),
-                              )
-                            } catch (error) {
-                              console.error(error)
-                            }
-                            setDidChangeReason(false)
-                          }}
-                        />
-                      ) : (
-                        // Display read-only relationship reason
-                        <Text
-                          size="medium"
-                          style={{
-                            fontStyle: "italic",
-                          }}
-                        >
-                          {person.reason || "-"}
-                        </Text>
-                      )}
-                    </Box>
+                          /* Update the relationship */
+                          try {
+                            await dispatch(
+                              updateRelationshipReason(
+                                props.currentPerson.id,
+                                person.id,
+                                e.currentTarget.value,
+                              ),
+                            )
+                          } catch (error) {
+                            console.error(error)
+                          }
+                          setDidChangeReason(false)
+                        }}
+                      />
+                    ) : (
+                      // Display read-only relationship reason
+                      <Text
+                        size="medium"
+                        style={{
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {person.reason || "-"}
+                      </Text>
+                    )}
                   </Box>
-                }
-              >
-                {/* TODO: Additional content */}
-                <Box pad="small">Additional content: Coming Soon!</Box>
-              </AccordionPanel>
-            </Accordion>
+                </Box>
+              }
+            </Box>
           )
         }}
         action={(otherPerson: IRelatedPersonData) => {
@@ -407,7 +431,7 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
           )
         }}
       />
-    </Box>
+    </React.Fragment>
   )
 }
 
@@ -504,7 +528,7 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
   }
 
   return (
-    <Box direction="row" align="center" justify="center">
+    <Box direction="row">
       {props.isEditing ? (
         // Toggle view mode
         <Button

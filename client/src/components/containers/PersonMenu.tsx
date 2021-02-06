@@ -36,7 +36,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
     return (
-      <Box dir="column" align="start" key={`${item.id}-${index}`}>
+      <Box direction="column" align="start" key={`${item.id}-${index}`}>
         <Box>
           {item.thumbnailUrl ? (
             <Image src={item.thumbnailUrl} height="64px" />
