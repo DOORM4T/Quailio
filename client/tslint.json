@@ -9,6 +9,7 @@
     "no-console": false,
     "no-empty": false,
     "jsx-no-lambda": false,
-    "jsx-boolean-value": false
+    "jsx-boolean-value": false,
+    "no-string-literal": false
   }
 }
