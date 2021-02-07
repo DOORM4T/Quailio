@@ -121,7 +121,7 @@ const DashboardPage: React.FC = () => {
   return (
     <React.Fragment>
       <Box
-        direction={isSmall ? "column-reverse" : "row"}
+        direction={isSmall ? "column" : "row"}
         style={{ height: `calc(100vh - ${HEADER_HEIGHT}px)` }}
         background="light-1"
       >
@@ -130,7 +130,6 @@ const DashboardPage: React.FC = () => {
           direction="column"
           justify="start"
           align="stretch"
-          background="light-1"
           width="large"
           gap="none"
         >
@@ -138,8 +137,9 @@ const DashboardPage: React.FC = () => {
             direction="row"
             justify="start"
             gap="small"
-            height="50px"
+            height="auto"
             margin="small"
+            pad="medium"
           >
             <DropButton
               id="select-network-dropbutton"
@@ -193,66 +193,63 @@ const DashboardPage: React.FC = () => {
               }
             />
           </Box>
-          <Box direction="column" fill>
-            {currentNetwork && (
-              <Box>
-                {/* Network actions */}
-                <Box
-                  direction="row"
-                  fill="horizontal"
-                  justify="start"
-                  pad={{ horizontal: "small" }}
-                  margin={{ vertical: "small" }}
-                  height="50px"
-                >
-                  <Tip
-                    content="Add person"
-                    children={
-                      <Button
-                        id="add-person-button"
-                        aria-label="Add a person to the network"
-                        icon={<Icons.UserAdd color="brand" />}
-                        onClick={addPersonHandler}
-                        disabled={!currentNetwork}
-                        hoverIndicator
-                      />
-                    }
-                  />
+          {currentNetwork && (
+            <Box direction="column" fill>
+              {/* Network actions */}
+              <Box
+                height="xsmall"
+                direction="row"
+                fill="horizontal"
+                justify="start"
+                pad={{ horizontal: "small" }}
+              >
+                <Tip
+                  content="Add person"
+                  children={
+                    <Button
+                      id="add-person-button"
+                      aria-label="Add a person to the network"
+                      icon={<Icons.UserAdd color="brand" />}
+                      onClick={addPersonHandler}
+                      disabled={!currentNetwork}
+                      hoverIndicator
+                    />
+                  }
+                />
 
-                  <Tip
-                    content="Delete current network"
-                    children={
-                      <Button
-                        id="delete-network-button"
-                        aria-label="Delete current network"
-                        icon={<Icons.Threats color="status-critical" />}
-                        onClick={handleDeleteNetwork}
-                        disabled={!currentNetwork}
-                        hoverIndicator
-                        margin={{ left: "auto" }}
-                      />
-                    }
-                  />
-                </Box>
-                <Box
-                  background="light-2"
-                  margin="small"
-                  style={{ boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)" }}
-                >
-                  <PersonMenu
-                    id="person-menu"
-                    data={
-                      currentNetwork
-                        ? currentNetwork.people.sort((p1, p2) =>
-                            p1.name.localeCompare(p2.name),
-                          )
-                        : []
-                    }
-                  />
-                </Box>
+                <Tip
+                  content="Delete current network"
+                  children={
+                    <Button
+                      id="delete-network-button"
+                      aria-label="Delete current network"
+                      icon={<Icons.Threats color="status-critical" />}
+                      onClick={handleDeleteNetwork}
+                      disabled={!currentNetwork}
+                      hoverIndicator
+                      margin={{ left: "auto" }}
+                    />
+                  }
+                />
               </Box>
-            )}
-          </Box>
+              <Box
+                background="light-2"
+                margin="small"
+                style={{ boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)" }}
+              >
+                <PersonMenu
+                  id="person-menu"
+                  data={
+                    currentNetwork
+                      ? currentNetwork.people.sort((p1, p2) =>
+                          p1.name.localeCompare(p2.name),
+                        )
+                      : []
+                  }
+                />
+              </Box>
+            </Box>
+          )}
         </Box>
         <ForceGraphCanvas
           id="network-sketch"
