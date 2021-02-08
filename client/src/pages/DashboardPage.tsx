@@ -123,7 +123,7 @@ const DashboardPage: React.FC = () => {
       <Box
         direction={isSmall ? "column" : "row"}
         style={{ height: `calc(100vh - ${HEADER_HEIGHT}px)` }}
-        background="light-1"
+        background="dark-1"
       >
         {/* Network Actions & Details */}
         <Box
@@ -143,6 +143,7 @@ const DashboardPage: React.FC = () => {
           >
             <DropButton
               id="select-network-dropbutton"
+              color="accent-1"
               ref={networkSelectRef}
               style={{
                 borderRadius: "4px",
@@ -166,6 +167,17 @@ const DashboardPage: React.FC = () => {
                     primaryKey={"name"}
                     data={networks}
                     onClickItem={handleNetworkSelect}
+                    background="dark-1"
+                    border={{
+                      color: "accent-1",
+                      side: "horizontal",
+                      size: "small",
+                    }}
+                    pad="medium"
+                    style={{
+                      overflow: "auto",
+                      maxHeight: "500px",
+                    }}
                   />
                 ) : (
                   <Text>You haven't created any networks... yet!</Text>
@@ -181,13 +193,15 @@ const DashboardPage: React.FC = () => {
                 <Button
                   id="create-network-button"
                   aria-label="Create a new network"
-                  icon={<Icons.Add color="brand" />}
+                  icon={<Icons.Add color="accent-3" />}
                   onClick={handleCreateNetwork}
                   hoverIndicator
+                  color="accent-3"
                   style={{
-                    border: "1px solid green",
+                    border: "2px solid",
                     width: "50px",
                     height: "50px",
+                    borderRadius: "2px",
                   }}
                 />
               }

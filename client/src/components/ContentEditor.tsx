@@ -62,7 +62,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
   }
 
   return (
-    <article id={props.id} style={{ overflowY: "auto", height: "100%" }}>
+    <article id={props.id} style={{ height: "100%" }}>
       {props.editMode ? (
         <React.Fragment>
           <Text
@@ -75,6 +75,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
             disabled={props.editMode ? false : true}
             apiKey={TINY_MCE_KEY}
             init={{
+              min_height: 400,
               height: "90%",
               plugins: ["image", "save"],
               toolbar: ["save"],

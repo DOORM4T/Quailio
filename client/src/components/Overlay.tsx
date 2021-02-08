@@ -5,12 +5,11 @@ import useSmallBreakpoint from "../hooks/useSmallBreakpoint"
 
 interface IProps {
   handleClose: () => void
-  leftChildren?: React.ReactNode
-  rightChildren?: React.ReactNode
+  children: React.ReactNode
   [key: string]: any
 }
 
-const SplitOverlay: React.FC<IProps> = (props) => {
+const Overlay: React.FC<IProps> = (props) => {
   const doColumn = useSmallBreakpoint()
 
   return (
@@ -41,18 +40,13 @@ const SplitOverlay: React.FC<IProps> = (props) => {
       <Box
         direction={doColumn ? "column" : "row"}
         elevation={doColumn ? "none" : "xlarge"}
-        width="xxlarge"
+        width="xlarge"
         height={doColumn ? "100vh" : "large"}
       >
-        <Box direction="column" style={{ flex: 1 }}>
-          {props.leftChildren}
-        </Box>
-        <Box direction="column" style={{ flex: 2 }}>
-          {props.rightChildren}
-        </Box>
+        {props.children}
       </Box>
     </Layer>
   )
 }
 
-export default SplitOverlay
+export default Overlay

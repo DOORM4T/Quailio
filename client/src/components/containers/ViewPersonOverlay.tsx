@@ -3,9 +3,13 @@ import {
   Box,
   Button,
   DropButton,
+  Grid,
+  Header,
   Heading,
   Image,
   List,
+  Tab,
+  Tabs,
   Text,
   TextInput,
   ThemeType,
@@ -34,7 +38,7 @@ import {
 } from "../../store/ui/uiActions"
 import { IPersonInFocus } from "../../store/ui/uiTypes"
 import ContentEditor from "../ContentEditor"
-import SplitOverlay from "../SplitOverlay"
+import Overlay from "../Overlay"
 
 interface IProps {
   [key: string]: any
@@ -44,7 +48,6 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   // -== GLOBAL STORE HOOKS ==- //
   const dispatch: Dispatch<any> = useDispatch()
   const isSmall = useSmallBreakpoint()
-  const theme = React.useContext<ThemeType>(ThemeContext)
 
   /* Get all people in the current network */
   const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
@@ -142,120 +145,180 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     }
   }
 
-  const Thumbnail: React.FC = () => (
-    <button
-      id="change-thumbnail-button"
-      onClick={openFileInput}
-      style={{
-        background:
-          theme.global?.colors?.["light-1"]?.toString() || "transparent",
-        cursor: "pointer",
-        boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)",
-        border: "none",
-        borderRadius: "4px",
-        width: "128px",
-        height: "128px",
-        padding: "2px",
-      }}
-      aria-label="Person thumbnail"
-      role="Click to change thumbnail"
-    >
-      <input
-        id="thumbnail-upload-input"
-        ref={thumbnailUploadRef}
-        type="file"
-        name="thumbnail-upload"
-        hidden
-        onChange={handleChangeThumbnail}
-      />
-      {person.thumbnailUrl ? (
-        <Image src={person.thumbnailUrl} fill />
-      ) : (
-        <Icons.User size="xlarge" color="dark-1" />
-      )}
-    </button>
-  )
-
   /* Update the selected Person's content */
   const updateContent = async (content: string) => {
     await dispatch(setPersonContent(person.id, content))
   }
 
-  return (
-    <SplitOverlay
-      {...props}
-      handleClose={handleClose}
-      leftChildren={
-        <Box
-          direction="column"
-          background="dark-1"
-          height="100%"
-          pad={{ bottom: "small" }}
-          overflow={{ vertical: isSmall ? "auto" : undefined }}
-        >
-          <Box
-            direction="row"
-            background="brand"
-            height={{ min: "150px" }}
-            style={{ boxSizing: "border-box" }}
-            pad={{ horizontal: "medium" }}
-            gap="large"
-            align="center"
-            fill="horizontal"
-          >
-            <Box>
-              <Thumbnail />
-            </Box>
-            <Box
-              direction="column"
-              align="center"
-              justify="center"
-              fill
-              pad={{ vertical: "small" }}
-            >
-              <h1
-                contentEditable={isEditing}
-                aria-label={isEditing ? "Edit name" : "Name"}
-              >
-                {person.name}
-              </h1>
-              <Buttons
-                person={person}
-                isEditing={isEditing}
-                setIsEditing={setIsEditing}
-              />
-            </Box>
-          </Box>
-          <Box
-            overflow={{ vertical: isSmall ? undefined : "auto" }}
-            height={isSmall ? "100%" : "auto"}
-          >
-            <Relationships
-              currentNetwork={currentNetwork}
-              relatedPeopleData={relatedPeopleData}
-              handleReasonChange={handleReasonChange}
-              currentPerson={person}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
-            />
-          </Box>
-        </Box>
-      }
-      rightChildren={
-        <Box fill background="light-2" pad="medium">
-          <ContentEditor
-            id="person-content-editor"
-            editMode={isEditing}
-            content={person.content}
-            handleSave={updateContent}
-          />
-        </Box>
-      }
+  /* Person Header */
+  const PersonHeader: React.FC = () => (
+    <Header direction="column" background="brand" pad="medium" justify="start">
+      <Thumbnail
+        currentPerson={person}
+        openFileInput={openFileInput}
+        handleChangeThumbnail={handleChangeThumbnail}
+        thumbnailUploadRef={thumbnailUploadRef}
+      />
+      <h1
+        contentEditable={isEditing}
+        aria-label={isEditing ? "Edit name" : "Name"}
+        style={{
+          padding: "1rem",
+          margin: 0,
+          lineHeight: "2rem",
+          whiteSpace: "break-spaces",
+          wordWrap: "break-word",
+          wordBreak: "break-all",
+          overflow: "auto",
+          height: "4rem",
+        }}
+      >
+        {person.name}
+      </h1>
+      <Buttons
+        person={person}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+      />
+    </Header>
+  )
+
+  /* Reusable relationships container */
+  const RelationshipsContainer: React.FC = () => (
+    <Relationships
+      currentNetwork={currentNetwork}
+      relatedPeopleData={relatedPeopleData}
+      handleReasonChange={handleReasonChange}
+      currentPerson={person}
+      isEditing={isEditing}
+      setIsEditing={setIsEditing}
     />
+  )
+
+  /* ContentEditor container */
+  const EditorContainer: React.FC = () => (
+    <ContentEditor
+      id="person-content-editor"
+      editMode={isEditing}
+      content={person.content}
+      handleSave={updateContent}
+    />
+  )
+
+  return (
+    <Overlay {...props} handleClose={handleClose}>
+      {isSmall ? (
+        <Box fill>
+          <PersonHeader />
+          <Box direction="column" background="dark-1" pad="medium" fill>
+            <Tabs>
+              <Tab title="Content">
+                <Box
+                  background="light-2"
+                  pad="medium"
+                  style={{ borderRadius: "2px" }}
+                  overflow={{ vertical: "auto" }}
+                  fill
+                >
+                  <EditorContainer />
+                </Box>
+              </Tab>
+              <Tab title="Relationships">
+                <Box overflow={{ vertical: "auto" }} fill>
+                  <RelationshipsContainer />
+                </Box>
+              </Tab>
+            </Tabs>
+          </Box>
+        </Box>
+      ) : (
+        <Grid
+          fill
+          rows={["auto", "auto"]}
+          columns={["medium", "auto"]}
+          areas={[
+            { name: "header", start: [0, 0], end: [0, 0] },
+            { name: "relationships", start: [0, 1], end: [0, 1] },
+            { name: "contentEditor", start: [1, 0], end: [1, 1] },
+          ]}
+        >
+          <PersonHeader />
+          <Box
+            gridArea="relationships"
+            overflow={{ vertical: "auto" }}
+            background="dark-1"
+            fill
+          >
+            <RelationshipsContainer />
+          </Box>
+          <Box
+            gridArea="contentEditor"
+            background="light-2"
+            pad="medium"
+            fill
+            overflow={{ vertical: "auto" }}
+          >
+            <EditorContainer />
+          </Box>
+        </Grid>
+      )}
+    </Overlay>
   )
 }
 
 export default ViewPersonOverlay
+
+//                             //
+// -== THUMBNAIL COMPONENT ==- //
+//                             //
+interface IThumbnailProps {
+  openFileInput: (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => void
+  thumbnailUploadRef: React.RefObject<HTMLInputElement>
+  handleChangeThumbnail: (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => Promise<void>
+  currentPerson: IPerson
+}
+const Thumbnail: React.FC<IThumbnailProps> = (props) => {
+  const theme = React.useContext<ThemeType>(ThemeContext)
+  return (
+    <Box>
+      <button
+        id="change-thumbnail-button"
+        onClick={props.openFileInput}
+        style={{
+          background:
+            theme.global?.colors?.["light-1"]?.toString() || "transparent",
+          cursor: "pointer",
+          boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)",
+          border: "none",
+          borderRadius: "4px",
+          width: "128px",
+          height: "128px",
+          padding: "2px",
+        }}
+        aria-label="Person thumbnail"
+        role="Click to change thumbnail"
+      >
+        <input
+          id="thumbnail-upload-input"
+          ref={props.thumbnailUploadRef}
+          type="file"
+          name="thumbnail-upload"
+          hidden
+          onChange={props.handleChangeThumbnail}
+        />
+        {props.currentPerson.thumbnailUrl ? (
+          <Image src={props.currentPerson.thumbnailUrl} fill />
+        ) : (
+          <Icons.User size="xlarge" color="dark-1" />
+        )}
+      </button>
+    </Box>
+  )
+}
 
 /* Get the array of people related to the selected person */
 function getRelatedPeople(
