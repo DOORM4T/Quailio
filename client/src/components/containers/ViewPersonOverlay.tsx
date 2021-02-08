@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { ThemeContext } from "styled-components"
 import { personContentCollection } from "../../firebase"
+import { fireUnsavedChangeEvent } from "../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
   connectPeople,
@@ -108,6 +109,11 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
    * Hide the person menu
    */
   const handleClose = () => {
+    /* If there are unsaved changes, ask the user to confirm  */
+    const doContinue = fireUnsavedChangeEvent()
+    if (!doContinue) return
+
+    /* Close overlay */
     dispatch(togglePersonEditMenu(false))
   }
 
@@ -160,7 +166,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         thumbnailUploadRef={thumbnailUploadRef}
       />
       <h1
-        contentEditable={isEditing}
+        // contentEditable={isEditing}
         aria-label={isEditing ? "Edit name" : "Name"}
         style={{
           padding: "1rem",
@@ -199,69 +205,71 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const EditorContainer: React.FC = () => (
     <ContentEditor
       id="person-content-editor"
-      editMode={isEditing}
+      isEditing={isEditing}
       content={person.content}
       handleSave={updateContent}
     />
   )
 
+  const SmallScreenLayout: React.FC = () => (
+    <Box fill>
+      <PersonHeader />
+      <Box direction="column" background="dark-1" pad="medium" fill>
+        <Tabs>
+          <Tab title="Content">
+            <Box
+              background="light-2"
+              pad="medium"
+              style={{ borderRadius: "2px" }}
+              overflow={{ vertical: "auto" }}
+              fill
+            >
+              <EditorContainer />
+            </Box>
+          </Tab>
+          <Tab title="Relationships">
+            <RelationshipsContainer />
+          </Tab>
+        </Tabs>
+      </Box>
+    </Box>
+  )
+
+  const LargeScreenLayout: React.FC = () => (
+    <Grid
+      fill
+      rows={["auto", "auto"]}
+      columns={["medium", "auto"]}
+      areas={[
+        { name: "header", start: [0, 0], end: [0, 0] },
+        { name: "relationships", start: [0, 1], end: [0, 1] },
+        { name: "contentEditor", start: [1, 0], end: [1, 1] },
+      ]}
+    >
+      <PersonHeader />
+      <Box
+        gridArea="relationships"
+        overflow={{ vertical: "auto" }}
+        background="dark-1"
+        fill
+      >
+        <RelationshipsContainer />
+      </Box>
+      <Box
+        gridArea="contentEditor"
+        background="light-2"
+        pad="medium"
+        fill
+        overflow={{ vertical: "auto" }}
+      >
+        <EditorContainer />
+      </Box>
+    </Grid>
+  )
+
   return (
     <Overlay {...props} handleClose={handleClose}>
-      {isSmall ? (
-        <Box fill>
-          <PersonHeader />
-          <Box direction="column" background="dark-1" pad="medium" fill>
-            <Tabs>
-              <Tab title="Content">
-                <Box
-                  background="light-2"
-                  pad="medium"
-                  style={{ borderRadius: "2px" }}
-                  overflow={{ vertical: "auto" }}
-                  fill
-                >
-                  <EditorContainer />
-                </Box>
-              </Tab>
-              <Tab title="Relationships">
-                <Box overflow={{ vertical: "auto" }} fill>
-                  <RelationshipsContainer />
-                </Box>
-              </Tab>
-            </Tabs>
-          </Box>
-        </Box>
-      ) : (
-        <Grid
-          fill
-          rows={["auto", "auto"]}
-          columns={["medium", "auto"]}
-          areas={[
-            { name: "header", start: [0, 0], end: [0, 0] },
-            { name: "relationships", start: [0, 1], end: [0, 1] },
-            { name: "contentEditor", start: [1, 0], end: [1, 1] },
-          ]}
-        >
-          <PersonHeader />
-          <Box
-            gridArea="relationships"
-            overflow={{ vertical: "auto" }}
-            background="dark-1"
-            fill
-          >
-            <RelationshipsContainer />
-          </Box>
-          <Box
-            gridArea="contentEditor"
-            background="light-2"
-            pad="medium"
-            fill
-            overflow={{ vertical: "auto" }}
-          >
-            <EditorContainer />
-          </Box>
-        </Grid>
-      )}
+      {isSmall ? <SmallScreenLayout /> : <LargeScreenLayout />}
     </Overlay>
   )
 }
@@ -404,6 +412,11 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                     /* Go to the related person's menu when clicked */
                     onClick={async () => {
                       try {
+                        /* Ask to continue if there are unsaved changes */
+                        const doContinue = fireUnsavedChangeEvent()
+                        if (!doContinue) return
+
+                        /* Navigate to the selected person's details */
                         await dispatch(setPersonInFocus(person.id))
                         props.setIsEditing(false)
                       } catch (error) {
@@ -598,7 +611,14 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
           icon={<Icons.View color="status-ok" />}
           aria-label="Viewer mode"
           hoverIndicator
-          onClick={() => props.setIsEditing(false)}
+          onClick={() => {
+            /* If there are unsaved changes, ask the user to confirm before switching modes */
+            const doContinue = fireUnsavedChangeEvent()
+            if (!doContinue) return
+
+            /* Switch away from edit mode to view mode */
+            props.setIsEditing(false)
+          }}
         />
       ) : (
         // Toggle edit mode

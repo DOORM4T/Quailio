@@ -3,67 +3,72 @@ import { Text } from "grommet"
 import React from "react"
 import { Editor as TinyMCEEditor } from "tinymce"
 import { TINY_MCE_KEY } from "../.tinyMCEKey"
+import {
+  addUnsavedChangeListener,
+  removeUnsavedChangeListener,
+} from "../helpers/unsavedChangeEvent"
 
 const INITIAL_VALUE = "<p>Write anything!</p>"
 const ContentEditor: React.FC<IProps> = (props) => {
-  const [content, setContent] = React.useState(INITIAL_VALUE)
+  const [editorContent, setEditorContent] = React.useState(
+    props.content || INITIAL_VALUE,
+  )
   const [isSaved, setIsSaved] = React.useState(true)
 
   const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
-    setContent(newContent)
-    /* Content should be already saved outside of edit mode */
-    if (props.editMode) setIsSaved(false)
+    setEditorContent(newContent)
+    setIsSaved(false)
   }
 
   const preventUnsavedChanges = (e: Event) => {
+    if (isSaved) return
+
+    /* Exit confirmation when closing the window */
+    if (e.type === "beforeunload") {
+      e.returnValue = true
+      return
+    }
+
+    /* Exit confirmation from UI interactions */
+    const doExit = window.confirm(
+      "You have unsaved changes. Are you sure you want to exit?",
+    )
+
+    if (doExit) return
+
     e.preventDefault()
-    e.returnValue = true
   }
 
   React.useEffect(() => {
     if (isSaved) {
       /* Safe to close the window. Remove the prevention listener, if there is one */
-      window.removeEventListener("beforeunload", preventUnsavedChanges)
+      removeUnsavedChangeListener(preventUnsavedChanges)
     } else {
       /* Prevent window closing if there are unsaved changes */
-      window.addEventListener("beforeunload", preventUnsavedChanges)
+      addUnsavedChangeListener(preventUnsavedChanges)
     }
 
     return () => {
       /* Remove the prevention listener when this component unmounts */
-      window.removeEventListener("beforeunload", preventUnsavedChanges)
+      removeUnsavedChangeListener(preventUnsavedChanges)
     }
   }, [isSaved])
 
-  /* Set content state when passed props change */
-  React.useEffect(() => {
-    setContent(props.content || INITIAL_VALUE)
-
-    /* Loaded content doesn't need to be saved until the user changes it */
-    setIsSaved(true)
-  }, [props.content])
-
-  React.useEffect(() => {
-    if (isSaved || props.editMode) return
-
-    /* Ask to save unsaved changes when exiting Edit Mode */
-    const doSave = window.confirm(
-      "You have unsaved changes. Save current changes before exiting Edit Mode?",
-    )
-    if (doSave) {
-      handleSave()
-    }
-  }, [props.editMode])
+  const editorContainerRef = React.useRef<HTMLDivElement>(null)
 
   /* Call the save method from props */
   const handleSave = async () => {
-    await props.handleSave(content)
+    await props.handleSave(editorContent)
     setIsSaved(true)
   }
 
+  React.useEffect(() => {
+    console.log("rerender")
+  }, [])
+
   return (
-    <article id={props.id} style={{ height: "100%" }}>
-      {props.editMode ? (
+    <article id={props.id} style={{ height: "100%" }} ref={editorContainerRef}>
+      {props.isEditing ? (
         <React.Fragment>
           <Text
             className="content-editor-save-status"
@@ -72,26 +77,29 @@ const ContentEditor: React.FC<IProps> = (props) => {
             {isSaved ? "Saved" : "Unsaved Changes"}
           </Text>
           <Editor
-            disabled={props.editMode ? false : true}
+            disabled={props.isEditing ? false : true}
             apiKey={TINY_MCE_KEY}
             init={{
               min_height: 400,
-              height: "90%",
+              height: "100%",
               plugins: ["image", "save"],
               toolbar: ["save"],
               removed_menuitems: "newdocument visualaid",
               save_onsavecallback: () => {
                 console.log("Saved.")
               },
-              auto_focus: true,
             }}
             onSaveContent={handleSave}
             onEditorChange={handleEditorChange}
-            value={content}
+            value={editorContent}
           />
         </React.Fragment>
       ) : (
-        <div dangerouslySetInnerHTML={{ __html: content }} />
+        <div
+          dangerouslySetInnerHTML={{
+            __html: props.content || "Write anything!",
+          }}
+        />
       )}
     </article>
   )
@@ -99,7 +107,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
 
 interface IProps {
   id: string
-  editMode: boolean
+  isEditing: boolean
   content?: string
   handleSave: (content: string) => void
 }
