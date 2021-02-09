@@ -19,7 +19,6 @@ import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { ThemeContext } from "styled-components"
-import { personContentCollection } from "../../firebase"
 import { fireUnsavedChangeEvent } from "../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
@@ -42,7 +41,7 @@ import ContentEditor from "../ContentEditor"
 import Overlay from "../Overlay"
 
 interface IProps {
-  [key: string]: any
+  id: string
 }
 
 const ViewPersonOverlay: React.FC<IProps> = (props) => {
@@ -63,43 +62,6 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   // -== LOCAL STATE & OTHER HOOKS ==- //
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
   const thumbnailUploadRef = React.useRef<HTMLInputElement>(null) // Reference to the thumbnail file input DOM element
-
-  /* Relationship state based on the selected person */
-  const [relatedPeopleData, setRelatedPeopleData] = React.useState<
-    IRelatedPersonData[]
-  >(getRelatedPeople(person, currentNetwork))
-
-  /* Update relatedPeopleData state every time the selected person changes */
-  React.useEffect(() => {
-    if (!person) return
-    setRelatedPeopleData(getRelatedPeople(person, currentNetwork))
-    personContentCollection.doc(person.id).onSnapshot(async (snapshot) => {
-      await dispatch(setPersonInFocus(person.id))
-    })
-  }, [person])
-
-  /* Handle updates to individual relationship reasons, updating relatedPeoplData state */
-  const handleReasonChange = (personId: string) => (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    /* Find the person to update */
-    const personToUpdate = relatedPeopleData.find((p) => p.id === personId)
-    if (!personToUpdate) return
-
-    /* Update their relationship reason */
-    const updatedPerson: IRelatedPersonData = {
-      ...personToUpdate,
-      reason: e.currentTarget.value,
-    }
-    /* Update the relatedPeople array */
-    const peopleWithoutUpdated = relatedPeopleData.filter(
-      (p) => p.id !== personId,
-    )
-    const updatedPeople = peopleWithoutUpdated
-      .concat(updatedPerson)
-      .sort((a, b) => a.name.localeCompare(b.name))
-    setRelatedPeopleData(updatedPeople)
-  }
 
   /* Don't render if there is no selected Network or Person  */
   if (!currentNetwork || !person) return null
@@ -152,12 +114,13 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   }
 
   /* Update the selected Person's content */
-  const updateContent = async (content: string) => {
-    await dispatch(setPersonContent(person.id, content))
+  const updateContent = async (newContent: string) => {
+    await dispatch(setPersonContent(person.id, newContent))
   }
 
+  // -== COMPONENTS ==- //
   /* Person Header */
-  const PersonHeader: React.FC = () => (
+  const PersonHeader: React.ReactNode = (
     <Header direction="column" background="brand" pad="medium" justify="start">
       <Thumbnail
         currentPerson={person}
@@ -165,22 +128,29 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         handleChangeThumbnail={handleChangeThumbnail}
         thumbnailUploadRef={thumbnailUploadRef}
       />
-      <h1
-        // contentEditable={isEditing}
-        aria-label={isEditing ? "Edit name" : "Name"}
-        style={{
-          padding: "1rem",
-          margin: 0,
-          lineHeight: "2rem",
-          whiteSpace: "break-spaces",
-          wordWrap: "break-word",
-          wordBreak: "break-all",
-          overflow: "auto",
-          height: "4rem",
-        }}
-      >
-        {person.name}
-      </h1>
+      {isEditing ? (
+        <TextInput
+          value={person.name}
+          textAlign="center"
+          onClick={(e) => e.currentTarget.select()}
+        />
+      ) : (
+        <h1
+          aria-label="Name"
+          style={{
+            padding: "1rem",
+            margin: 0,
+            lineHeight: "2rem",
+            whiteSpace: "break-spaces",
+            wordWrap: "break-word",
+            wordBreak: "break-all",
+            overflow: "auto",
+            height: "4rem",
+          }}
+        >
+          {person.name}
+        </h1>
+      )}
       <Buttons
         person={person}
         isEditing={isEditing}
@@ -190,30 +160,33 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   )
 
   /* Reusable relationships container */
-  const RelationshipsContainer: React.FC = () => (
+  const RelationshipsContainer: React.ReactNode = (
     <Relationships
       currentNetwork={currentNetwork}
-      relatedPeopleData={relatedPeopleData}
-      handleReasonChange={handleReasonChange}
       currentPerson={person}
       isEditing={isEditing}
       setIsEditing={setIsEditing}
     />
   )
 
-  /* ContentEditor container */
-  const EditorContainer: React.FC = () => (
+  /* Content & Content Editor container */
+  const ContentContainer: React.ReactNode = isEditing ? (
     <ContentEditor
       id="person-content-editor"
-      isEditing={isEditing}
       content={person.content}
       handleSave={updateContent}
+    />
+  ) : (
+    <div
+      dangerouslySetInnerHTML={{
+        __html: person.content || "Write anything!",
+      }}
     />
   )
 
   const SmallScreenLayout: React.FC = () => (
     <Box fill>
-      <PersonHeader />
+      {PersonHeader}
       <Box direction="column" background="dark-1" pad="medium" fill>
         <Tabs>
           <Tab title="Content">
@@ -224,12 +197,10 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
               overflow={{ vertical: "auto" }}
               fill
             >
-              <EditorContainer />
+              {ContentContainer}
             </Box>
           </Tab>
-          <Tab title="Relationships">
-            <RelationshipsContainer />
-          </Tab>
+          <Tab title="Relationships">{RelationshipsContainer}</Tab>
         </Tabs>
       </Box>
     </Box>
@@ -246,14 +217,14 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         { name: "contentEditor", start: [1, 0], end: [1, 1] },
       ]}
     >
-      <PersonHeader />
+      {PersonHeader}
       <Box
         gridArea="relationships"
         overflow={{ vertical: "auto" }}
         background="dark-1"
         fill
       >
-        <RelationshipsContainer />
+        {RelationshipsContainer}
       </Box>
       <Box
         gridArea="contentEditor"
@@ -262,13 +233,13 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         fill
         overflow={{ vertical: "auto" }}
       >
-        <EditorContainer />
+        {ContentContainer}
       </Box>
     </Grid>
   )
 
   return (
-    <Overlay {...props} handleClose={handleClose}>
+    <Overlay id={props.id} handleClose={handleClose}>
       {isSmall ? <SmallScreenLayout /> : <LargeScreenLayout />}
     </Overlay>
   )
@@ -375,10 +346,6 @@ interface IRelatedPersonData {
 interface IRelationshipsProps {
   currentNetwork: ICurrentNetwork
   currentPerson: IPersonInFocus
-  relatedPeopleData: IRelatedPersonData[]
-  handleReasonChange: (
-    id: string,
-  ) => (e: React.ChangeEvent<HTMLInputElement>) => void
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -387,16 +354,49 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
   const [didChangeReason, setDidChangeReason] = React.useState<boolean>(false)
 
+  /* Relationship state based on the selected person */
+  const [relatedPeopleData, setRelatedPeopleData] = React.useState<
+    IRelatedPersonData[]
+  >(getRelatedPeople(props.currentPerson, props.currentNetwork))
+
+  /* Update relatedPeopleData state every time the selected person changes */
   React.useEffect(() => {
-    console.log(didChangeReason)
-  }, [didChangeReason])
+    if (!props.currentPerson) return
+    setRelatedPeopleData(
+      getRelatedPeople(props.currentPerson, props.currentNetwork),
+    )
+  }, [props.currentPerson])
+
+  /* Handle updates to individual relationship reasons, updating relatedPeopleData state */
+  const handleReasonChange = (personId: string) => (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    /* Find the person to update */
+    const personToUpdate = relatedPeopleData.find((p) => p.id === personId)
+    if (!personToUpdate) return
+
+    /* Update their relationship reason */
+    const updatedPerson: IRelatedPersonData = {
+      ...personToUpdate,
+      reason: e.currentTarget.value,
+    }
+
+    /* Update the relatedPeople array */
+    const peopleWithoutUpdated = relatedPeopleData.filter(
+      (p) => p.id !== personId,
+    )
+    const updatedPeople = peopleWithoutUpdated
+      .concat(updatedPerson)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    setRelatedPeopleData(updatedPeople) // TODO: This state update rerenders everything...
+  }
 
   return (
     <React.Fragment>
       <h3 style={{ textAlign: "center" }}>Connections</h3>
       <List
         id="relationships-list"
-        data={props.relatedPeopleData}
+        data={relatedPeopleData}
         border={false}
         children={(person: IRelatedPersonData, index: number) => {
           return (
@@ -435,7 +435,7 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                           borderBottom: "1px solid black",
                         }}
                         value={person.reason}
-                        onChange={props.handleReasonChange(person.id)}
+                        onChange={handleReasonChange(person.id)}
                         onFocus={(e) => e.currentTarget.select()}
                         onKeyPress={(e) => {
                           setDidChangeReason(true)
@@ -454,6 +454,11 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                                 person.id,
                                 e.currentTarget.value,
                               ),
+                            )
+
+                            /* Get the updated details */
+                            await dispatch(
+                              setPersonInFocus(props.currentPerson.id),
                             )
                           } catch (error) {
                             console.error(error)
