@@ -252,7 +252,6 @@ const DashboardPage: React.FC = () => {
                 style={{ boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)" }}
               >
                 <PersonMenu
-                  background="dark-2"
                   id="person-menu"
                   data={
                     currentNetwork
