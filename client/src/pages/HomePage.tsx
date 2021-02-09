@@ -16,24 +16,22 @@ import Logo from "../assets/logo.png"
 import { auth } from "../firebase"
 import { IApplicationState } from "../store/store"
 
-interface IProps {}
-
 const APP_NAME = "Quailio"
 
-const HomePage: React.FC<IProps> = (props: IProps) => {
+const HomePage: React.FC = () => {
   const isLoggedIn = useSelector<IApplicationState>(
     (state) => state.auth.userId,
   )
 
   return (
-    <React.Fragment>
+    <Box fill background="light-1">
       <Box align="center" justify="start" direction="column" fill="horizontal">
         <GrommetHeader
           align="center"
           direction="row"
           justify="center"
           fill="horizontal"
-          background={{ color: "accent-1" }}
+          background={{ color: "dark-1" }}
         >
           <Avatar
             align="center"
@@ -47,7 +45,7 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
             animation={{ type: "zoomIn" }}
           />
         </GrommetHeader>
-        <Box align="center" justify="center">
+        <Box align="center" justify="center" fill>
           <Box
             align="center"
             justify="center"
@@ -83,9 +81,9 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
           </Box>
 
           <Text size="xxlarge">Make a connection</Text>
-          <Box align="stretch">
+          <Box align="stretch" pad={{ bottom: "xlarge" }}>
             <Accordion width="large">
-              <AccordionPanel label="Connecting Families (Coming Soon!)">
+              <AccordionPanel label="Connecting Families">
                 <Box pad="medium">
                   <Text>
                     Create family trees to share with family and watch your
@@ -96,7 +94,7 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
               <AccordionPanel label="Organizational Hierarchy">
                 <Box pad="medium">
                   <Text>
-                    Whether you're a part of a project team or a social club,
+                    Whether you're a part of a project team or a social club,{" "}
                     {APP_NAME} is great for school organizations!
                   </Text>
                 </Box>
@@ -136,16 +134,29 @@ const HomePage: React.FC<IProps> = (props: IProps) => {
               disconnected={true}
             />
           </Box> */}
-          <Footer
+          <Box
+            width="large"
+            height="large"
+            background="dark-1"
             align="center"
-            direction="row"
-            flex={false}
-            justify="between"
-            gap="medium"
-          />
+            justify="center"
+            margin={{ vertical: "xlarge" }}
+          >
+            <i>Zero-login demo coming soon!</i>
+          </Box>
         </Box>
       </Box>
-    </React.Fragment>
+      <Footer
+        direction="row"
+        height="xsmall"
+        background="brand"
+        align="center"
+        justify="end"
+        gap="medium"
+      >
+        🦅
+      </Footer>
+    </Box>
   )
 }
 

@@ -22,7 +22,7 @@ const Routes: React.FC = () => {
   if (isAuthenticated === undefined) return <div />
 
   return (
-    <div>
+    <React.Fragment>
       <AppHeader title="Quailio" />
       <TransitionGroup>
         <CSSTransition
@@ -58,7 +58,7 @@ const Routes: React.FC = () => {
           </Switch>
         </CSSTransition>
       </TransitionGroup>
-    </div>
+    </React.Fragment>
   )
 }
 
