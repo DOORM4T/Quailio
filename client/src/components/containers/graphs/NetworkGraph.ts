@@ -269,6 +269,7 @@ export function createNetworkGraph(
         }
       }
     })
+    .backgroundColor("#444")
 
   return Graph
 }
