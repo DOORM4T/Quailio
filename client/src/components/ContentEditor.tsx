@@ -80,6 +80,7 @@ const ContentEditor: React.FC<IProps> = (props) => {
             save_onsavecallback: () => {
               console.log("Saved.")
             },
+            auto_focus: true,
           }}
           onSaveContent={handleSave}
           onEditorChange={handleEditorChange}
