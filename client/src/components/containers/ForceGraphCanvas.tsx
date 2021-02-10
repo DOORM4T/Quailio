@@ -47,6 +47,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
       return () => {
         window.removeEventListener("resize", handleResize)
+        forceGraph._destructor()
       }
     }
   }, [props])
