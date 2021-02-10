@@ -28,11 +28,6 @@ const ContentPanel: React.FC<IProps> = (props) => {
   )
   const [isSaved, setIsSaved] = React.useState(true)
 
-  React.useEffect(() => {
-    console.log("rerender")
-    console.log(editorContent)
-  }, [props.currentPersonId])
-
   // Handle controlled input changes
   const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
     setEditorContent(newContent)
@@ -46,7 +41,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
   }
 
   // Manage listener events to prevent unsaved changes
-  const preventUnsavedChanges = (e: Event) => {
+  const preventUnsavedChanges = async (e: Event) => {
     if (isSaved) return
 
     /* Exit confirmation when closing the window */
@@ -57,10 +52,12 @@ const ContentPanel: React.FC<IProps> = (props) => {
 
     /* Exit confirmation from UI interactions */
     const doExit = window.confirm(
-      "You have unsaved changes. Are you sure you want to exit?",
+      "There are unsaved changes to this panel's content. Are you sure you want to exit?",
     )
 
-    if (doExit) return
+    if (doExit) {
+      return
+    }
 
     e.preventDefault()
   }
