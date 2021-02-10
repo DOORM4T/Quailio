@@ -104,7 +104,7 @@ export function createNetworkGraph(
     .graphData(gData)
     .nodeRelSize(NODE_SIZE)
     .nodeCanvasObject((node, ctx) => {
-      const { thumbnail, x = 0, y = 0 } = node as NodeObject & IPersonNode
+      const { thumbnail, x = 0, y = 0, name } = node as NodeObject & IPersonNode
 
       // add ring just for highlighted nodes
       if (highlightNodes.has(node)) {
@@ -147,6 +147,15 @@ export function createNetworkGraph(
         ctx.strokeStyle = "black"
         ctx.stroke()
       }
+
+      ctx.textAlign = "center"
+      ctx.textBaseline = "top"
+      ctx.fillStyle = "yellow"
+      ctx.strokeStyle = "black"
+      ctx.lineWidth = 0.2
+      ctx.font = `${NODE_SIZE / 3}px Sans-Serif`
+      ctx.fillText(name, x, y + NODE_SIZE / 2)
+      ctx.strokeText(name, x, y + NODE_SIZE / 2)
     })
     .nodeLabel("name")
     .nodeAutoColorBy("id")
