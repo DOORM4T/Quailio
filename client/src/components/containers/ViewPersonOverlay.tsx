@@ -8,10 +8,10 @@ import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetw
 import { getPersonInFocus } from "../../store/selectors/ui/getPersonInFocus"
 import { togglePersonEditMenu } from "../../store/ui/uiActions"
 import Overlay from "../Overlay"
-import ContentPanel from "./OverlayComponents/ContentPanel"
-import OverlayButtons from "./OverlayComponents/OverlayButtons"
-import Relationships from "./OverlayComponents/Relationships"
-import UploadPersonThumbnail from "./OverlayComponents/UploadPersonThumbnail"
+import ContentPanel from "./ViewPersonComponents/ContentPanel"
+import OverlayButtons from "./ViewPersonComponents/OverlayButtons"
+import Relationships from "./ViewPersonComponents/Relationships"
+import UploadPersonThumbnail from "./ViewPersonComponents/UploadPersonThumbnail"
 
 interface IProps {
   id: string
