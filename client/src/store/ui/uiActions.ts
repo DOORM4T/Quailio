@@ -49,6 +49,7 @@ export const setPersonInFocus: ActionCreator<
         : null
 
       /* Get the Person's rich text content, if they exist */
+      let personContent = ""
       if (person !== null) {
         const personContentDoc = personContentCollection.doc(person.id)
         const doesExist = (await personContentDoc.get()).exists
@@ -58,13 +59,14 @@ export const setPersonInFocus: ActionCreator<
           const personContentData = (
             await personContentDoc.get()
           ).data() as IPersonContentData
-          person.content = personContentData.content
+          personContent = personContentData.content
         }
       }
 
       return dispatch({
         type: UserInterfaceActionTypes.FOCUS_ON_PERSON,
         person,
+        personContent,
       })
     } catch (error) {
       /* Failed to focus on the Person */

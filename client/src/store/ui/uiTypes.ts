@@ -3,8 +3,9 @@ import { IPerson } from "../networks/networkTypes"
 // -== STATE TYPES ==- //
 export interface IUserInterfaceState {
   readonly isLoading: boolean
-  readonly personInFocus: IPersonInFocus | null
   readonly isPersonEditMenuOpen: boolean
+  readonly personInFocus: IPersonInFocus | null
+  readonly personContent: string
 }
 
 export interface IPersonInFocus extends IPerson {
@@ -27,6 +28,7 @@ export interface ISetUILoadingAction {
 export interface IFocusOnPersonAction {
   type: UserInterfaceActionTypes.FOCUS_ON_PERSON
   person: IPersonInFocus | null
+  personContent: string
 }
 
 export interface ITogglePersonEditMenu {

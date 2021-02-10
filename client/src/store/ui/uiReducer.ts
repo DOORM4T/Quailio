@@ -1,6 +1,5 @@
 import { Reducer } from "redux"
 import {
-  IPersonInFocus,
   IUserInterfaceState,
   UserInterfaceActions,
   UserInterfaceActionTypes,
@@ -8,8 +7,9 @@ import {
 
 const initialState: IUserInterfaceState = {
   isLoading: false,
-  personInFocus: null,
   isPersonEditMenuOpen: false,
+  personInFocus: null,
+  personContent: "",
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -22,7 +22,12 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
     }
 
     case UserInterfaceActionTypes.FOCUS_ON_PERSON: {
-      return { ...state, personInFocus: action.person, isLoading: false }
+      return {
+        ...state,
+        personInFocus: action.person,
+        personContent: action.personContent,
+        isLoading: false,
+      }
     }
 
     /* SET A PERSON'S RICH TEXT CONTENT */
@@ -30,15 +35,9 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       /* Stop if there's no person selected */
       if (!state.personInFocus) break
 
-      /* Create the updated person object */
-      const updatedPerson: IPersonInFocus = {
-        ...state.personInFocus,
-        content: action.content,
-      }
-
       return {
         ...state,
-        personInFocus: updatedPerson,
+        personContent: action.content,
         isLoading: false,
       }
     }
