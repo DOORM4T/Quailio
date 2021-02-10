@@ -122,7 +122,11 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
               {ContentContainer}
             </Box>
           </Tab>
-          <Tab title="Relationships">{RelationshipsContainer}</Tab>
+          <Tab title="Relationships">
+            <Box overflow={{ vertical: "auto" }} background="dark-1" fill>
+              {RelationshipsContainer}
+            </Box>
+          </Tab>
         </Tabs>
       </Box>
     </Box>
