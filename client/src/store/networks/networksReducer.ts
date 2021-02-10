@@ -84,7 +84,7 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
         action.personId,
       )
 
-      /* Append the new person data to the current netowkr's list of person data */
+      /* Append the new person data to the current network's list of person data */
       const updatedPeopleData = state.currentNetwork.people.concat(
         action.personData,
       )
