@@ -6,19 +6,16 @@ import {
   Grid,
   Header,
   Heading,
-  Image,
   List,
   Tab,
   Tabs,
   Text,
   TextInput,
-  ThemeType,
 } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import { ThemeContext } from "styled-components"
 import { fireUnsavedChangeEvent } from "../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
@@ -26,13 +23,11 @@ import {
   deletePerson as deletePersonById,
   disconnectPeople,
   getAllPeople,
-  setPersonThumbnail,
   updateRelationshipReason,
 } from "../../store/networks/networksActions"
 import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { getPersonInFocus } from "../../store/selectors/ui/getPersonInFocus"
-import { IApplicationState } from "../../store/store"
 import {
   setPersonContent,
   setPersonInFocus,
@@ -41,6 +36,7 @@ import {
 import { IPersonInFocus } from "../../store/ui/uiTypes"
 import ContentEditor from "../ContentEditor"
 import Overlay from "../Overlay"
+import UploadPersonThumbnail from "./OverlayComponents/UploadPersonThumbnail"
 
 interface IProps {
   id: string
@@ -59,7 +55,6 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
 
   // -== LOCAL STATE & OTHER HOOKS ==- //
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
-  const thumbnailUploadRef = React.useRef<HTMLInputElement>(null) // Reference to the thumbnail file input DOM element
 
   /* Don't render if there is no selected Network or Person  */
   if (!currentNetwork || !currentPerson) return null
@@ -77,42 +72,6 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     dispatch(togglePersonEditMenu(false))
   }
 
-  /**
-   * Open the file input menu
-   */
-  const openFileInput = () => {
-    const fileInput = thumbnailUploadRef.current
-    fileInput?.click()
-  }
-
-  /**
-   * Handle thumbnail uploading
-   */
-  const handleChangeThumbnail = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    try {
-      const fileInput = e.currentTarget
-
-      /* Get the file (first file, multiple files at once are not accepted) */
-      const file = fileInput.files ? fileInput.files[0] : null
-
-      /* Stop if no file was uploaded */
-      if (!file) throw new Error("No file was uploaded.")
-
-      /* Update the person in the database and in global state  */
-      await dispatch(
-        setPersonThumbnail(currentNetwork.id, currentPerson.id, file),
-      )
-
-      /* Refresh focused person global state */
-      await dispatch(setPersonInFocus(currentPerson.id))
-    } catch (error) {
-      /* Failed to upload a thumbnail */
-      console.error(error)
-    }
-  }
-
   /* Update the selected Person's content */
   const updateContent = async (newContent: string) => {
     await dispatch(setPersonContent(currentPerson.id, newContent))
@@ -122,11 +81,9 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   /* Person Header */
   const PersonHeader: React.ReactNode = (
     <Header direction="column" background="brand" pad="medium" justify="start">
-      <Thumbnail
+      <UploadPersonThumbnail
+        currentNetwork={currentNetwork}
         currentPerson={currentPerson}
-        openFileInput={openFileInput}
-        handleChangeThumbnail={handleChangeThumbnail}
-        thumbnailUploadRef={thumbnailUploadRef}
       />
       {isEditing ? (
         <TextInput
@@ -247,58 +204,6 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
 }
 
 export default ViewPersonOverlay
-
-//                             //
-// -== THUMBNAIL COMPONENT ==- //
-//                             //
-interface IThumbnailProps {
-  openFileInput: (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) => void
-  thumbnailUploadRef: React.RefObject<HTMLInputElement>
-  handleChangeThumbnail: (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => Promise<void>
-  currentPerson: IPerson
-}
-const Thumbnail: React.FC<IThumbnailProps> = (props) => {
-  const theme = React.useContext<ThemeType>(ThemeContext)
-  return (
-    <Box>
-      <button
-        id="change-thumbnail-button"
-        onClick={props.openFileInput}
-        style={{
-          background:
-            theme.global?.colors?.["light-1"]?.toString() || "transparent",
-          cursor: "pointer",
-          boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)",
-          border: "none",
-          borderRadius: "4px",
-          width: "128px",
-          height: "128px",
-          padding: "2px",
-        }}
-        aria-label="Person thumbnail"
-        role="Click to change thumbnail"
-      >
-        <input
-          id="thumbnail-upload-input"
-          ref={props.thumbnailUploadRef}
-          type="file"
-          name="thumbnail-upload"
-          hidden
-          onChange={props.handleChangeThumbnail}
-        />
-        {props.currentPerson.thumbnailUrl ? (
-          <Image src={props.currentPerson.thumbnailUrl} fill />
-        ) : (
-          <Icons.User size="xlarge" color="dark-1" />
-        )}
-      </button>
-    </Box>
-  )
-}
 
 /* Get the array of people related to the selected person */
 function getRelatedPeople(
