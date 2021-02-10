@@ -14,14 +14,12 @@ import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
 import Logo from "../assets/logo.png"
 import { auth } from "../firebase"
-import { IApplicationState } from "../store/store"
+import { getIsAuthenticated } from "../store/selectors/auth/getIsAuthenticated"
 
 const APP_NAME = "Quailio"
 
 const HomePage: React.FC = () => {
-  const isLoggedIn = useSelector<IApplicationState>(
-    (state) => state.auth.userId,
-  )
+  const isLoggedIn = useSelector(getIsAuthenticated)
 
   return (
     <Box fill background="light-1">

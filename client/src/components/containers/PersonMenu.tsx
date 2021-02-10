@@ -4,6 +4,7 @@ import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
+import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { IApplicationState } from "../../store/store"
 import {
   setPersonInFocus,
@@ -13,9 +14,7 @@ import {
 const PersonMenu: React.FC<IProps> = (props) => {
   // -== STATE ==- //
   const dispatch: Dispatch<any> = useDispatch()
-  const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
-    (state) => state.networks.currentNetwork,
-  )
+  const currentNetwork = useSelector(getCurrentNetwork)
 
   /* Open a Person's content menu */
   const viewPerson = (id: string) => async () => {

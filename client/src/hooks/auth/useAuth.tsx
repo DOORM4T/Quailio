@@ -1,16 +1,12 @@
 import { useSelector } from "react-redux"
-import { IApplicationState } from "../../store/store"
+import { getIsAuthenticated } from "../../store/selectors/auth/getIsAuthenticated"
 
 /* get user authentication state */
-function useAuth(): { isAuthenticated: AuthState } {
+function useAuth(): { isAuthenticated: boolean | undefined } {
   /* true, false, or undefined. Undefined indicates the state has not loaded yet.  */
-  const isAuthenticated = useSelector<IApplicationState, AuthState>((state) =>
-    state.auth.userId === undefined ? undefined : Boolean(state.auth.userId),
-  )
+  const isAuthenticated = useSelector(getIsAuthenticated)
 
   return { isAuthenticated }
 }
 
 export default useAuth
-
-type AuthState = boolean | undefined

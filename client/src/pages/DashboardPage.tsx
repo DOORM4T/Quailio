@@ -16,38 +16,33 @@ import PersonMenu from "../components/containers/PersonMenu"
 import ViewPersonOverlay from "../components/containers/ViewPersonOverlay"
 import { HEADER_HEIGHT } from "../constants"
 import useGetNetworks from "../hooks/networks/useGetNetworks"
+import useSmallBreakpoint from "../hooks/useSmallBreakpoint"
 import {
   addPerson,
   createNetwork,
   deleteNetwork,
+  getAllNetworks,
   setNetwork,
 } from "../store/networks/networksActions"
-import { ICurrentNetwork, INetwork } from "../store/networks/networkTypes"
-import { IApplicationState } from "../store/store"
+import { getAllNetworkData } from "../store/selectors/networks/getAllNetworkData"
+import { getCurrentNetwork } from "../store/selectors/networks/getCurrentNetwork"
+import { getIsOverlayOpen } from "../store/selectors/ui/getIsOverlayOpen"
 
 const DashboardPage: React.FC = () => {
-  /* get all network data for an authenticated user */
+  /* Fetch network data*/
   useGetNetworks()
 
+  /* Access global state */
   const dispatch: ActionCreator<AnyAction> = useDispatch()
-  const networks = useSelector<IApplicationState, INetwork[]>(
-    (state) => state.networks.networks,
-  )
-  const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
-    (state) => state.networks.currentNetwork,
-  )
+  const networks = useSelector(getAllNetworkData)
+  const currentNetwork = useSelector(getCurrentNetwork)
+  const isOverlayOpen = useSelector(getIsOverlayOpen)
 
   /* responsive breakpoints */
-  const size = React.useContext(ResponsiveContext)
-  const isSmall = size === "xsmall" || size === "small"
+  const isSmall = useSmallBreakpoint()
 
   /* Network select button ref */
   const networkSelectRef = React.useRef<any>(null)
-
-  /* View person menu open state */
-  const isOverlayOpen = useSelector<IApplicationState, boolean>(
-    (state) => state.ui.isPersonEditMenuOpen,
-  )
 
   /* Create Network Function */
   const handleCreateNetwork = async () => {

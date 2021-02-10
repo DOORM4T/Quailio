@@ -4,7 +4,7 @@ import { Dispatch } from "redux"
 import { getAllNetworks } from "../../store/networks/networksActions"
 import useAuth from "../auth/useAuth"
 
-/* gets all network data for an authenticated user upon component mount */
+/* Place all network data in global state for an authenticated user upon component mount */
 function useGetNetworks(): { didGetNetworks: boolean } {
   const { isAuthenticated } = useAuth()
   const dispatch: Dispatch<any> = useDispatch()

@@ -30,6 +30,8 @@ import {
   updateRelationshipReason,
 } from "../../store/networks/networksActions"
 import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
+import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
+import { getPersonInFocus } from "../../store/selectors/ui/getPersonInFocus"
 import { IApplicationState } from "../../store/store"
 import {
   setPersonContent,
@@ -49,22 +51,18 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
   const isSmall = useSmallBreakpoint()
 
-  /* Get all people in the current network */
-  const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
-    (state) => state.networks.currentNetwork,
-  )
+  /* Get the current network */
+  const currentNetwork = useSelector(getCurrentNetwork)
 
   /* Get the current person in focus */
-  const person = useSelector<IApplicationState, IPersonInFocus | null>(
-    (state) => state.ui.personInFocus,
-  )
+  const currentPerson = useSelector(getPersonInFocus)
 
   // -== LOCAL STATE & OTHER HOOKS ==- //
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
   const thumbnailUploadRef = React.useRef<HTMLInputElement>(null) // Reference to the thumbnail file input DOM element
 
   /* Don't render if there is no selected Network or Person  */
-  if (!currentNetwork || !person) return null
+  if (!currentNetwork || !currentPerson) return null
 
   // -== FUNCTIONS ==- //
   /**
@@ -103,10 +101,12 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
       if (!file) throw new Error("No file was uploaded.")
 
       /* Update the person in the database and in global state  */
-      await dispatch(setPersonThumbnail(currentNetwork.id, person.id, file))
+      await dispatch(
+        setPersonThumbnail(currentNetwork.id, currentPerson.id, file),
+      )
 
       /* Refresh focused person global state */
-      await dispatch(setPersonInFocus(person.id))
+      await dispatch(setPersonInFocus(currentPerson.id))
     } catch (error) {
       /* Failed to upload a thumbnail */
       console.error(error)
@@ -115,7 +115,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
 
   /* Update the selected Person's content */
   const updateContent = async (newContent: string) => {
-    await dispatch(setPersonContent(person.id, newContent))
+    await dispatch(setPersonContent(currentPerson.id, newContent))
   }
 
   // -== COMPONENTS ==- //
@@ -123,14 +123,14 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const PersonHeader: React.ReactNode = (
     <Header direction="column" background="brand" pad="medium" justify="start">
       <Thumbnail
-        currentPerson={person}
+        currentPerson={currentPerson}
         openFileInput={openFileInput}
         handleChangeThumbnail={handleChangeThumbnail}
         thumbnailUploadRef={thumbnailUploadRef}
       />
       {isEditing ? (
         <TextInput
-          value={person.name}
+          value={currentPerson.name}
           textAlign="center"
           onClick={(e) => e.currentTarget.select()}
         />
@@ -148,11 +148,12 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
             height: "4rem",
           }}
         >
-          {person.name}
+          {currentPerson.name}
         </h1>
       )}
       <Buttons
-        person={person}
+        currentNetwork={currentNetwork}
+        currentPerson={currentPerson}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
       />
@@ -163,7 +164,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const RelationshipsContainer: React.ReactNode = (
     <Relationships
       currentNetwork={currentNetwork}
-      currentPerson={person}
+      currentPerson={currentPerson}
       isEditing={isEditing}
       setIsEditing={setIsEditing}
     />
@@ -173,13 +174,13 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const ContentContainer: React.ReactNode = isEditing ? (
     <ContentEditor
       id="person-content-editor"
-      content={person.content}
+      content={currentPerson.content}
       handleSave={updateContent}
     />
   ) : (
     <div
       dangerouslySetInnerHTML={{
-        __html: person.content || "Write anything!",
+        __html: currentPerson.content || "Write anything!",
       }}
     />
   )
@@ -520,32 +521,28 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
 // -== BUTTONS ==- //
 //                 //
 interface IOverlayButtonProps {
-  person: IPersonInFocus
+  currentNetwork: ICurrentNetwork
+  currentPerson: IPersonInFocus
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }
 const Buttons: React.FC<IOverlayButtonProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
 
-  /* Get the list of people in the current network */
-  const currentNetwork = useSelector<IApplicationState, ICurrentNetwork | null>(
-    (state) => state.networks.currentNetwork || null,
-  )
-
-  /* Stop if no network is selected */
-  if (!currentNetwork) return null
+  /* Do not render if no network or person are selected */
+  if (!props.currentNetwork || !props.currentPerson) return null
 
   /* IDs of people related to the selected person */
   const currentRelationshipIds: string[] = Object.keys(
-    props.person.relationships,
+    props.currentPerson.relationships,
   )
 
   /* List of possible people to connect to */
-  const relationshipOptions = currentNetwork.people
+  const relationshipOptions = props.currentNetwork.people
     .map((p) => {
       /* Exclude already-related people */
       const isAlreadyRelated = currentRelationshipIds.includes(p.id)
-      const isSelf = p.id === props.person.id
+      const isSelf = p.id === props.currentPerson.id
       if (!isAlreadyRelated && !isSelf) {
         return { id: p.id, name: p.name }
       } else {
@@ -562,22 +559,29 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
     const otherPerson = event.item as { id: string; name: string }
 
     const p1Reason =
-      prompt(`${props.person.name}'s relationship to ${otherPerson.name}:`) ||
-      ""
+      prompt(
+        `${props.currentPerson.name}'s relationship to ${otherPerson.name}:`,
+      ) || ""
     const p2Reason =
-      prompt(`${otherPerson.name}'s relationship to ${props.person.name}:`) ||
-      ""
+      prompt(
+        `${otherPerson.name}'s relationship to ${props.currentPerson.name}:`,
+      ) || ""
 
-    const p1Id = props.person.id
+    const p1Id = props.currentPerson.id
     const p2Id = otherPerson.id
 
     try {
       await dispatch(
-        connectPeople(currentNetwork.id, { p1Id, p2Id, p1Reason, p2Reason }),
+        connectPeople(props.currentNetwork.id, {
+          p1Id,
+          p2Id,
+          p1Reason,
+          p2Reason,
+        }),
       )
 
       /* Load updated data */
-      await dispatch(setPersonInFocus(props.person.id))
+      await dispatch(setPersonInFocus(props.currentPerson.id))
     } catch (error) {
       console.error(error)
     }
@@ -588,11 +592,11 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
    * @param id
    */
   const deletePerson = (id: string) => async () => {
-    if (!currentNetwork) return
+    if (!props.currentNetwork) return
 
     /* Confirm deletion */
     const doDelete = window.confirm(
-      `Delete ${props.person.name}? This action cannot be reversed.`,
+      `Delete ${props.currentPerson.name}? This action cannot be reversed.`,
     )
     if (!doDelete) return
 
@@ -601,8 +605,8 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
 
     /* Delete the person */
     try {
-      await dispatch(deletePersonById(currentNetwork.id, id))
-      await dispatch(getAllPeople(currentNetwork.id))
+      await dispatch(deletePersonById(props.currentNetwork.id, id))
+      await dispatch(getAllPeople(props.currentNetwork.id))
     } catch (error) {
       console.error(error)
     }
@@ -665,7 +669,7 @@ const Buttons: React.FC<IOverlayButtonProps> = (props) => {
             icon={<Icons.Trash color="status-critical" />}
             aria-label="Delete person"
             hoverIndicator
-            onClick={deletePerson(props.person.id)}
+            onClick={deletePerson(props.currentPerson.id)}
           />
         </React.Fragment>
       )}
