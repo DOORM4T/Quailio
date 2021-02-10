@@ -3,13 +3,10 @@ import React from "react"
 import { useSelector } from "react-redux"
 import Spinner from "react-spinner"
 import "react-spinner/react-spinner.css"
-import { IApplicationState } from "../../store/store"
+import getIsLoading from "../../store/selectors/getIsLoading"
 
 const LoadingOverlay: React.FC = () => {
-  const isLoading = useSelector<IApplicationState>(
-    (state) =>
-      state.auth.isLoading || state.networks.isLoading || state.ui.isLoading,
-  ) as boolean
+  const isLoading = useSelector(getIsLoading)
 
   if (!isLoading) return null
 
