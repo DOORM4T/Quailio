@@ -112,13 +112,28 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                         }}
                         value={person.reason}
                         onChange={handleReasonChange(person.id)}
-                        onFocus={(e) => e.currentTarget.select()}
+                        onFocus={(e) => {
+                          /* Ask to continue if there are unsaved changes */
+                          const doContinue = fireUnsavedChangeEvent()
+                          if (!doContinue) {
+                            /* Un-focus */
+                            e.currentTarget.blur()
+                            return
+                          }
+
+                          /* Highlight all text */
+                          e.currentTarget.select()
+                        }}
                         onKeyPress={(e) => {
                           if (/(Enter|Escape)/.test(e.key))
                             e.currentTarget.blur()
                         }}
                         onBlur={async (e) => {
                           if (!didChangeReason) return
+
+                          /* Ask to continue if there are unsaved changes */
+                          const doContinue = fireUnsavedChangeEvent()
+                          if (!doContinue) return
 
                           /* Update the relationship */
                           try {
@@ -167,6 +182,10 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
               icon={<Icons.Unlink color="status-critical" />}
               hoverIndicator
               onClick={async () => {
+                /* Ask to continue if there are unsaved changes */
+                const doContinue = fireUnsavedChangeEvent()
+                if (!doContinue) return
+
                 /* Delete a relationship with the other person*/
                 try {
                   await dispatch(
