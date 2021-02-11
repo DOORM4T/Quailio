@@ -113,14 +113,6 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                         value={person.reason}
                         onChange={handleReasonChange(person.id)}
                         onFocus={(e) => {
-                          /* Ask to continue if there are unsaved changes */
-                          const doContinue = fireUnsavedChangeEvent()
-                          if (!doContinue) {
-                            /* Un-focus */
-                            e.currentTarget.blur()
-                            return
-                          }
-
                           /* Highlight all text */
                           e.currentTarget.select()
                         }}
@@ -129,12 +121,6 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                             e.currentTarget.blur()
                         }}
                         onBlur={async (e) => {
-                          if (!didChangeReason) return
-
-                          /* Ask to continue if there are unsaved changes */
-                          const doContinue = fireUnsavedChangeEvent()
-                          if (!doContinue) return
-
                           /* Update the relationship */
                           try {
                             await dispatch(

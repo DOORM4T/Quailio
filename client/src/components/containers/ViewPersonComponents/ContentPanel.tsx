@@ -22,22 +22,34 @@ interface IProps {
 
 const ContentPanel: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
-  const content = useSelector(getPersonContent)
+  const initialContent = useSelector(getPersonContent)
   const [editorContent, setEditorContent] = React.useState(
-    content || DEFAULT_CONTENT,
+    initialContent || DEFAULT_CONTENT,
   )
-  const [isSaved, setIsSaved] = React.useState(true)
+  const [isSaved, setSaved] = React.useState(true)
+  const [isSaving, setSaving] = React.useState(false)
 
   // Handle controlled input changes
   const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
     setEditorContent(newContent)
-    setIsSaved(false)
+    setSaved(false)
   }
 
   // Save to global state
   const handleSave = async () => {
-    await dispatch(setPersonContent(props.currentPersonId, editorContent))
-    setIsSaved(true)
+    // Stop if nothing changed
+    if (editorContent === initialContent) return
+
+    setSaving(true)
+    try {
+      await dispatch(setPersonContent(props.currentPersonId, editorContent))
+      setSaved(true)
+    } catch (error) {
+      console.error(error)
+      alert("Failed to save content. Please try again.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Manage listener events to prevent unsaved changes
@@ -83,9 +95,15 @@ const ContentPanel: React.FC<IProps> = (props) => {
         <React.Fragment>
           <Text
             className="content-editor-save-status"
-            color={isSaved ? "status-success" : "status-critical"}
+            color={
+              isSaving
+                ? "status-warning"
+                : isSaved
+                ? "status-success"
+                : "status-critical"
+            }
           >
-            {isSaved ? "Saved" : "Unsaved Changes"}
+            {isSaving ? "Saving..." : isSaved ? "Saved" : "Unsaved Changes"}
           </Text>
           <Editor
             apiKey={TINY_MCE_KEY}
@@ -101,13 +119,14 @@ const ContentPanel: React.FC<IProps> = (props) => {
             }}
             onSaveContent={handleSave}
             onEditorChange={handleEditorChange}
+            onBlur={handleSave}
             value={editorContent}
           />
         </React.Fragment>
       ) : (
         <div
           dangerouslySetInnerHTML={{
-            __html: content || "Write anything!",
+            __html: initialContent || "Write anything!",
           }}
         />
       )}
