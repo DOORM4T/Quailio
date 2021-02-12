@@ -1,4 +1,4 @@
-import { Box, Grid, Header, Tab, Tabs, TextInput } from "grommet"
+import { Box, Grid, Tab, Tabs } from "grommet"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
@@ -9,9 +9,8 @@ import { getPersonInFocus } from "../../../store/selectors/ui/getPersonInFocus"
 import { togglePersonEditMenu } from "../../../store/ui/uiActions"
 import Overlay from "../../Overlay"
 import ContentPanel from "./ContentPanel"
-import OverlayButtons from "./OverlayButtons"
+import PersonHeader from "./PersonHeader"
 import Relationships from "./Relationships"
-import UploadPersonThumbnail from "./UploadPersonThumbnail"
 
 interface IProps {
   id: string
@@ -47,47 +46,16 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     dispatch(togglePersonEditMenu(false))
   }
 
-  // -== COMPONENTS ==- //
-  /* Person Header */
-  const PersonHeader: React.ReactNode = (
-    <Header direction="column" background="brand" pad="medium" justify="start">
-      <UploadPersonThumbnail
-        currentNetwork={currentNetwork}
-        currentPerson={currentPerson}
-      />
-      {isEditing ? (
-        <TextInput
-          value={currentPerson.name}
-          textAlign="center"
-          onClick={(e) => e.currentTarget.select()}
-        />
-      ) : (
-        <h1
-          aria-label="Name"
-          style={{
-            padding: "1rem",
-            margin: 0,
-            lineHeight: "2rem",
-            whiteSpace: "break-spaces",
-            wordWrap: "break-word",
-            wordBreak: "break-all",
-            overflow: "auto",
-            height: "4rem",
-          }}
-        >
-          {currentPerson.name}
-        </h1>
-      )}
-      <OverlayButtons
-        currentNetwork={currentNetwork}
-        currentPerson={currentPerson}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-      />
-    </Header>
+  // -== REUSABLE COMPONENTS (Reused for different layouts) ==- //
+  const PersonHeaderContainer: React.ReactNode = (
+    <PersonHeader
+      currentNetwork={currentNetwork}
+      currentPerson={currentPerson}
+      isEditing={isEditing}
+      setIsEditing={setIsEditing}
+    />
   )
 
-  /* Reusable relationships container */
   const RelationshipsContainer: React.ReactNode = (
     <Relationships
       currentNetwork={currentNetwork}
@@ -97,7 +65,6 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     />
   )
 
-  /* Content & Content Editor container */
   const ContentContainer: React.ReactNode = (
     <ContentPanel
       id="person-content-editor"
@@ -106,9 +73,10 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     />
   )
 
+  // -== LAYOUTS ==- //
   const SmallScreenLayout: React.FC = () => (
     <Box fill>
-      {PersonHeader}
+      {PersonHeaderContainer}
       <Box direction="column" background="dark-1" pad="medium" fill>
         <Tabs>
           <Tab title="Content">
@@ -143,7 +111,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         { name: "contentEditor", start: [1, 0], end: [1, 1] },
       ]}
     >
-      {PersonHeader}
+      {PersonHeaderContainer}
       <Box
         gridArea="relationships"
         overflow={{ vertical: "auto" }}

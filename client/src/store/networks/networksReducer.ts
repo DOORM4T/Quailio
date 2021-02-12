@@ -263,6 +263,41 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
         isLoading: false,
       }
     }
+
+    // -== UPDATE A PERSON'S NAME ==- //
+    case NetworkActionTypes.UPDATE_PERSON_NAME: {
+      /* Stop if no network is selected */
+      if (!state.currentNetwork) break
+
+      /* Get the person that will be updated */
+      const person = state.currentNetwork.people.find(
+        (p) => p.id === action.personId,
+      )
+
+      /* Stop if the person was not found */
+      if (!person) break
+
+      /* Update the person's name */
+      const updatedPerson: IPerson = { ...person, name: action.updatedName }
+
+      /* Update the people list */
+      const peopleWithoutUpdated = state.currentNetwork.people.filter(
+        (p) => p.id !== action.personId,
+      )
+      const updatedPeople = [...peopleWithoutUpdated, updatedPerson]
+
+      const updatedNetwork: ICurrentNetwork = {
+        ...state.currentNetwork,
+        people: updatedPeople,
+      }
+
+      return {
+        ...state,
+        currentNetwork: updatedNetwork,
+        isLoading: false,
+      }
+    }
   }
+
   return state
 }
