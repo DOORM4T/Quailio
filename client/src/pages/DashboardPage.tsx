@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  DropButton,
-  List,
-  ResponsiveContext,
-  Text,
-  Tip,
-} from "grommet"
+import { Box, Button, DropButton, List, Text, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -17,13 +9,10 @@ import ViewPersonOverlay from "../components/containers/ViewPersonOverlay"
 import { HEADER_HEIGHT } from "../constants"
 import useGetNetworks from "../hooks/networks/useGetNetworks"
 import useSmallBreakpoint from "../hooks/useSmallBreakpoint"
-import {
-  addPerson,
-  createNetwork,
-  deleteNetwork,
-  getAllNetworks,
-  setNetwork,
-} from "../store/networks/networksActions"
+import { addPerson } from "../store/networks/actions/addPerson"
+import { createNetwork } from "../store/networks/actions/createNetwork"
+import { deleteNetwork } from "../store/networks/actions/deleteNetwork"
+import { setNetwork } from "../store/networks/actions/setNetwork"
 import { getAllNetworkData } from "../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../store/selectors/networks/getCurrentNetwork"
 import { getIsOverlayOpen } from "../store/selectors/ui/getIsOverlayOpen"

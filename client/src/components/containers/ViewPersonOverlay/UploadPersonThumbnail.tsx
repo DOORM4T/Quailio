@@ -3,8 +3,8 @@ import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch } from "react-redux"
 import { ThemeContext } from "styled-components"
-import { setPersonThumbnail } from "../../../store/networks/networksActions"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
+import { setPersonThumbnail } from "../../../store/networks/actions/setPersonThumbnail"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
 
 interface IThumbnailProps {

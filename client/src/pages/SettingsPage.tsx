@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux"
 import { useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
 import { deleteAccount } from "../store/auth/authActions"
-import { resetLocalNetworks } from "../store/networks/networksActions"
+import { resetLocalNetworks } from "../store/networks/actions/resetLocalNetworks"
 
 const SettingsPage: React.FC = () => {
   const dispatch: ActionCreator<AnyAction> = useDispatch()
