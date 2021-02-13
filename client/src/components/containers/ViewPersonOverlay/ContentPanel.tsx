@@ -29,10 +29,16 @@ const ContentPanel: React.FC<IProps> = (props) => {
   const [isSaved, setSaved] = React.useState(true)
   const [isSaving, setSaving] = React.useState(false)
 
+  // Update saved state when editorContent state changes
+  React.useEffect(() => {
+    /* Unsaved changes if the new content is different from the initial content */
+    if (editorContent !== initialContent) setSaved(false)
+    else setSaved(true)
+  }, [editorContent])
+
   // Handle controlled input changes
   const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
     setEditorContent(newContent)
-    setSaved(false)
   }
 
   // Save to global state
