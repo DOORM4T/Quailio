@@ -5,12 +5,20 @@ export interface INetworksState {
   readonly currentNetwork: ICurrentNetwork | null // State of the currently selected network
 }
 
+/* 
+  Network type with basic id, name, and a list of person IDs.
+  personIds are used to access relational person data 
+*/
 export interface INetwork {
   id: string
   name: string
   personIds: string[] // IDs of people in the network
 }
 
+/* 
+  A network focused on by the user includes all the related people data (not just their IDs!) 
+  This is used to avoid storing every person from every network in global state at the same time. That would be costly!
+*/
 export interface ICurrentNetwork extends INetwork {
   people: IPerson[] // People in the current network
 }
@@ -122,7 +130,7 @@ export interface IUpdatePersonNameAction {
   updatedName: string
 }
 
-/* action types used by the networks reducer */
+/* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
   | ICreateNetworkAction
