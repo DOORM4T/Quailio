@@ -1,7 +1,6 @@
 import { ActionCreator } from "redux"
 import { auth, IFirebaseUser, usersCollection } from "../../firebase"
-import { deleteNetwork } from "../networks/actions/deleteNetwork"
-import { resetLocalNetworks } from "../networks/actions/resetLocalNetworks"
+import { deleteNetwork, resetLocalNetworks } from "../networks/actions"
 import { AppThunk } from "../store"
 import {
   AuthActionTypes,

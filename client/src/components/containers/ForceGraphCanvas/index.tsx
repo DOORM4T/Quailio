@@ -1,10 +1,9 @@
-import { ForceGraphInstance } from "force-graph"
-import React from "react"
-import { CSSProperties } from "styled-components"
-import { ICurrentNetwork } from "../../store/networks/networkTypes"
-import Canvas from "../Canvas"
-import { createNetworkGraph } from "./graphs/NetworkGraph"
 import deepEqual from "deep-equal"
+import { ForceGraphInstance } from "force-graph"
+import React, { CSSProperties } from "react"
+import { ICurrentNetwork } from "../../../store/networks/networkTypes"
+import Canvas from "../../Canvas"
+import { createNetworkGraph } from "./NetworkGraph"
 
 /* Empty default state for when the Current Network is null */
 const emptyState: ICurrentNetwork = {

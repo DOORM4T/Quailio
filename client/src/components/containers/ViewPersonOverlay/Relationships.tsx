@@ -3,9 +3,11 @@ import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch } from "react-redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
-import { disconnectPeople } from "../../../store/networks/actions/disconnectPeople"
+import {
+  disconnectPeople,
+  updateRelationshipReason,
+} from "../../../store/networks/actions"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
-import { updateRelationshipReason } from "../../../store/networks/actions/updateRelationshipReason"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
 import { IPersonInFocus } from "../../../store/ui/uiTypes"
 

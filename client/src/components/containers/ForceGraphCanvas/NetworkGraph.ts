@@ -1,6 +1,5 @@
 import ForceGraph, { LinkObject, NodeObject } from "force-graph"
-import { addPerson } from "../../../store/networks/actions/addPerson"
-import { connectPeople } from "../../../store/networks/actions/connectPeople"
+import { addPerson, connectPeople } from "../../../store/networks/actions"
 import {
   ICurrentNetwork,
   IRelationships,
