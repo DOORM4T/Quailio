@@ -64,7 +64,7 @@ export async function getNetworkJSON(networkId: string) {
   ) as IPersonWithContent[]
 
   const json: INetworkJSON = {
-    id: networkData.name,
+    id: networkData.id,
     name: networkData.name,
     people: peopleDataWithoutNull,
   }
