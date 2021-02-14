@@ -213,24 +213,34 @@ const DashboardPage: React.FC = () => {
               fill="horizontal"
             />
 
-            <Tip
-              content="Create a new network"
-              children={
-                <Button
-                  id="create-network-button"
-                  aria-label="Create a new network"
-                  icon={<Icons.Add color="accent-3" />}
-                  onClick={handleCreateNetwork}
-                  hoverIndicator
-                  color="accent-3"
-                  style={{
-                    border: "2px solid",
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "2px",
-                  }}
-                />
-              }
+            <ToolTipButton
+              id="create-network-button"
+              tooltip="Create a new network"
+              ariaLabel="Create a new network"
+              icon={<Icons.Add color="accent-3" />}
+              onClick={handleCreateNetwork}
+              isDisabled={false}
+              buttonStyle={{
+                border: "2px solid white",
+                width: "50px",
+                height: "50px",
+                borderRadius: "2px",
+              }}
+            />
+
+            <ToolTipButton
+              id="import-network-json-button"
+              tooltip="Import network from JSON"
+              ariaLabel="Import a network from a JSON file"
+              icon={<Icons.Upload color="brand" />}
+              onClick={() => "importing"}
+              isDisabled={false}
+              buttonStyle={{
+                border: "2px solid #666",
+                width: "50px",
+                height: "50px",
+                borderRadius: "2px",
+              }}
             />
           </Box>
           {currentNetwork && (
