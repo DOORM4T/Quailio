@@ -8,7 +8,7 @@ export * from "./getAllNetworks"
 export * from "./getAllPeople"
 export * from "./resetLocalNetworks"
 export * from "./setNetwork"
-// Don't export setNetworkLoading
+export * from "./setNetworkLoading"
 export * from "./setPersonThumbnail"
 export * from "./updatePersonName"
 export * from "./updateRelationshipReason"
