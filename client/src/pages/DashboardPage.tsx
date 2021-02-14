@@ -8,6 +8,7 @@ import PersonMenu from "../components/containers/PersonMenu"
 import ViewPersonOverlay from "../components/containers/ViewPersonOverlay"
 import ToolTipButton from "../components/ToolTipButton"
 import { HEADER_HEIGHT } from "../constants"
+import { getNetworkJSON } from "../firebase/getNetworkJSON"
 import useGetNetworks from "../hooks/networks/useGetNetworks"
 import useSmallBreakpoint from "../hooks/useSmallBreakpoint"
 import {
@@ -15,6 +16,7 @@ import {
   createNetwork,
   deleteNetwork,
   setNetwork,
+  setNetworkLoading,
 } from "../store/networks/actions"
 import { INetwork } from "../store/networks/networkTypes"
 import { getAllNetworkData } from "../store/selectors/networks/getAllNetworkData"
@@ -36,6 +38,20 @@ const DashboardPage: React.FC = () => {
 
   /* Network select button ref */
   const networkSelectRef = React.useRef<any>(null)
+
+  /* Select Network Function */
+  const handleNetworkSelect = async (event: any) => {
+    try {
+      if (!event.item) throw new Error("Network not found.")
+      await dispatch(setNetwork(event.item.id))
+
+      if (networkSelectRef.current) {
+        ;(networkSelectRef.current as HTMLButtonElement).click()
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   //                                 //
   // -== ACTION BUTTON FUNCTIONS ==- //
@@ -97,17 +113,40 @@ const DashboardPage: React.FC = () => {
     }
   }
 
-  /* Select Network Function */
-  const handleNetworkSelect = async (event: any) => {
-    try {
-      if (!event.item) throw new Error("Network not found.")
-      await dispatch(setNetwork(event.item.id))
+  /* Export Network to JSON Function */
+  const handleExportToJSON = async () => {
+    /* Stop if no network is selected */
+    if (!currentNetwork) return
 
-      if (networkSelectRef.current) {
-        ;(networkSelectRef.current as HTMLButtonElement).click()
-      }
+    try {
+      /* Set loading */
+      await dispatch(setNetworkLoading(true))
+
+      /* Get the network as JSON */
+      const networkJSON = await getNetworkJSON(currentNetwork.id)
+
+      /* Stop if no data was found */
+      if (!networkJSON) return
+
+      /* Convert the JSON to an Object URL */
+      const stringJSON = JSON.stringify(networkJSON)
+      const encoded = Buffer.from(stringJSON)
+      const blob = new Blob([encoded], { type: "application/json" })
+      const objectURL = URL.createObjectURL(blob)
+
+      /* Download the JSON via Object URL */
+      const downloadElement = document.createElement("a")
+      const networkNameWithoutSpaces = currentNetwork.name.replace(/\s/g, "")
+      downloadElement.download = `${networkNameWithoutSpaces}_export.json`
+      downloadElement.href = objectURL
+      downloadElement.click()
+      downloadElement.remove()
     } catch (error) {
+      /* Failed to get the network JSON */
       console.error(error)
+    } finally {
+      /* Disable network loading */
+      await dispatch(setNetworkLoading(false))
     }
   }
 
@@ -207,6 +246,7 @@ const DashboardPage: React.FC = () => {
                   currentNetwork={currentNetwork}
                   handleAddPerson={handleAddPerson}
                   handleDeleteNetwork={handleDeleteNetwork}
+                  handleExportToJSON={handleExportToJSON}
                 />
               </Box>
               <Box
@@ -249,6 +289,7 @@ interface INetworkButtonsProps {
   currentNetwork: INetwork
   handleAddPerson: () => void
   handleDeleteNetwork: () => void
+  handleExportToJSON: () => void
 }
 
 const NetworkButtons: React.FC<INetworkButtonsProps> = (props) => {
@@ -260,6 +301,14 @@ const NetworkButtons: React.FC<INetworkButtonsProps> = (props) => {
         ariaLabel="Add a person to the network"
         icon={<Icons.UserAdd color="brand" />}
         onClick={props.handleAddPerson}
+        isDisabled={!props.currentNetwork}
+      />
+      <ToolTipButton
+        id="export-network-json-button"
+        tooltip="Export network to JSON"
+        ariaLabel="Export the network as a JSON file"
+        icon={<Icons.Download color="brand" />}
+        onClick={props.handleExportToJSON}
         isDisabled={!props.currentNetwork}
       />
 
