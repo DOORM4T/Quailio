@@ -1,4 +1,4 @@
-import { Box, Button, DropButton, List, Text, Tip } from "grommet"
+import { Box, DropButton, List, Text } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -140,13 +140,41 @@ const DashboardPage: React.FC = () => {
       downloadElement.download = `${networkNameWithoutSpaces}_export.json`
       downloadElement.href = objectURL
       downloadElement.click()
-      downloadElement.remove()
     } catch (error) {
       /* Failed to get the network JSON */
       console.error(error)
     } finally {
       /* Disable network loading */
       await dispatch(setNetworkLoading(false))
+    }
+  }
+
+  /* Import Network from JSON Function */
+  const handleImportFromJSON = async () => {
+    const fileInput = document.createElement("input")
+    fileInput.type = "file"
+    fileInput.multiple = true
+    fileInput.accept = ".json"
+    fileInput.click()
+
+    /* Wait for the user to upload JSON files */
+    fileInput.onchange = async () => {
+      if (fileInput.files) {
+        try {
+          /* Get JSON data from each file */
+          const files = Object.values(fileInput.files)
+          const getParsedJSON = files.map(async (file) => {
+            return JSON.parse(await file.text())
+          })
+
+          const data = await Promise.all(getParsedJSON)
+
+          // TODO: Upload data -- create a new action that creates a network from JSON
+          console.log(data)
+        } catch (error) {
+          console.error(error)
+        }
+      }
     }
   }
 
@@ -217,13 +245,11 @@ const DashboardPage: React.FC = () => {
               id="create-network-button"
               tooltip="Create a new network"
               ariaLabel="Create a new network"
-              icon={<Icons.Add color="accent-3" />}
+              icon={<Icons.Add color="status-ok" />}
               onClick={handleCreateNetwork}
               isDisabled={false}
               buttonStyle={{
                 border: "2px solid white",
-                width: "50px",
-                height: "50px",
                 borderRadius: "2px",
               }}
             />
@@ -233,14 +259,8 @@ const DashboardPage: React.FC = () => {
               tooltip="Import network from JSON"
               ariaLabel="Import a network from a JSON file"
               icon={<Icons.Upload color="brand" />}
-              onClick={() => "importing"}
-              isDisabled={false}
-              buttonStyle={{
-                border: "2px solid #666",
-                width: "50px",
-                height: "50px",
-                borderRadius: "2px",
-              }}
+              onClick={handleImportFromJSON}
+              isDisabled={true} // TODO: set to false when the feature is completed
             />
           </Box>
           {currentNetwork && (
