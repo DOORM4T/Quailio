@@ -6,6 +6,7 @@ import { ActionCreator, AnyAction } from "redux"
 import ForceGraphCanvas from "../components/containers/ForceGraphCanvas/index"
 import PersonMenu from "../components/containers/PersonMenu"
 import ViewPersonOverlay from "../components/containers/ViewPersonOverlay"
+import ToolTipButton from "../components/ToolTipButton"
 import { HEADER_HEIGHT } from "../constants"
 import useGetNetworks from "../hooks/networks/useGetNetworks"
 import useSmallBreakpoint from "../hooks/useSmallBreakpoint"
@@ -15,6 +16,7 @@ import {
   deleteNetwork,
   setNetwork,
 } from "../store/networks/actions"
+import { INetwork } from "../store/networks/networkTypes"
 import { getAllNetworkData } from "../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../store/selectors/networks/getCurrentNetwork"
 import { getIsOverlayOpen } from "../store/selectors/ui/getIsOverlayOpen"
@@ -35,6 +37,10 @@ const DashboardPage: React.FC = () => {
   /* Network select button ref */
   const networkSelectRef = React.useRef<any>(null)
 
+  //                                 //
+  // -== ACTION BUTTON FUNCTIONS ==- //
+  //                                 //
+
   /* Create Network Function */
   const handleCreateNetwork = async () => {
     const networkName = window.prompt("Name your network:")
@@ -51,7 +57,7 @@ const DashboardPage: React.FC = () => {
   }
 
   /* Add Person Function */
-  const addPersonHandler = async () => {
+  const handleAddPerson = async () => {
     if (!currentNetwork) {
       alert("Please select a Network!")
       return
@@ -64,7 +70,7 @@ const DashboardPage: React.FC = () => {
       return
     }
 
-    /* update state */
+    /* Update state */
     try {
       await dispatch(addPerson(currentNetwork.id, name))
     } catch (error) {
@@ -72,17 +78,18 @@ const DashboardPage: React.FC = () => {
     }
   }
 
+  /* Delete Network Function */
   const handleDeleteNetwork = async () => {
     if (!currentNetwork) return
 
-    /* confirm deletion */
+    /* Confirm deletion */
     const doDelete = window.confirm(`Delete network: ${currentNetwork.name}?`)
     if (!doDelete) {
       alert(`Did not delete ${currentNetwork.name}`)
       return
     }
 
-    /* update state */
+    /* Update state */
     try {
       await dispatch(deleteNetwork(currentNetwork.id))
     } catch (error) {
@@ -112,16 +119,11 @@ const DashboardPage: React.FC = () => {
         background="dark-1"
       >
         {/* Network Actions & Details */}
-        <Box
-          direction="column"
-          justify="start"
-          align="stretch"
-          width="large"
-          gap="none"
-        >
+        <Box direction="column" justify="start" align="stretch" width="large">
           <Box
             direction="row"
             justify="start"
+            align="center"
             gap="small"
             height="auto"
             margin="small"
@@ -136,7 +138,6 @@ const DashboardPage: React.FC = () => {
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                padding: "0 1rem",
                 height: "50px",
               }}
               aria-label="Select a network"
@@ -194,48 +195,25 @@ const DashboardPage: React.FC = () => {
             />
           </Box>
           {currentNetwork && (
-            <Box direction="column" fill>
-              {/* Network actions */}
+            <Box direction="column">
               <Box
-                height="xsmall"
                 direction="row"
                 fill="horizontal"
                 justify="start"
-                pad={{ horizontal: "small" }}
+                align="center"
+                pad={isSmall ? "medium" : { horizontal: "medium" }}
               >
-                <Tip
-                  content="Add person"
-                  children={
-                    <Button
-                      id="add-person-button"
-                      aria-label="Add a person to the network"
-                      icon={<Icons.UserAdd color="brand" />}
-                      onClick={addPersonHandler}
-                      disabled={!currentNetwork}
-                      hoverIndicator
-                    />
-                  }
-                />
-
-                <Tip
-                  content="Delete current network"
-                  children={
-                    <Button
-                      id="delete-network-button"
-                      aria-label="Delete current network"
-                      icon={<Icons.Threats color="status-critical" />}
-                      onClick={handleDeleteNetwork}
-                      disabled={!currentNetwork}
-                      hoverIndicator
-                      margin={{ left: "auto" }}
-                    />
-                  }
+                <NetworkButtons
+                  currentNetwork={currentNetwork}
+                  handleAddPerson={handleAddPerson}
+                  handleDeleteNetwork={handleDeleteNetwork}
                 />
               </Box>
               <Box
                 background="light-2"
                 margin="small"
                 style={{ boxShadow: "inset 0 0 8px rgba(0,0,0,0.5)" }}
+                overflow={{ vertical: "auto" }}
               >
                 <PersonMenu
                   id="person-menu"
@@ -265,3 +243,36 @@ const DashboardPage: React.FC = () => {
 }
 
 export default DashboardPage
+
+// -== NETWORK ACTION BUTTONS ==- //
+interface INetworkButtonsProps {
+  currentNetwork: INetwork
+  handleAddPerson: () => void
+  handleDeleteNetwork: () => void
+}
+
+const NetworkButtons: React.FC<INetworkButtonsProps> = (props) => {
+  return (
+    <React.Fragment>
+      <ToolTipButton
+        id="add-person-button"
+        tooltip="Add person"
+        ariaLabel="Add a person to the network"
+        icon={<Icons.UserAdd color="brand" />}
+        onClick={props.handleAddPerson}
+        isDisabled={!props.currentNetwork}
+      />
+
+      <Box margin={{ left: "auto" }}>
+        <ToolTipButton
+          id="delete-network-button"
+          tooltip="Delete current network"
+          ariaLabel="Delete current network"
+          icon={<Icons.Threats color="status-critical" />}
+          onClick={props.handleDeleteNetwork}
+          isDisabled={!props.currentNetwork}
+        />
+      </Box>
+    </React.Fragment>
+  )
+}
