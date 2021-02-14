@@ -2,7 +2,7 @@ import {
   networksCollection,
   peopleCollection,
   personContentCollection,
-} from "../../../firebase"
+} from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import {
   IDeletePersonByIdAction,

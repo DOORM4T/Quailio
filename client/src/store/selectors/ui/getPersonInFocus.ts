@@ -1,6 +1,6 @@
 import { IApplicationState } from "../../store"
-import { IPersonInFocus } from "../../ui/uiTypes"
+import { IPersonWithContent } from "../../ui/uiTypes"
 
 export const getPersonInFocus = (
   state: IApplicationState,
-): IPersonInFocus | null => state.ui.personInFocus
+): IPersonWithContent | null => state.ui.personInFocus

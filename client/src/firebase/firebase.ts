@@ -3,7 +3,8 @@ import "firebase/auth"
 import "firebase/firestore"
 import "firebase/storage"
 import { v4 as uuid } from "uuid"
-import { firebaseConfig } from "./.firebaseConfig"
+import { firebaseConfig } from "../.firebaseConfig"
+import { IRelationships } from "../store/networks/networkTypes"
 
 // ==- INITIALIZATION -== //
 const app = firebase.initializeApp(firebaseConfig)

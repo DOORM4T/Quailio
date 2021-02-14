@@ -13,14 +13,14 @@ import {
   setPersonInFocus,
   togglePersonEditMenu,
 } from "../../../store/ui/uiActions"
-import { IPersonInFocus } from "../../../store/ui/uiTypes"
+import { IPersonWithContent } from "../../../store/ui/uiTypes"
 
 //                 //
 // -== BUTTONS ==- //
 //                 //
 interface IOverlayButtonProps {
   currentNetwork: ICurrentNetwork
-  currentPerson: IPersonInFocus
+  currentPerson: IPersonWithContent
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }

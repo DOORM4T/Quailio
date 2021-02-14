@@ -9,7 +9,7 @@ import {
 } from "../../../store/networks/actions"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
-import { IPersonInFocus } from "../../../store/ui/uiTypes"
+import { IPersonWithContent } from "../../../store/ui/uiTypes"
 
 interface IRelatedPersonData {
   id: string
@@ -19,7 +19,7 @@ interface IRelatedPersonData {
 
 interface IRelationshipsProps {
   currentNetwork: ICurrentNetwork
-  currentPerson: IPersonInFocus
+  currentPerson: IPersonWithContent
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }

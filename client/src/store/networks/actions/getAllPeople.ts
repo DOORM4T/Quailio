@@ -1,4 +1,7 @@
-import { networksCollection, peopleCollection } from "../../../firebase"
+import {
+  networksCollection,
+  peopleCollection,
+} from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import {
   IGetAllPeopleAction,

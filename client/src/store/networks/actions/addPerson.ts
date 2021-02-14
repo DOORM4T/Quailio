@@ -1,5 +1,8 @@
 import { v4 as uuidv4 } from "uuid"
-import { networksCollection, peopleCollection } from "../../../firebase"
+import {
+  networksCollection,
+  peopleCollection,
+} from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import {
   IAddPersonAction,

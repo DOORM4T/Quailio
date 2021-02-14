@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react"
 import { useDispatch } from "react-redux"
 import { AnyAction } from "redux"
-import { auth } from "../../firebase"
+import { auth } from "../../firebase/firebase"
 import { setUser } from "../../store/auth/authActions"
 import useAuth from "./useAuth"
 

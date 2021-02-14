@@ -3,7 +3,7 @@ import {
   IFirebaseUser,
   networksCollection,
   usersCollection,
-} from "../../../firebase"
+} from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import { deletePerson } from "./deletePerson"
 import {

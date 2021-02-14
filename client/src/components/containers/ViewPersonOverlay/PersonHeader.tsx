@@ -5,13 +5,13 @@ import { Dispatch } from "redux"
 import { updatePersonName } from "../../../store/networks/actions"
 import { ICurrentNetwork } from "../../../store/networks/networkTypes"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
-import { IPersonInFocus } from "../../../store/ui/uiTypes"
+import { IPersonWithContent } from "../../../store/ui/uiTypes"
 import OverlayButtons from "./OverlayButtons"
 import UploadPersonThumbnail from "./UploadPersonThumbnail"
 
 interface IProps {
   currentNetwork: ICurrentNetwork
-  currentPerson: IPersonInFocus
+  currentPerson: IPersonWithContent
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }

@@ -4,11 +4,11 @@ import {
   IPersonContentData,
   peopleCollection,
   personContentCollection,
-} from "../../firebase"
+} from "../../firebase/firebase"
 import { store } from "../store"
 import {
   IFocusOnPersonAction,
-  IPersonInFocus,
+  IPersonWithContent,
   ISetPersonContentAction,
   ISetUILoadingAction,
   ITogglePersonEditMenu,
@@ -44,7 +44,7 @@ export const setPersonInFocus: ActionCreator<
       if (!currentNetwork) throw new Error("No network is currently selected.")
 
       /* Get the Person */
-      const person: IPersonInFocus | null = currentNetwork
+      const person: IPersonWithContent | null = currentNetwork
         ? currentNetwork.people.find((p) => p.id === personId) ?? null // If person not found, return null instead of undefined
         : null
 

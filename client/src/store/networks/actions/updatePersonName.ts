@@ -1,4 +1,4 @@
-import { peopleCollection } from "../../../firebase"
+import { peopleCollection } from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import { IUpdatePersonNameAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"

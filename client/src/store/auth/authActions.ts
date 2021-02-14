@@ -1,5 +1,5 @@
 import { ActionCreator } from "redux"
-import { auth, IFirebaseUser, usersCollection } from "../../firebase"
+import { auth, IFirebaseUser, usersCollection } from "../../firebase/firebase"
 import { deleteNetwork, resetLocalNetworks } from "../networks/actions"
 import { AppThunk } from "../store"
 import {
