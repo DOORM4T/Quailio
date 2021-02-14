@@ -333,16 +333,17 @@ const NetworkButtons: React.FC<INetworkButtonsProps> = (props) => {
         onClick={props.handleAddPerson}
         isDisabled={!props.currentNetwork}
       />
-      <ToolTipButton
-        id="export-network-json-button"
-        tooltip="Export network to JSON"
-        ariaLabel="Export the network as a JSON file"
-        icon={<Icons.Download color="brand" />}
-        onClick={props.handleExportToJSON}
-        isDisabled={!props.currentNetwork}
-      />
 
-      <Box margin={{ left: "auto" }}>
+      <Box margin={{ left: "auto" }} direction="row">
+        <ToolTipButton
+          id="export-network-json-button"
+          tooltip="Export network to JSON"
+          ariaLabel="Export the network as a JSON file"
+          icon={<Icons.Download color="brand" />}
+          onClick={props.handleExportToJSON}
+          isDisabled={!props.currentNetwork}
+        />
+
         <ToolTipButton
           id="delete-network-button"
           tooltip="Delete current network"
