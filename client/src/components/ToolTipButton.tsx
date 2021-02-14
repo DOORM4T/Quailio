@@ -1,4 +1,4 @@
-import { Box, Button, Tip } from "grommet"
+import { Button, Tip } from "grommet"
 import React, { CSSProperties } from "react"
 
 interface IProps {
@@ -12,22 +12,21 @@ interface IProps {
 }
 
 const ToolTipButton: React.FC<IProps> = (props) => {
-  return (
-    <Tip
-      content={props.tooltip}
-      children={
-        <Button
-          id={props.id}
-          aria-label={props.ariaLabel || props.tooltip}
-          icon={props.icon}
-          onClick={props.onClick}
-          disabled={props.isDisabled}
-          hoverIndicator
-          style={props.buttonStyle}
-        />
-      }
+  const StandaloneButton: React.ReactNode = (
+    <Button
+      id={props.id}
+      aria-label={props.ariaLabel || props.tooltip}
+      icon={props.icon}
+      onClick={props.onClick}
+      disabled={props.isDisabled}
+      hoverIndicator
+      style={props.buttonStyle}
     />
   )
+
+  if (props.isDisabled)
+    return <React.Fragment>{StandaloneButton}</React.Fragment>
+  else return <Tip content={props.tooltip} children={StandaloneButton} />
 }
 
 export default ToolTipButton
