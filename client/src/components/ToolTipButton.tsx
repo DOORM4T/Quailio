@@ -1,5 +1,5 @@
 import { Box, Button, Tip } from "grommet"
-import React from "react"
+import React, { CSSProperties } from "react"
 
 interface IProps {
   id: string
@@ -8,6 +8,7 @@ interface IProps {
   onClick: () => void
   isDisabled: boolean
   ariaLabel: string
+  buttonStyle?: CSSProperties
 }
 
 const ToolTipButton: React.FC<IProps> = (props) => {
@@ -17,11 +18,12 @@ const ToolTipButton: React.FC<IProps> = (props) => {
       children={
         <Button
           id={props.id}
-          aria-label={props.ariaLabel || "Button"}
+          aria-label={props.ariaLabel || props.tooltip}
           icon={props.icon}
           onClick={props.onClick}
           disabled={props.isDisabled}
           hoverIndicator
+          style={props.buttonStyle}
         />
       }
     />
