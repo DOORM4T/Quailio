@@ -6,7 +6,7 @@ interface IProps {
   tooltip: string
   icon: JSX.Element
   onClick: () => void
-  isDisabled: boolean
+  isDisabled?: boolean
   ariaLabel: string
   buttonStyle?: CSSProperties
 }
@@ -27,6 +27,10 @@ const ToolTipButton: React.FC<IProps> = (props) => {
   if (props.isDisabled)
     return <React.Fragment>{StandaloneButton}</React.Fragment>
   else return <Tip content={props.tooltip} children={StandaloneButton} />
+}
+
+ToolTipButton.defaultProps = {
+  isDisabled: false,
 }
 
 export default ToolTipButton

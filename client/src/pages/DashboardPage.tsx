@@ -247,7 +247,6 @@ const DashboardPage: React.FC = () => {
               ariaLabel="Create a new network"
               icon={<Icons.Add color="status-ok" />}
               onClick={handleCreateNetwork}
-              isDisabled={false}
               buttonStyle={{
                 border: "2px solid white",
                 borderRadius: "2px",
@@ -260,7 +259,6 @@ const DashboardPage: React.FC = () => {
               ariaLabel="Import a network from a JSON file"
               icon={<Icons.Upload color="brand" />}
               onClick={handleImportFromJSON}
-              isDisabled={true} // TODO: set to false when the feature is completed
             />
           </Box>
           {currentNetwork && (
