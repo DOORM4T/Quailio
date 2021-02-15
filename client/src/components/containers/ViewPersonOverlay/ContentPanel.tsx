@@ -12,7 +12,8 @@ import {
 import { getPersonInFocusData } from "../../../store/selectors/ui/getPersonInFocusData"
 import { updatePersonContent } from "../../../store/networks/actions/"
 
-const DEFAULT_CONTENT = "<p>Write anything!</p>"
+/* Content on the view panel when the user has no content */
+const DEFAULT_VIEW_CONTENT = "<p>Write anything!</p>"
 
 interface IProps {
   id: string
@@ -23,16 +24,16 @@ interface IProps {
 const ContentPanel: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
   const initialContent = useSelector(getPersonInFocusData)?.content
-  const [editorContent, setEditorContent] = React.useState(
-    initialContent || DEFAULT_CONTENT,
-  )
+  const [editorContent, setEditorContent] = React.useState(initialContent || "")
   const [isSaved, setSaved] = React.useState(true)
   const [isSaving, setSaving] = React.useState(false)
 
   // Update saved state when editorContent state changes
   React.useEffect(() => {
     /* Unsaved changes if the new content is different from the initial content */
-    if (editorContent !== initialContent) setSaved(false)
+    const hasContent = initialContent !== undefined
+    const didChange = editorContent !== initialContent
+    if (hasContent && didChange) setSaved(false)
     else setSaved(true)
   }, [editorContent])
 
@@ -132,7 +133,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
       ) : (
         <div
           dangerouslySetInnerHTML={{
-            __html: initialContent || "Write anything!",
+            __html: initialContent || DEFAULT_VIEW_CONTENT,
           }}
         />
       )}

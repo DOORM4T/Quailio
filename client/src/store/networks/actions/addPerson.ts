@@ -27,6 +27,7 @@ export const addPerson = (networkId: string, name: string): AppThunk => {
       id: uuidv4(),
       name,
       relationships: {},
+      content: "",
     }
 
     try {

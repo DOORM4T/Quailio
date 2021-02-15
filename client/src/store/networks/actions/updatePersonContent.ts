@@ -1,7 +1,4 @@
-import {
-  peopleCollection,
-  personContentCollection,
-} from "../../../firebase/firebase"
+import { peopleCollection } from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import { IUpdatePersonContentAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
@@ -24,8 +21,8 @@ export const updatePersonContent = (
       /* Ensure the Person exists */
       if (!personDoc.exists) throw new Error("That person does not exist.")
 
-      /* Update the Person's content in a separate personContent collection */
-      await personContentCollection.doc(personId).update({ content })
+      /* Update person's content field  */
+      await personDoc.ref.update({ content })
 
       const action: IUpdatePersonContentAction = {
         type: NetworkActionTypes.UPDATE_PERSON_CONTENT,

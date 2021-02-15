@@ -4,7 +4,6 @@ import "firebase/firestore"
 import "firebase/storage"
 import { v4 as uuid } from "uuid"
 import { firebaseConfig } from "../.firebaseConfig"
-import { IRelationships } from "../store/networks/networkTypes"
 
 // ==- INITIALIZATION -== //
 const app = firebase.initializeApp(firebaseConfig)
@@ -17,15 +16,11 @@ enum firebaseCollections {
   USERS = "users",
   NETWORKS = "networks",
   PEOPLE = "people",
-  PERSON_CONTENT = "person_content",
 }
 
 export const usersCollection = db.collection(firebaseCollections.USERS)
 export const networksCollection = db.collection(firebaseCollections.NETWORKS)
 export const peopleCollection = db.collection(firebaseCollections.PEOPLE)
-export const personContentCollection = db.collection(
-  firebaseCollections.PERSON_CONTENT,
-)
 
 /* Document Type Definitions */
 export interface IFirebaseUser {

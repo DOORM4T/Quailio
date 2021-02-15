@@ -1,9 +1,5 @@
 import { INetwork, IPerson } from "../store/networks/networkTypes"
-import {
-  networksCollection,
-  peopleCollection,
-  personContentCollection,
-} from "./firebase"
+import { networksCollection, peopleCollection } from "./firebase"
 
 //
 // Export network as JSON
@@ -21,7 +17,7 @@ export async function getNetworkJSON(networkId: string) {
   /* Stop if the network doesn't exist */
   if (!networkDoc.exists) return
 
-  /* Get all related people */
+  /* Get all people in the network */
   const networkData = networkDoc.data() as INetwork
   const getAllPersonData = networkData.personIds.map(async (personId) => {
     /* Get the person doc */
@@ -31,29 +27,7 @@ export async function getNetworkJSON(networkId: string) {
     if (!personDoc.exists) return null
 
     /* Get the person's data */
-    const {
-      id,
-      name,
-      relationships,
-      thumbnailUrl,
-    } = personDoc.data() as IPerson
-
-    /* Get the person's content */
-    const personContentDoc = await personContentCollection.doc(personId).get()
-
-    const content = personContentDoc.exists
-      ? (personContentDoc.data() as { content: string }).content
-      : undefined
-
-    /* Return a person-with-content object */
-    const person: IPerson = {
-      id,
-      name,
-      relationships,
-      thumbnailUrl,
-      content,
-    }
-
+    const person = personDoc.data() as IPerson
     return person
   })
 

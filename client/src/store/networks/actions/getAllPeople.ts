@@ -1,7 +1,6 @@
 import {
   networksCollection,
   peopleCollection,
-  personContentCollection,
 } from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import {
@@ -54,32 +53,5 @@ export async function getAllPersonDataFromDB(networkId: string) {
     async (id) => (await peopleCollection.doc(id).get()).data() as IPerson,
   )
   const peopleData: IPerson[] = await Promise.all(getPeopleData)
-
-  /* Get all person content */
-  const getPeopleContentWithId = peopleData.map(async ({ id }) => {
-    const contentDoc = await personContentCollection.doc(id).get()
-    if (!contentDoc.exists) return null
-
-    const { content } = contentDoc.data() as { content: string }
-    const contentById = { id, content }
-    return contentById
-  })
-
-  const peopleContentWithId = await Promise.all(getPeopleContentWithId)
-  const peopleContentWithIdWithoutNull = peopleContentWithId.filter(
-    (content) => content !== null,
-  ) as {
-    id: string
-    content: string
-  }[]
-
-  /* For each person who has content, set their content in their peopleData object */
-  peopleContentWithIdWithoutNull.forEach(({ id, content }) => {
-    // Each person should be guaranteed to exist, since we got content by mapping over their IDs
-    const person = peopleData.find((p) => p.id === id)!
-
-    // Set content
-    person.content = content
-  })
   return peopleData
 }

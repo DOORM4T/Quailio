@@ -1,7 +1,6 @@
 import {
   networksCollection,
   peopleCollection,
-  personContentCollection,
 } from "../../../firebase/firebase"
 import { AppThunk } from "../../store"
 import {
@@ -52,13 +51,6 @@ export const deletePerson = (networkId: string, personId: string): AppThunk => {
       })
 
       await Promise.all(relationshipUpdates)
-
-      /* Remove the Person's content document */
-      const contentDoc = personContentCollection.doc(personId)
-      const hasContentDoc = (await contentDoc.get()).exists
-      if (hasContentDoc) {
-        await contentDoc.delete()
-      }
 
       /* Delete the Person's document */
       await personDoc.delete()
