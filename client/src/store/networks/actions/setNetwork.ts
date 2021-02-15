@@ -10,6 +10,7 @@ import {
   ISetNetworkAction,
   NetworkActionTypes,
 } from "../networkTypes"
+import { getAllPersonDataFromDB } from "./getAllPeople"
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
@@ -31,12 +32,7 @@ export const setNetwork = (networkId: string): AppThunk => {
       if (!networkData) throw new Error("Network not found.")
 
       /* Get all Person documents related to the Person IDs in the Network */
-      const peopleData: IPerson[] = await Promise.all(
-        networkData.personIds.map(
-          async (id) =>
-            (await peopleCollection.doc(id).get()).data() as IPerson,
-        ),
-      )
+      const peopleData: IPerson[] = await getAllPersonDataFromDB(networkId)
 
       /* Create a current network object from Network and People state  */
       const currentNetwork: ICurrentNetwork = {

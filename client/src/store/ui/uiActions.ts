@@ -1,18 +1,9 @@
-import { ActionCreator, AnyAction, Dispatch } from "redux"
-import { ThunkAction } from "redux-thunk"
-import {
-  IPersonContentData,
-  peopleCollection,
-  personContentCollection,
-} from "../../firebase/firebase"
-import { store } from "../store"
+import { ActionCreator } from "redux"
+import { AppThunk } from "../store"
 import {
   IFocusOnPersonAction,
-  IPersonWithContent,
-  ISetPersonContentAction,
   ISetUILoadingAction,
   ITogglePersonEditMenu,
-  IUserInterfaceState,
   UserInterfaceActionTypes,
 } from "./uiTypes"
 
@@ -26,90 +17,30 @@ export const setUILoading: ActionCreator<ISetUILoadingAction> = (
 
 /**
  * Add a new Person to an existing Network
- * @param networkId ID of the network to add the person to
- * @param name new person's name
+ * @param personId ID of the person to focus on. This person should exist in the currentNetwork state. A null person ID un-focuses from the current person.
  */
-export const setPersonInFocus: ActionCreator<
-  ThunkAction<
-    Promise<AnyAction>,
-    IUserInterfaceState,
-    null,
-    IFocusOnPersonAction
-  >
-> = (personId: string | null) => {
-  return async (dispatch: Dispatch) => {
+export const setPersonInFocus = (personId: string | null): AppThunk => {
+  return async (dispatch, getState) => {
     dispatch(setUILoading(true))
+
     try {
-      const currentNetwork = store.getState().networks.currentNetwork
-      if (!currentNetwork) throw new Error("No network is currently selected.")
+      if (personId !== null) {
+        const currentNetwork = getState().networks.currentNetwork
+        if (!currentNetwork) throw new Error("No network selected.")
 
-      /* Get the Person */
-      const person: IPersonWithContent | null = currentNetwork
-        ? currentNetwork.people.find((p) => p.id === personId) ?? null // If person not found, return null instead of undefined
-        : null
-
-      /* Get the Person's rich text content, if they exist */
-      let personContent = ""
-      if (person !== null) {
-        const personContentDoc = personContentCollection.doc(person.id)
-        const doesExist = (await personContentDoc.get()).exists
-
-        /* Set the Person's content, if it exists */
-        if (doesExist) {
-          const personContentData = (
-            await personContentDoc.get()
-          ).data() as IPersonContentData
-          personContent = personContentData.content
-        }
+        const doesPersonExist = currentNetwork.personIds.some(
+          (id) => id === personId,
+        )
+        if (!doesPersonExist) throw new Error("That person does not exist.")
       }
 
-      return dispatch({
-        type: UserInterfaceActionTypes.FOCUS_ON_PERSON,
-        person,
-        personContent,
-      })
+      const action: IFocusOnPersonAction = {
+        type: UserInterfaceActionTypes.FOCUS_ON_PERSON_BY_ID,
+        personId,
+      }
+      return dispatch(action)
     } catch (error) {
       /* Failed to focus on the Person */
-      dispatch(setUILoading(false))
-      throw error
-    }
-  }
-}
-
-/**
- * Set a person's rich text content
- * @param personId
- * @param content
- */
-export const setPersonContent: ActionCreator<
-  ThunkAction<
-    Promise<AnyAction>,
-    IUserInterfaceState,
-    null,
-    ISetPersonContentAction
-  >
-> = (personId: string, content: string) => {
-  return async (dispatch: Dispatch) => {
-    dispatch(setUILoading(true))
-
-    try {
-      const personDoc = peopleCollection.doc(personId)
-
-      /* Ensure the Person exists */
-      const doesExist = (await personDoc.get()).exists
-      if (!doesExist) throw new Error("That person does not exist.")
-
-      /* Set the Person's content in a separate personContent collection */
-      const personContentData: IPersonContentData = { content }
-      await personContentCollection.doc(personId).set(personContentData)
-
-      return dispatch({
-        type: UserInterfaceActionTypes.SET_PERSON_CONTENT,
-        personId,
-        content,
-      })
-    } catch (error) {
-      /* Failed to set the Person's thumbnail url*/
       dispatch(setUILoading(false))
       throw error
     }

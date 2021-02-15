@@ -5,7 +5,7 @@ import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
 import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
-import { getPersonInFocus } from "../../../store/selectors/ui/getPersonInFocus"
+import { getPersonInFocusData } from "../../../store/selectors/ui/getPersonInFocusData"
 import { togglePersonEditMenu } from "../../../store/ui/uiActions"
 import Overlay from "../../Overlay"
 import ContentPanel from "./ContentPanel"
@@ -25,7 +25,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const currentNetwork = useSelector(getCurrentNetwork)
 
   /* Get the current person in focus */
-  const currentPerson = useSelector(getPersonInFocus)
+  const currentPerson = useSelector(getPersonInFocusData)
 
   // -== LOCAL STATE & OTHER HOOKS ==- //
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not

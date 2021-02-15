@@ -13,6 +13,7 @@ import {
   IPerson,
   ISetNetworkAction,
   ISetPersonThumbnailAction,
+  IUpdatePersonContentAction,
   IUpdatePersonNameAction,
   IUpdateRelationshipReasonAction,
   NetworkActionTypes,
@@ -83,8 +84,47 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.UPDATE_PERSON_NAME:
       return getUpdatedPersonNameState(state, action)
 
+    case NetworkActionTypes.UPDATE_PERSON_CONTENT:
+      return getUpdatedPersonContentState(state, action)
+
     default:
       return state
+  }
+}
+
+function getUpdatedPersonContentState(
+  state: INetworksState,
+  action: IUpdatePersonContentAction,
+) {
+  /* Stop if no network is selected */
+  if (!state.currentNetwork) return state
+
+  /* Get the person that will be updated */
+  const person = state.currentNetwork.people.find(
+    (p) => p.id === action.personId,
+  )
+
+  /* Stop if the person was not found */
+  if (!person) return state
+
+  /* Update the person's content */
+  const updatedPerson: IPerson = { ...person, content: action.content }
+
+  /* Update the people list */
+  const peopleWithoutUpdated = state.currentNetwork.people.filter(
+    (p) => p.id !== action.personId,
+  )
+  const updatedPeople = [...peopleWithoutUpdated, updatedPerson]
+
+  const updatedNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedNetwork,
+    isLoading: false,
   }
 }
 

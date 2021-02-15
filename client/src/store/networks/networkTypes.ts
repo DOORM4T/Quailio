@@ -1,3 +1,5 @@
+import { INetworkJSON } from "../../firebase/getNetworkJSON"
+
 // -== STATE TYPES ==- //
 export interface INetworksState {
   readonly isLoading: boolean
@@ -28,6 +30,7 @@ export interface IPerson {
   name: string
   relationships: IRelationships
   thumbnailUrl?: string
+  content?: string
 }
 
 /* string 1: this person in relation to the other person 
@@ -50,6 +53,9 @@ export enum NetworkActionTypes {
   DISCONNECT_PEOPLE = "NETWORK/DISCONNECT_PEOPLE",
   UPDATE_PERSON_RELATIONSHIP = "NETWORK/UPDATE_PERSON_RELATIONSHIP",
   UPDATE_PERSON_NAME = "NETWORK/UPDATE_PERSON_NAME",
+
+  UPDATE_PERSON_CONTENT = "NETWORK/UPDATE_PERSON_CONTENT",
+  IMPORT_NETWORK = "NETWORK/IMPORT_NETWORK",
 }
 
 export interface INetworkLoadingAction {
@@ -130,6 +136,17 @@ export interface IUpdatePersonNameAction {
   updatedName: string
 }
 
+export interface IUpdatePersonContentAction {
+  type: NetworkActionTypes.UPDATE_PERSON_CONTENT
+  personId: string
+  content: string
+}
+
+export interface IImportNetworkAction {
+  type: NetworkActionTypes.IMPORT_NETWORK
+  networkData: INetworkJSON
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -146,3 +163,4 @@ export type NetworksActions =
   | IDisconnectPeopleAction
   | IUpdateRelationshipReasonAction
   | IUpdatePersonNameAction
+  | IUpdatePersonContentAction

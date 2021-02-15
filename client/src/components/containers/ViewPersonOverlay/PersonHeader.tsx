@@ -3,15 +3,14 @@ import React, { CSSProperties } from "react"
 import { useDispatch } from "react-redux"
 import { Dispatch } from "redux"
 import { updatePersonName } from "../../../store/networks/actions"
-import { ICurrentNetwork } from "../../../store/networks/networkTypes"
+import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
-import { IPersonWithContent } from "../../../store/ui/uiTypes"
 import OverlayButtons from "./OverlayButtons"
 import UploadPersonThumbnail from "./UploadPersonThumbnail"
 
 interface IProps {
   currentNetwork: ICurrentNetwork
-  currentPerson: IPersonWithContent
+  currentPerson: IPerson
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }

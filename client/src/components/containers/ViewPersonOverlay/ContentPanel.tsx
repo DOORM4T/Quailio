@@ -9,8 +9,8 @@ import {
   addUnsavedChangeListener,
   removeUnsavedChangeListener,
 } from "../../../helpers/unsavedChangeEvent"
-import { getPersonContent } from "../../../store/selectors/ui/getPersonContent"
-import { setPersonContent } from "../../../store/ui/uiActions"
+import { getPersonInFocusData } from "../../../store/selectors/ui/getPersonInFocusData"
+import { updatePersonContent } from "../../../store/networks/actions/"
 
 const DEFAULT_CONTENT = "<p>Write anything!</p>"
 
@@ -22,7 +22,7 @@ interface IProps {
 
 const ContentPanel: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
-  const initialContent = useSelector(getPersonContent)
+  const initialContent = useSelector(getPersonInFocusData)?.content
   const [editorContent, setEditorContent] = React.useState(
     initialContent || DEFAULT_CONTENT,
   )
@@ -48,7 +48,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
 
     setSaving(true)
     try {
-      await dispatch(setPersonContent(props.currentPersonId, editorContent))
+      await dispatch(updatePersonContent(props.currentPersonId, editorContent))
       setSaved(true)
     } catch (error) {
       console.error(error)

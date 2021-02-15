@@ -9,7 +9,6 @@ const initialState: IUserInterfaceState = {
   isLoading: false,
   isPersonEditMenuOpen: false,
   personInFocus: null,
-  personContent: "",
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -21,23 +20,10 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return { ...state, isLoading: action.isLoading }
     }
 
-    case UserInterfaceActionTypes.FOCUS_ON_PERSON: {
+    case UserInterfaceActionTypes.FOCUS_ON_PERSON_BY_ID: {
       return {
         ...state,
-        personInFocus: action.person,
-        personContent: action.personContent,
-        isLoading: false,
-      }
-    }
-
-    /* SET A PERSON'S RICH TEXT CONTENT */
-    case UserInterfaceActionTypes.SET_PERSON_CONTENT: {
-      /* Stop if there's no person selected */
-      if (!state.personInFocus) break
-
-      return {
-        ...state,
-        personContent: action.content,
+        personInFocus: action.personId,
         isLoading: false,
       }
     }
@@ -48,6 +34,8 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
         isPersonEditMenuOpen: action.isOpen,
       }
     }
+
+    default:
+      return state
   }
-  return state
 }

@@ -1,5 +1,4 @@
 import { INetwork, IPerson } from "../store/networks/networkTypes"
-import { IPersonWithContent } from "../store/ui/uiTypes"
 import {
   networksCollection,
   peopleCollection,
@@ -9,10 +8,10 @@ import {
 //
 // Export network as JSON
 //
-interface INetworkJSON {
+export interface INetworkJSON {
   id: string
   name: string
-  people: IPersonWithContent[]
+  people: IPerson[]
 }
 
 export async function getNetworkJSON(networkId: string) {
@@ -47,7 +46,7 @@ export async function getNetworkJSON(networkId: string) {
       : undefined
 
     /* Return a person-with-content object */
-    const person: IPersonWithContent = {
+    const person: IPerson = {
       id,
       name,
       relationships,
@@ -61,7 +60,7 @@ export async function getNetworkJSON(networkId: string) {
   const peopleData = await Promise.all(getAllPersonData)
   const peopleDataWithoutNull = peopleData.filter(
     (data) => data !== null,
-  ) as IPersonWithContent[]
+  ) as IPerson[]
 
   const json: INetworkJSON = {
     id: networkData.id,

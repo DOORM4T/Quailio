@@ -8,19 +8,18 @@ import {
   deletePerson as deletePersonById,
   getAllPeople,
 } from "../../../store/networks/actions"
-import { ICurrentNetwork } from "../../../store/networks/networkTypes"
+import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import {
   setPersonInFocus,
   togglePersonEditMenu,
 } from "../../../store/ui/uiActions"
-import { IPersonWithContent } from "../../../store/ui/uiTypes"
 
 //                 //
 // -== BUTTONS ==- //
 //                 //
 interface IOverlayButtonProps {
   currentNetwork: ICurrentNetwork
-  currentPerson: IPersonWithContent
+  currentPerson: IPerson
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }
