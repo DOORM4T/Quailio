@@ -11,6 +11,7 @@ import {
   IGetAllPeopleAction,
   INetworksState,
   IPerson,
+  IRelationships,
   ISetNetworkAction,
   ISetPersonThumbnailAction,
   IUpdatePersonContentAction,
@@ -266,16 +267,45 @@ function getDeletePersonState(
   action: IDeletePersonByIdAction,
 ) {
   /* Stop if there is no network selected */
-  if (!state.currentNetwork) return state
+  const currentNetwork = state.currentNetwork
+  if (!currentNetwork) return state
 
-  const idsWithoutDeletedPerson = state.currentNetwork.personIds.filter(
+  /* Get the person that will be deleted */
+  const personToDelete = currentNetwork.people.find(
+    (p) => p.id === action.personId,
+  )
+
+  /* Stop if the person doesn't exist */
+  if (!personToDelete) return state
+
+  /* Remove all relationships with the person in the current network */
+  const relationshipsCopy: IRelationships = { ...personToDelete.relationships }
+  Object.keys(relationshipsCopy).forEach((otherPersonId) => {
+    /* Get the other person in the relationship */
+    const otherPerson = currentNetwork.people.find(
+      (p) => p.id === otherPersonId,
+    )
+    if (!otherPerson) return
+
+    /* Delete the relationship from the other person's relationships object */
+    delete otherPerson.relationships[action.personId]
+  })
+
+  /* Remove the person from the list of IDs in the current network */
+  const idsWithoutDeletedPerson = currentNetwork.personIds.filter(
     (id) => id !== action.personId,
   )
 
+  /* Remove the person's data from the current network */
+  const peopleDataWithoutDeletedPerson = currentNetwork.people.filter(
+    (p) => p.id !== action.personId,
+  )
+
   /* Network with the updated IDs */
-  const updatedNetwork = {
-    ...state.currentNetwork,
+  const updatedNetwork: ICurrentNetwork = {
+    ...currentNetwork,
     personIds: idsWithoutDeletedPerson,
+    people: peopleDataWithoutDeletedPerson,
   }
 
   return {

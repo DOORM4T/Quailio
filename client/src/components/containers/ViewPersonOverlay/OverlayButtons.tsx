@@ -6,7 +6,6 @@ import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import {
   connectPeople,
   deletePerson as deletePersonById,
-  getAllPeople,
 } from "../../../store/networks/actions"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { togglePersonEditMenu } from "../../../store/ui/uiActions"
@@ -97,7 +96,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     /* Delete the person */
     try {
       await dispatch(deletePersonById(props.currentNetwork.id, id))
-      await dispatch(getAllPeople(props.currentNetwork.id))
     } catch (error) {
       console.error(error)
     }
