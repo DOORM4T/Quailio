@@ -9,10 +9,7 @@ import {
   getAllPeople,
 } from "../../../store/networks/actions"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
-import {
-  setPersonInFocus,
-  togglePersonEditMenu,
-} from "../../../store/ui/uiActions"
+import { togglePersonEditMenu } from "../../../store/ui/uiActions"
 
 //                 //
 // -== BUTTONS ==- //
@@ -76,9 +73,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
           p2Reason,
         }),
       )
-
-      /* Load updated data */
-      await dispatch(setPersonInFocus(props.currentPerson.id))
     } catch (error) {
       console.error(error)
     }

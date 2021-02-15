@@ -3,9 +3,8 @@ import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
+import { IPerson } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
-import { IApplicationState } from "../../store/store"
 import {
   setPersonInFocus,
   togglePersonEditMenu,

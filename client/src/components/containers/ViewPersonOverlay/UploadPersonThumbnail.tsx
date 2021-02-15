@@ -3,9 +3,8 @@ import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch } from "react-redux"
 import { ThemeContext } from "styled-components"
-import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { setPersonThumbnail } from "../../../store/networks/actions"
-import { setPersonInFocus } from "../../../store/ui/uiActions"
+import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 
 interface IThumbnailProps {
   currentNetwork: ICurrentNetwork
@@ -47,9 +46,6 @@ const UploadPersonThumbnail: React.FC<IThumbnailProps> = (props) => {
           file,
         ),
       )
-
-      /* Refresh focused person global state */
-      await dispatch(setPersonInFocus(props.currentPerson.id))
     } catch (error) {
       /* Failed to upload a thumbnail */
       console.error(error)

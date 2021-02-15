@@ -129,11 +129,6 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                                 e.currentTarget.value,
                               ),
                             )
-
-                            /* Get the updated details */
-                            await dispatch(
-                              setPersonInFocus(props.currentPerson.id),
-                            )
                           } catch (error) {
                             console.error(error)
                           }
@@ -179,9 +174,6 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                       p2Id: otherPerson.id,
                     }),
                   )
-
-                  /* Get updated current person data */
-                  await dispatch(setPersonInFocus(props.currentPerson.id))
                 } catch (error) {
                   console.error(error)
                 }

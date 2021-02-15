@@ -4,7 +4,6 @@ import { useDispatch } from "react-redux"
 import { Dispatch } from "redux"
 import { updatePersonName } from "../../../store/networks/actions"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
-import { setPersonInFocus } from "../../../store/ui/uiActions"
 import OverlayButtons from "./OverlayButtons"
 import UploadPersonThumbnail from "./UploadPersonThumbnail"
 
@@ -30,9 +29,6 @@ const PersonHeader: React.FC<IProps> = (props) => {
     try {
       /* Dispatch the name change to the global store */
       await dispatch(updatePersonName(props.currentPerson.id, personName))
-
-      /* Re-focus on the current person to see the updated name */
-      await dispatch(setPersonInFocus(props.currentPerson.id))
     } catch (error) {
       console.error(error)
     }
