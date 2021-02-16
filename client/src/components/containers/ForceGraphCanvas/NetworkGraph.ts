@@ -206,7 +206,7 @@ export function createNetworkGraph(
       node.fy = node.y
     })
     .onBackgroundRightClick(async () => {
-      if (disconnected) return
+      if (disconnected || !state.id) return
 
       /* if the user is in the middle of making a node connection  */
       if (nodeToConnect) {

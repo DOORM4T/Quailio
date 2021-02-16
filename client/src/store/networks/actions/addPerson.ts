@@ -22,14 +22,6 @@ export const addPerson = (networkId: string, name: string): AppThunk => {
   return async (dispatch) => {
     dispatch(setNetworkLoading(true))
 
-    /* Initialize the new Person's document */
-    const newPerson: IPerson = {
-      id: uuidv4(),
-      name,
-      relationships: {},
-      content: "",
-    }
-
     try {
       /* Database updates */
       /* Get the network document that will add this new Person */
@@ -38,6 +30,14 @@ export const addPerson = (networkId: string, name: string): AppThunk => {
 
       /* Ensure the network exists */
       if (!networkData) throw new Error("Network does not exist.")
+
+      /* Initialize the new Person's document */
+      const newPerson: IPerson = {
+        id: uuidv4(),
+        name,
+        relationships: {},
+        content: "",
+      }
 
       /* Update just the personIds field of the Network document */
       const updatedPersonIds = networkData.personIds.concat(newPerson.id)
