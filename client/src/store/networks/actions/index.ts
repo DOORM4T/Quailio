@@ -1,3 +1,5 @@
+import { importNetwork } from "./importNetwork"
+
 export * from "./addPerson"
 export * from "./connectPeople"
 export * from "./createNetwork"
@@ -13,3 +15,4 @@ export * from "./setPersonThumbnail"
 export * from "./updatePersonName"
 export * from "./updateRelationshipReason"
 export * from "./updatePersonContent"
+export * from "./importNetwork"

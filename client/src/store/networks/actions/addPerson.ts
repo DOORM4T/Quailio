@@ -19,37 +19,36 @@ import { setNetworkLoading } from "./setNetworkLoading"
  */
 
 export const addPerson = (networkId: string, name: string): AppThunk => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
+    /* Initialize the new Person's document */
+    const newPerson: IPerson = {
+      id: uuidv4(),
+      name,
+      relationships: {},
+      content: "",
+    }
+
     try {
-      /* Database updates */
+      /* Database updates, if applicable */
       /* Get the network document that will add this new Person */
       const networkDoc = networksCollection.doc(networkId)
       const networkData: INetwork = (await networkDoc.get()).data() as INetwork
 
       /* Ensure the network exists */
-      if (!networkData) throw new Error("Network does not exist.")
+      if (networkData) {
+        /* Update just the personIds field of the Network document */
+        const updatedPersonIds = networkData.personIds.concat(newPerson.id)
+        await networkDoc.update({ personIds: updatedPersonIds })
 
-      /* Initialize the new Person's document */
-      const newPerson: IPerson = {
-        id: uuidv4(),
-        name,
-        relationships: {},
-        content: "",
+        /* Create a document for the new Person */
+        await peopleCollection.doc(newPerson.id).set(newPerson)
       }
-
-      /* Update just the personIds field of the Network document */
-      const updatedPersonIds = networkData.personIds.concat(newPerson.id)
-      await networkDoc.update({ personIds: updatedPersonIds })
-
-      /* Create a document for the new Person */
-      await peopleCollection.doc(newPerson.id).set(newPerson)
 
       /* Update state with the new person */
       const action: IAddPersonAction = {
         type: NetworkActionTypes.ADD_PERSON,
-        personId: newPerson.id,
         personData: newPerson,
       }
       return dispatch(action)

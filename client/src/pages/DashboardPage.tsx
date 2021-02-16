@@ -15,6 +15,7 @@ import {
   addPerson,
   createNetwork,
   deleteNetwork,
+  importNetwork,
   setNetwork,
   setNetworkLoading,
 } from "../store/networks/actions"
@@ -66,7 +67,7 @@ const DashboardPage: React.FC = () => {
     }
 
     try {
-      dispatch(createNetwork(networkName))
+      await dispatch(createNetwork(networkName))
     } catch (error) {
       console.error(error)
     }
@@ -169,8 +170,12 @@ const DashboardPage: React.FC = () => {
 
           const data = await Promise.all(getParsedJSON)
 
-          // TODO: Upload data -- create a new action that creates a network from JSON
-          console.log(data)
+          // Import the JSON to global state
+          const dispatchImportFunctions = data.map(async (parsedJSON) => {
+            return await dispatch(importNetwork(parsedJSON))
+          })
+
+          await Promise.all(dispatchImportFunctions)
         } catch (error) {
           console.error(error)
         }

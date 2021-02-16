@@ -9,6 +9,8 @@ import {
   IDisconnectPeopleAction,
   IGetAllNetworksIdsAction,
   IGetAllPeopleAction,
+  IImportNetworkAction,
+  INetwork,
   INetworksState,
   IPerson,
   IRelationships,
@@ -88,8 +90,27 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.UPDATE_PERSON_CONTENT:
       return getUpdatedPersonContentState(state, action)
 
+    case NetworkActionTypes.IMPORT_NETWORK:
+      return getImportedNetworkState(state, action)
+
     default:
       return state
+  }
+}
+
+/* Set the current network to the imported network  */
+function getImportedNetworkState(
+  state: INetworksState,
+  action: IImportNetworkAction,
+): INetworksState {
+  const { id, name, personIds } = action.asCurrentNetwork
+  const asNetworkListItem: INetwork = { id, name, personIds }
+
+  return {
+    ...state,
+    networks: state.networks.concat(asNetworkListItem),
+    currentNetwork: action.asCurrentNetwork,
+    isLoading: false,
   }
 }
 
@@ -352,7 +373,7 @@ function getAddPersonState(state: INetworksState, action: IAddPersonAction) {
   if (!state.currentNetwork) return state
 
   const updatedPersonIds = state.currentNetwork.personIds.concat(
-    action.personId,
+    action.personData.id,
   )
 
   /* Append the new person data to the current network's list of person data */

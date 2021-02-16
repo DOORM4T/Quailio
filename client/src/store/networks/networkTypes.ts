@@ -89,7 +89,6 @@ export interface IResetClientNetworksAction {
 
 export interface IAddPersonAction {
   type: NetworkActionTypes.ADD_PERSON
-  personId: string // ID of the added person
   personData: IPerson
 }
 
@@ -144,7 +143,7 @@ export interface IUpdatePersonContentAction {
 
 export interface IImportNetworkAction {
   type: NetworkActionTypes.IMPORT_NETWORK
-  networkData: INetworkJSON
+  asCurrentNetwork: ICurrentNetwork
 }
 
 /* Action types used by the networks reducer */
@@ -164,3 +163,4 @@ export type NetworksActions =
   | IUpdateRelationshipReasonAction
   | IUpdatePersonNameAction
   | IUpdatePersonContentAction
+  | IImportNetworkAction
