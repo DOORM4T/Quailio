@@ -1,6 +1,5 @@
 import {
   deleteNetworkThumbnails,
-  IFirebaseUser,
   networksCollection,
   usersCollection,
 } from "../../../firebase/firebase"
@@ -12,6 +11,7 @@ import {
   NetworkActionTypes,
 } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
+import { IUserDocument } from "../../auth/authTypes"
 
 /**
  * Delete a Network by its ID
@@ -33,7 +33,7 @@ export const deleteNetwork = (networkId: string): AppThunk => {
         .where("networkIds", "array-contains", networkId)
         .get()
       userDocs.docs.forEach((doc) => {
-        const data = doc.data() as IFirebaseUser
+        const data = doc.data() as IUserDocument
         const updatedNetworkIds = data.networkIds.filter(
           (id) => id !== networkId,
         )

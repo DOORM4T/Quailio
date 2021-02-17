@@ -1,9 +1,9 @@
 import {
   auth,
-  IFirebaseUser,
   networksCollection,
   usersCollection,
 } from "../../../firebase/firebase"
+import { IUserDocument } from "../../auth/authTypes"
 import { AppThunk } from "../../store"
 import {
   IGetAllNetworksIdsAction,
@@ -26,9 +26,9 @@ export const getAllNetworks = (): AppThunk => {
       if (!uid) throw new Error("There is no currently authenticated user.")
 
       /* Get the IDs of the User's Networks   */
-      const userData: IFirebaseUser = (
+      const userData = (
         await usersCollection.doc(uid).get()
-      ).data() as IFirebaseUser
+      ).data() as IUserDocument
 
       if (!userData) throw new Error("User data not found.")
 

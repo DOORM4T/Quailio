@@ -36,7 +36,7 @@ export const addPerson = (networkId: string, name: string): AppThunk => {
       const networkDoc = networksCollection.doc(networkId)
       const networkData: INetwork = (await networkDoc.get()).data() as INetwork
 
-      /* Ensure the network exists */
+      /* Update the database if the network exists */
       if (networkData) {
         /* Update just the personIds field of the Network document */
         const updatedPersonIds = networkData.personIds.concat(newPerson.id)

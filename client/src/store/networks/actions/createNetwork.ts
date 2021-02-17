@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from "uuid"
 import {
   auth,
-  IFirebaseUser,
   networksCollection,
   usersCollection,
 } from "../../../firebase/firebase"
+import { IUserDocument } from "../../auth/authTypes"
 import { AppThunk } from "../../store"
 import {
   ICreateNetworkAction,
@@ -40,7 +40,7 @@ export const createNetwork = (name: string): AppThunk => {
       const doesUserDataExist = (await userDoc.get()).exists
       if (!doesUserDataExist) throw new Error("User document does not exist.")
 
-      const userData = (await userDoc.get()).data() as IFirebaseUser
+      const userData = (await userDoc.get()).data() as IUserDocument
       const updatedUserNetworkIds = userData.networkIds.concat(newNetwork.id)
       userDoc.update({ networkIds: updatedUserNetworkIds })
 

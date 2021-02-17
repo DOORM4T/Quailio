@@ -1,5 +1,5 @@
 import { ActionCreator } from "redux"
-import { auth, IFirebaseUser, usersCollection } from "../../firebase/firebase"
+import { auth, usersCollection } from "../../firebase/firebase"
 import { deleteNetwork, resetLocalNetworks } from "../networks/actions"
 import { AppThunk } from "../store"
 import {
@@ -10,6 +10,7 @@ import {
   IAuthLoginAction,
   IAuthLogoutAction,
   IAuthSetUserAction,
+  IUserDocument,
 } from "./authTypes"
 
 // -== ACTION CREATORS ==- //
@@ -40,7 +41,7 @@ export const createAccount = (email: string, password: string): AppThunk => {
       if (!id) throw new Error("Failed to get the new user's id.")
 
       /* Initialize the user's "users" collection document */
-      const userDocument: IFirebaseUser = {
+      const userDocument: IUserDocument = {
         id: credentials.user.uid,
         email,
         networkIds: [],
@@ -135,9 +136,9 @@ export const deleteAccount = (): AppThunk => {
       const userDataDoesExist = (await userDoc.get()).exists
       if (userDataDoesExist) {
         /* Get user document data */
-        const userData: IFirebaseUser = (
+        const userData: IUserDocument = (
           await userDoc.get()
-        ).data() as IFirebaseUser
+        ).data() as IUserDocument
 
         /* Delete the user document */
         await userDoc.delete()

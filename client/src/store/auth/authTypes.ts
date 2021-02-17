@@ -3,6 +3,13 @@ export interface IAuthState {
   userId: string | null | undefined
 }
 
+/* User Document type */
+export interface IUserDocument {
+  id: string
+  email: string
+  networkIds: string[] // IDs of networks belonging to the user
+}
+
 // -== ACTION TYPES ==- //
 export enum AuthActionTypes {
   LOADING = "AUTH/LOADING",
