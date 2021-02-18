@@ -16,6 +16,7 @@ import {
   createNetwork,
   deleteNetwork,
   importNetwork,
+  renameNetwork,
   setNetwork,
   setNetworkLoading,
 } from "../store/networks/actions"
@@ -183,6 +184,25 @@ const DashboardPage: React.FC = () => {
     }
   }
 
+  const handleRenameNetwork = async () => {
+    /* Stop if no network is selected */
+    if (!currentNetwork) return
+
+    /* Prompt the user for the new name */
+    const newName = window.prompt(`Rename ${currentNetwork.name} to: `)
+    if (!newName) {
+      alert("Canceled rename action.")
+      return
+    }
+
+    // Dispatch to global state
+    try {
+      await dispatch(renameNetwork(currentNetwork.id, newName))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <React.Fragment>
       <Box
@@ -277,6 +297,7 @@ const DashboardPage: React.FC = () => {
               >
                 <NetworkButtons
                   currentNetwork={currentNetwork}
+                  handleRenameNetwork={handleRenameNetwork}
                   handleAddPerson={handleAddPerson}
                   handleDeleteNetwork={handleDeleteNetwork}
                   handleExportToJSON={handleExportToJSON}
@@ -321,8 +342,9 @@ export default DashboardPage
 interface INetworkButtonsProps {
   currentNetwork: INetwork
   handleAddPerson: () => void
-  handleDeleteNetwork: () => void
   handleExportToJSON: () => void
+  handleRenameNetwork: () => void
+  handleDeleteNetwork: () => void
 }
 
 const NetworkButtons: React.FC<INetworkButtonsProps> = (props) => {
@@ -344,6 +366,15 @@ const NetworkButtons: React.FC<INetworkButtonsProps> = (props) => {
           ariaLabel="Export the network as a JSON file"
           icon={<Icons.Download color="brand" />}
           onClick={props.handleExportToJSON}
+          isDisabled={!props.currentNetwork}
+        />
+
+        <ToolTipButton
+          id="rename-network-button"
+          tooltip="Rename current network"
+          ariaLabel="Rename the current network"
+          icon={<Icons.Tag color="brand" />}
+          onClick={props.handleRenameNetwork}
           isDisabled={!props.currentNetwork}
         />
 

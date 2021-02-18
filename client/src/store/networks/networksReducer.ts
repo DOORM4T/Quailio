@@ -14,6 +14,7 @@ import {
   INetworksState,
   IPerson,
   IRelationships,
+  IRenameNetworkAction,
   ISetNetworkAction,
   ISetPersonThumbnailAction,
   IUpdatePersonContentAction,
@@ -93,8 +94,46 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.IMPORT_NETWORK:
       return getImportedNetworkState(state, action)
 
+    case NetworkActionTypes.RENAME_NETWORK:
+      return getRenamedNetworksState(state, action)
+
     default:
       return state
+  }
+}
+
+function getRenamedNetworksState(
+  state: INetworksState,
+  action: IRenameNetworkAction,
+): INetworksState {
+  const network = state.networks.find((n) => n.id === action.networkId)
+
+  /* Stop if the network doesn't exist in state */
+  if (!network) return state
+
+  /* Create the renamed network */
+  const renamedNetwork: INetwork = { ...network, name: action.newName }
+
+  /* Update networks state with the renamed network */
+  const networksWithoutRenamed = state.networks.filter(
+    (n) => n.id !== action.networkId,
+  )
+  const updatedNetworks = networksWithoutRenamed.concat(renamedNetwork)
+
+  /* If a network is currently selected, update it (so the name change is immediately shown) */
+  const updatedCurrentNetwork: ICurrentNetwork | null = state.currentNetwork
+    ? {
+        ...state.currentNetwork,
+        name: action.newName,
+      }
+    : null
+
+  /* New state */
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    networks: updatedNetworks,
+    isLoading: false,
   }
 }
 
