@@ -15,6 +15,14 @@ import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import SettingsPage from "./pages/SettingsPage"
 
+enum routeNames {
+  HOME = "/",
+  LOGIN = "/login",
+  REGISTER = "/register",
+  SETTINGS = "/settings",
+  DASHBOARD = "/dashboard",
+}
+
 const Routes: React.FC = () => {
   const history = useHistory()
   const { isAuthenticated } = useAuthChange()
@@ -23,7 +31,12 @@ const Routes: React.FC = () => {
 
   return (
     <React.Fragment>
-      <AppHeader title="Quailio" />
+      {
+        // Hide the default AppHeader on the Dashboard -- the Dashboard page uses its own custom header
+        history.location.pathname !== routeNames.DASHBOARD && (
+          <AppHeader title="Quailio" />
+        )
+      }
       <TransitionGroup>
         <CSSTransition
           key={history.location.key}
@@ -31,30 +44,42 @@ const Routes: React.FC = () => {
           classNames="animate"
         >
           <Switch>
-            <Route exact path="/" component={HomePage} />
+            <Route exact path={routeNames.HOME} component={HomePage} />
 
             {/* Log in/Register Routes. Shows Dashboard if authenticated. */}
-            <Route path="/login">
-              {!isAuthenticated ? <LoginPage /> : <Redirect to="/dashboard" />}
+            <Route path={routeNames.LOGIN}>
+              {!isAuthenticated ? (
+                <LoginPage />
+              ) : (
+                <Redirect to={routeNames.DASHBOARD} />
+              )}
             </Route>
-            <Route path="/register">
+            <Route path={routeNames.REGISTER}>
               {!isAuthenticated ? (
                 <RegisterPage />
               ) : (
-                <Redirect to="/dashboard" />
+                <Redirect to={routeNames.DASHBOARD} />
               )}
             </Route>
 
             {/* Dashboard Route. Redirects to Home Page if not authenticated. */}
-            <Route path="/dashboard">
-              {isAuthenticated ? <DashboardPage /> : <Redirect to="/" />}
+            <Route path={routeNames.DASHBOARD}>
+              {isAuthenticated ? (
+                <DashboardPage />
+              ) : (
+                <Redirect to={routeNames.HOME} />
+              )}
             </Route>
 
             {/* Settings Route. Redirects to Home Page if not authenticated. */}
-            <Route path="/settings">
-              {isAuthenticated ? <SettingsPage /> : <Redirect to="/" />}
+            <Route path={routeNames.SETTINGS}>
+              {isAuthenticated ? (
+                <SettingsPage />
+              ) : (
+                <Redirect to={routeNames.HOME} />
+              )}
             </Route>
-            <Redirect to="/" />
+            <Redirect to={routeNames.HOME} />
           </Switch>
         </CSSTransition>
       </TransitionGroup>
