@@ -42,6 +42,8 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
         forceGraph.height(h)
         forceGraph.centerAt(0, 0, 500)
       }
+
+      handleResize()
       window.addEventListener("resize", handleResize)
 
       return () => {
