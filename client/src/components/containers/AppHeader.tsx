@@ -8,6 +8,8 @@ import { logout } from "../../store/auth/authActions"
 import Header from "../Header"
 import { MenuItems } from "./AppBurgerMenu"
 
+export const HEADER_HEIGHT = 60
+
 interface IProps {
   title: string
   showLogo?: boolean
@@ -31,7 +33,7 @@ const AppHeader: React.FC<IProps> = (props) => {
   return (
     <Header
       title={props.title}
-      height={60}
+      height={HEADER_HEIGHT}
       menuItems={MenuItems({ isLoggedIn, logoutFunction })}
       children={
         <React.Fragment>
