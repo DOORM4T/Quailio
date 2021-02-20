@@ -1,4 +1,4 @@
-import { Box, DropButton, List, Text } from "grommet"
+import { Box, DropButton, List, Menu, Text } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -6,6 +6,7 @@ import { ActionCreator, AnyAction } from "redux"
 import AppHeader from "../../components/containers/AppHeader"
 import ToolTipButton from "../../components/ToolTipButton"
 import { getNetworkJSON } from "../../firebase/getNetworkJSON"
+import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
   addPerson,
   createNetwork,
@@ -22,6 +23,8 @@ export const HeaderMenu: React.FC = () => {
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
+
+  const isSmall = useSmallBreakpoint()
 
   //                                 //
   // -== ACTION BUTTON FUNCTIONS ==- //
@@ -188,6 +191,56 @@ export const HeaderMenu: React.FC = () => {
     }
   }
 
+  const actionButtons = [
+    <ToolTipButton
+      key={"add-person-button"}
+      id="add-person-button"
+      tooltip="Add person"
+      ariaLabel="Add a person to the network"
+      icon={<Icons.UserAdd color="light-1" />}
+      onClick={handleAddPerson}
+      isDisabled={!currentNetwork}
+    />,
+
+    <ToolTipButton
+      key="export-network-json-button"
+      id="export-network-json-button"
+      tooltip="Export network to JSON"
+      ariaLabel="Export the network as a JSON file"
+      icon={<Icons.Download color="light-1" />}
+      onClick={handleExportToJSON}
+      isDisabled={!currentNetwork}
+    />,
+    <ToolTipButton
+      key="import-network-json-button"
+      id="import-network-json-button"
+      tooltip="Import network from JSON"
+      ariaLabel="Import a network from a JSON file"
+      icon={<Icons.Upload color="light-1" />}
+      onClick={handleImportFromJSON}
+    />,
+
+    <ToolTipButton
+      key="rename-network-button"
+      id="rename-network-button"
+      tooltip="Rename current network"
+      ariaLabel="Rename the current network"
+      icon={<Icons.Tag color="light-1" />}
+      onClick={handleRenameNetwork}
+      isDisabled={!currentNetwork}
+    />,
+
+    <ToolTipButton
+      key="delete-network-button"
+      id="delete-network-button"
+      tooltip="Delete current network"
+      ariaLabel="Delete current network"
+      icon={<Icons.Threats color="status-critical" />}
+      onClick={handleDeleteNetwork}
+      isDisabled={!currentNetwork}
+    />,
+  ]
+
   const dropContent = networks ? (
     <List
       id="select-network-list"
@@ -216,8 +269,8 @@ export const HeaderMenu: React.FC = () => {
         direction="row"
         justify="start"
         align="center"
-        pad="medium"
         width="100%"
+        overflow="hidden"
       >
         <Box direction="row" gap="small">
           <ToolTipButton
@@ -255,48 +308,20 @@ export const HeaderMenu: React.FC = () => {
         </Box>
         {currentNetwork && (
           <Box direction="row" margin={{ left: "auto" }}>
-            <ToolTipButton
-              id="add-person-button"
-              tooltip="Add person"
-              ariaLabel="Add a person to the network"
-              icon={<Icons.UserAdd color="light-1" />}
-              onClick={handleAddPerson}
-              isDisabled={!currentNetwork}
-            />
-
-            <ToolTipButton
-              id="export-network-json-button"
-              tooltip="Export network to JSON"
-              ariaLabel="Export the network as a JSON file"
-              icon={<Icons.Download color="light-1" />}
-              onClick={handleExportToJSON}
-              isDisabled={!currentNetwork}
-            />
-            <ToolTipButton
-              id="import-network-json-button"
-              tooltip="Import network from JSON"
-              ariaLabel="Import a network from a JSON file"
-              icon={<Icons.Upload color="light-1" />}
-              onClick={handleImportFromJSON}
-            />
-
-            <ToolTipButton
-              id="rename-network-button"
-              tooltip="Rename current network"
-              ariaLabel="Rename the current network"
-              icon={<Icons.Tag color="light-1" />}
-              onClick={handleRenameNetwork}
-              isDisabled={!currentNetwork}
-            />
-
-            <ToolTipButton
-              id="delete-network-button"
-              tooltip="Delete current network"
-              ariaLabel="Delete current network"
-              icon={<Icons.Threats color="status-critical" />}
-              onClick={handleDeleteNetwork}
-              isDisabled={!currentNetwork}
-            />
+            {isSmall ? (
+              <Menu
+                icon={
+                  <ToolTipButton
+                    id="actions-menu"
+                    tooltip="Toggle network actions menu"
+                    icon={<Icons.Actions />}
+                  />
+                }
+                items={actionButtons.map((btn) => ({ label: btn }))}
+              />
+            ) : (
+              actionButtons.map((btn) => btn)
+            )}
           </Box>
         )}
       </Box>

@@ -19,7 +19,7 @@ const Header: React.FC<IProps> = (props) => {
       align="center"
       height={{ min: `${props.height}px`, max: `${props.height}px` }}
     >
-      {props.children && props.children}
+      {props.children}
       <Nav margin={{ left: "auto" }} direction="row" pad="xsmall">
         <Menu
           id="navigation-menu"

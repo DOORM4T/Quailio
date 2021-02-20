@@ -5,9 +5,9 @@ interface IProps {
   id: string
   tooltip: string
   icon: JSX.Element
-  onClick: () => void
+  onClick?: () => void
   isDisabled?: boolean
-  ariaLabel: string
+  ariaLabel?: string
   buttonStyle?: CSSProperties
 }
 
