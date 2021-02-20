@@ -9,7 +9,7 @@ import useGetNetworks from "../../hooks/networks/useGetNetworks"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { getIsOverlayOpen } from "../../store/selectors/ui/getIsOverlayOpen"
-import HeaderMenu from "./HeaderMenu"
+import HeaderMenu from "./MenuHeader"
 
 const DashboardPage: React.FC = () => {
   /* Fetch network data*/
