@@ -1,9 +1,10 @@
-import { Box, DropButton, List, Menu, Text } from "grommet"
+import deepEqual from "deep-equal"
+import { Box, Keyboard, Menu, Select } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
-import { useDispatch, useSelector } from "react-redux"
+import { useDispatch } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
-import AppHeader from "../../components/containers/AppHeader"
+import AppHeader, { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ToolTipButton from "../../components/ToolTipButton"
 import { getNetworkJSON } from "../../firebase/getNetworkJSON"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
@@ -16,15 +17,58 @@ import {
   setNetwork,
   setNetworkLoading,
 } from "../../store/networks/actions"
-import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
-import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
+import { INetwork } from "../../store/networks/networkTypes"
 
-export const HeaderMenu: React.FC = () => {
-  const dispatch: ActionCreator<AnyAction> = useDispatch()
-  const networks = useSelector(getAllNetworkData)
-  const currentNetwork = useSelector(getCurrentNetwork)
+interface INetworkSelectOption {
+  id: string
+  name: string
+}
 
+interface IProps {
+  networks: INetwork[]
+  currentNetwork: INetwork | null
+}
+
+export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
   const isSmall = useSmallBreakpoint()
+  const dispatch: ActionCreator<AnyAction> = useDispatch()
+
+  const [
+    selectedNetwork,
+    setSelectedNetwork,
+  ] = React.useState<INetworkSelectOption | null>(null)
+
+  const defaultNetworkOptions = networks.map((n) => ({
+    id: n.id,
+    name: n.name,
+  }))
+
+  const [isSearching, setSearching] = React.useState<boolean>(false)
+  const [networkOptions, setNetworkOptions] = React.useState<
+    INetworkSelectOption[]
+  >(defaultNetworkOptions)
+
+  /* Logic for opening the network select menu when CTRL + / is pressed */
+  const selectNetworkRef = React.useRef<any>(null)
+  React.useEffect(() => {
+    const openNetworkSelect = (e: KeyboardEvent) => {
+      if (
+        e.key === "/" &&
+        e.ctrlKey &&
+        !isSearching &&
+        selectNetworkRef.current
+      ) {
+        ;(selectNetworkRef.current as HTMLElement).click()
+      }
+    }
+
+    window.addEventListener("keyup", openNetworkSelect)
+
+    /* Remove listener on component unmount */
+    return () => {
+      window.removeEventListener("keyup", openNetworkSelect)
+    }
+  }, [])
 
   //                                 //
   // -== ACTION BUTTON FUNCTIONS ==- //
@@ -126,18 +170,16 @@ export const HeaderMenu: React.FC = () => {
     }
   }
 
-  /* Network select button ref */
-  const networkSelectRef = React.useRef<any>(null)
-
   /* Select Network Function */
-  const handleNetworkSelect = async (event: any) => {
+  const handleNetworkSelect = async (
+    event: Event & { value: INetworkSelectOption },
+  ) => {
     try {
-      if (!event.item) throw new Error("Network not found.")
-      await dispatch(setNetwork(event.item.id))
+      if (!event.value) throw new Error("Network not found.")
 
-      if (networkSelectRef.current) {
-        ;(networkSelectRef.current as HTMLButtonElement).click()
-      }
+      await dispatch(setNetwork(event.value.id))
+      setSelectedNetwork(event.value)
+      setSearching(false)
     } catch (error) {
       console.error(error)
     }
@@ -241,26 +283,111 @@ export const HeaderMenu: React.FC = () => {
     />,
   ]
 
-  const dropContent = networks ? (
-    <List
-      id="select-network-list"
-      primaryKey={"name"}
-      data={networks}
-      onClickItem={handleNetworkSelect}
-      background="dark-1"
-      border={{
-        color: "accent-1",
-        side: "horizontal",
-        size: "small",
-      }}
-      pad="medium"
-      style={{
-        overflow: "auto",
-        maxHeight: "500px",
-      }}
-    />
-  ) : (
-    <Text>You haven't created any networks... yet!</Text>
+  /* Handle searches for network options */
+  const handleOptionSearch = (text: string) => {
+    if (!text) {
+      /* Searching for nothing? Done searching. */
+      setSearching(false)
+      return
+    }
+
+    /* Filter default options using the search */
+    setSearching(true)
+    const filtered = defaultNetworkOptions.filter((n) =>
+      n.name.match(new RegExp(text, "i")),
+    )
+    setNetworkOptions(filtered)
+  }
+
+  /* How the select menu renders options */
+  const renderNetworkOptions = (
+    option: INetworkSelectOption,
+    index: number,
+  ) => {
+    return (
+      <Box
+        key={`${option.id}-${index}`}
+        pad="small"
+        width="large"
+        // style={{ overflow: "hidden", textOverflow: "ellipsis" }}
+      >
+        {option.name}
+      </Box>
+    )
+  }
+
+  /* Menu for selecting a network */
+  const networkSelectMenu: React.ReactNode = (
+    <Select
+      dropHeight="350px"
+      id="select-network-dropbutton"
+      aria-label="Select a network"
+      placeholder="Select a network (CTRL + /)"
+      searchPlaceholder="Search by name"
+      options={isSearching ? networkOptions : defaultNetworkOptions}
+      onChange={handleNetworkSelect}
+      dropAlign={{ top: "bottom" }}
+      disabled={networks.length === 0}
+      valueLabel={
+        selectedNetwork ? (
+          <Box
+            align="start"
+            justify="center"
+            pad="small"
+            style={{
+              maxWidth: "30ch",
+              maxHeight: `${HEADER_HEIGHT}px`,
+              padding: "4px 8px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {selectedNetwork.name}
+          </Box>
+        ) : null
+      }
+      value={selectedNetwork?.name}
+      onSearch={handleOptionSearch}
+      ref={selectNetworkRef}
+    >
+      {renderNetworkOptions}
+    </Select>
+  )
+
+  const leftHeaderItems: React.ReactNode = (
+    <Box direction="row" gap="small" overflow="hidden">
+      <ToolTipButton
+        id="create-network-button"
+        tooltip="Create a new network"
+        ariaLabel="Create a new network"
+        icon={<Icons.Add color="status-ok" />}
+        onClick={handleCreateNetwork}
+        buttonStyle={{
+          border: "2px solid white",
+          borderRadius: "2px",
+        }}
+      />
+      <Box>{networkSelectMenu}</Box>
+    </Box>
+  )
+
+  const rightHeaderItems: React.ReactNode = (
+    <Box direction="row" margin={{ left: "auto" }}>
+      {isSmall ? (
+        <Menu
+          icon={
+            <ToolTipButton
+              id="actions-menu"
+              tooltip="Toggle network actions menu"
+              icon={<Icons.Actions />}
+            />
+          }
+          items={actionButtons.map((btn) => ({ label: btn }))}
+        />
+      ) : (
+        actionButtons.map((btn) => btn)
+      )}
+    </Box>
   )
 
   return (
@@ -272,61 +399,20 @@ export const HeaderMenu: React.FC = () => {
         width="100%"
         overflow="hidden"
       >
-        <Box direction="row" gap="small">
-          <ToolTipButton
-            id="create-network-button"
-            tooltip="Create a new network"
-            ariaLabel="Create a new network"
-            icon={<Icons.Add color="status-ok" />}
-            onClick={handleCreateNetwork}
-            buttonStyle={{
-              border: "2px solid white",
-              borderRadius: "2px",
-            }}
-          />
-          <DropButton
-            id="select-network-dropbutton"
-            color="accent-1"
-            ref={networkSelectRef}
-            style={{
-              borderRadius: "4px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              minWidth: "250px",
-            }}
-            aria-label="Select a network"
-            label={
-              currentNetwork
-                ? `Network: ${currentNetwork.name}`
-                : "Select Network"
-            }
-            dropAlign={{ top: "bottom" }}
-            dropContent={dropContent}
-            disabled={networks.length === 0}
-          />
-        </Box>
-        {currentNetwork && (
-          <Box direction="row" margin={{ left: "auto" }}>
-            {isSmall ? (
-              <Menu
-                icon={
-                  <ToolTipButton
-                    id="actions-menu"
-                    tooltip="Toggle network actions menu"
-                    icon={<Icons.Actions />}
-                  />
-                }
-                items={actionButtons.map((btn) => ({ label: btn }))}
-              />
-            ) : (
-              actionButtons.map((btn) => btn)
-            )}
-          </Box>
-        )}
+        {leftHeaderItems}
+        {currentNetwork && rightHeaderItems}
       </Box>
     </AppHeader>
   )
 }
 
-export default HeaderMenu
+export default React.memo(HeaderMenu, (prevProps, nextProps) => {
+  /* Re-render only if the networks or currentNetwork changed */
+  const areCurrentNetworksEqual = deepEqual(
+    prevProps.currentNetwork,
+    nextProps.currentNetwork,
+  )
+  const areNetworksEqual = deepEqual(prevProps.networks, nextProps.networks)
+  const skipRerender = areCurrentNetworksEqual && areNetworksEqual
+  return skipRerender
+})

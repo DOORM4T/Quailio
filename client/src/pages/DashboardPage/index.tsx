@@ -7,6 +7,7 @@ import PersonMenu from "../../components/containers/PersonMenu"
 import ViewPersonOverlay from "../../components/containers/ViewPersonOverlay"
 import useGetNetworks from "../../hooks/networks/useGetNetworks"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
+import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { getIsOverlayOpen } from "../../store/selectors/ui/getIsOverlayOpen"
 import HeaderMenu from "./MenuHeader"
@@ -16,6 +17,7 @@ const DashboardPage: React.FC = () => {
   useGetNetworks()
 
   /* Access global state */
+  const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
   const isOverlayOpen = useSelector(getIsOverlayOpen)
 
@@ -24,7 +26,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <React.Fragment>
-      <HeaderMenu />
+      <HeaderMenu networks={networks} currentNetwork={currentNetwork} />
       <Box
         direction={isSmall ? "column" : "row"}
         background="dark-1"
