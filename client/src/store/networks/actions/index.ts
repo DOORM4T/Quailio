@@ -1,5 +1,3 @@
-import { importNetwork } from "./importNetwork"
-
 export * from "./addPerson"
 export * from "./connectPeople"
 export * from "./createNetwork"
@@ -7,7 +5,6 @@ export * from "./deleteNetwork"
 export * from "./deletePerson"
 export * from "./disconnectPeople"
 export * from "./getAllNetworks"
-export * from "./getAllPeople"
 export * from "./resetLocalNetworks"
 export * from "./setNetwork"
 export * from "./setNetworkLoading"

@@ -10,7 +10,6 @@ import {
   ISetNetworkAction,
   NetworkActionTypes,
 } from "../networkTypes"
-import { getAllPersonDataFromDB } from "./getAllPeople"
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
@@ -52,4 +51,24 @@ export const setNetwork = (networkId: string): AppThunk => {
       throw error
     }
   }
+}
+
+/**
+ * Gets all person data from Firestore
+ * @param networkId
+ */
+export async function getAllPersonDataFromDB(networkId: string) {
+  /* Get the Network by its ID from the Networks collection */
+  const networkData: INetwork = (
+    await networksCollection.doc(networkId).get()
+  ).data() as INetwork
+
+  if (!networkData) throw new Error("Network not found.")
+
+  /* Get all Person documents related to the Person IDs in the Network */
+  const getPeopleData = networkData.personIds.map(
+    async (id) => (await peopleCollection.doc(id).get()).data() as IPerson,
+  )
+  const peopleData: IPerson[] = await Promise.all(getPeopleData)
+  return peopleData
 }

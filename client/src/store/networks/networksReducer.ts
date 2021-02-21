@@ -8,7 +8,6 @@ import {
   IDeletePersonByIdAction,
   IDisconnectPeopleAction,
   IGetAllNetworksIdsAction,
-  IGetAllPeopleAction,
   IImportNetworkAction,
   INetwork,
   INetworksState,
@@ -47,11 +46,13 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.CREATE:
       return getCreateNetworkState(state, action)
 
-    case NetworkActionTypes.SET:
-      return getSetCurrentNetworkState(state, action)
-
+    // Populate networks field with network IDs, network names, and person Ids.
+    // No person data other than their ID is fetched
     case NetworkActionTypes.GET_ALL:
       return getAllNetworksState(state, action)
+
+    case NetworkActionTypes.SET:
+      return getSetCurrentNetworkState(state, action)
 
     case NetworkActionTypes.DELETE: {
       return getDeleteNetworkState(state, action)
@@ -74,9 +75,6 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
 
     case NetworkActionTypes.DELETE_PERSON:
       return getDeletePersonState(state, action)
-
-    case NetworkActionTypes.GET_ALL_PEOPLE:
-      return getAllPeopleState(state, action)
 
     case NetworkActionTypes.SET_PERSON_THUMBNAIL:
       return getUpdatedPersonThumbnailState(state, action)
@@ -303,20 +301,6 @@ function getUpdatedPersonThumbnailState(
   return {
     ...state,
     currentNetwork: updatedNetwork,
-    isLoading: false,
-  }
-}
-
-function getAllPeopleState(
-  state: INetworksState,
-  action: IGetAllPeopleAction,
-): INetworksState {
-  /* Stop if there's no Network selected */
-  if (!state.currentNetwork) return state
-
-  return {
-    ...state,
-    currentNetwork: { ...state.currentNetwork, people: action.people },
     isLoading: false,
   }
 }

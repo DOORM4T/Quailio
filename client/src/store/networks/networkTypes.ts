@@ -105,11 +105,6 @@ export interface IDeletePersonByIdAction {
   personId: string // ID of the deleted person
 }
 
-export interface IGetAllPeopleAction {
-  type: NetworkActionTypes.GET_ALL_PEOPLE
-  people: IPerson[]
-}
-
 export interface ISetPersonThumbnailAction {
   type: NetworkActionTypes.SET_PERSON_THUMBNAIL
   personId: string
@@ -164,7 +159,6 @@ export type NetworksActions =
   | IAddPersonAction
   | IConnectPeopleAction
   | IDeletePersonByIdAction
-  | IGetAllPeopleAction
   | ISetPersonThumbnailAction
   | IDisconnectPeopleAction
   | IUpdateRelationshipReasonAction

@@ -13,16 +13,17 @@ import {
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
- * Get all Networks belonging to the currently authenticated user
+ * Fetch all Networks belonging to the currently authenticated user
+ * Network data consists only of the network IDs, network names, and person IDs.
+ * Person data beyond person IDs are not fetched.
  */
-
 export const getAllNetworks = (): AppThunk => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     try {
       /* Check for an authenticated User */
-      const uid = auth.currentUser?.uid
+      const uid = getState().auth.userId
       if (!uid) throw new Error("There is no currently authenticated user.")
 
       /* Get the IDs of the User's Networks   */

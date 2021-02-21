@@ -13,15 +13,14 @@ import { getIsOverlayOpen } from "../../store/selectors/ui/getIsOverlayOpen"
 import HeaderMenu from "./MenuHeader"
 
 const DashboardPage: React.FC = () => {
-  /* Fetch network data*/
-  useGetNetworks()
-
   /* Access global state */
+  /* Fetch network data (network IDs, network names, person IDs)*/
+  useGetNetworks()
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
   const isOverlayOpen = useSelector(getIsOverlayOpen)
 
-  /* responsive breakpoints */
+  /* Responsive breakpoint */
   const isSmall = useSmallBreakpoint()
 
   return (
