@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal"
-import { Box, Keyboard, Menu, Select } from "grommet"
+import { Box, Menu, Select } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -249,14 +249,6 @@ export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
       onClick={handleExportToJSON}
       isDisabled={!currentNetwork}
     />,
-    <ToolTipButton
-      key="import-network-json-button"
-      id="import-network-json-button"
-      tooltip="Import network from JSON"
-      ariaLabel="Import a network from a JSON file"
-      icon={<Icons.Upload color="light-1" />}
-      onClick={handleImportFromJSON}
-    />,
 
     <ToolTipButton
       key="rename-network-button"
@@ -362,6 +354,14 @@ export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
           border: "2px solid white",
           borderRadius: "2px",
         }}
+      />
+      <ToolTipButton
+        key="import-network-json-button"
+        id="import-network-json-button"
+        tooltip="Import network from JSON"
+        ariaLabel="Import a network from a JSON file"
+        icon={<Icons.Upload color="light-1" />}
+        onClick={handleImportFromJSON}
       />
       <Box>{networkSelectMenu}</Box>
     </Box>
