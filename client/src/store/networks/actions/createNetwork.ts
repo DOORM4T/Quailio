@@ -19,10 +19,10 @@ import { setNetworkLoading } from "./setNetworkLoading"
  */
 
 export const createNetwork = (name: string): AppThunk => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
-    /* Initialize the Network */
+    /* Create a network object */
     const newNetwork: INetwork = {
       id: uuidv4(),
       name,
@@ -30,28 +30,29 @@ export const createNetwork = (name: string): AppThunk => {
     }
 
     try {
-      /* Database updates */
-      /* Get the authenticated User's ID */
-      const uid = auth.currentUser?.uid
-      if (!uid) throw new Error("There is no currently authenticated user.")
+      /* User is authenticated? Add the network to Firestore */
+      const uid = getState().auth.userId
+      if (uid) {
+        /* Ensure the user's Firestore document exists */
+        const userDoc = usersCollection.doc(uid)
+        const doesUserDataExist = (await userDoc.get()).exists
+        if (!doesUserDataExist) throw new Error("User document does not exist.")
 
-      /* Add the Network's ID to the User's list of Network IDs */
-      const userDoc = usersCollection.doc(uid)
-      const doesUserDataExist = (await userDoc.get()).exists
-      if (!doesUserDataExist) throw new Error("User document does not exist.")
+        /* Add the Network's ID to the User's list of Network IDs */
+        const userData = (await userDoc.get()).data() as IUserDocument
+        const updatedUserNetworkIds = userData.networkIds.concat(newNetwork.id)
+        userDoc.update({ networkIds: updatedUserNetworkIds })
 
-      const userData = (await userDoc.get()).data() as IUserDocument
-      const updatedUserNetworkIds = userData.networkIds.concat(newNetwork.id)
-      userDoc.update({ networkIds: updatedUserNetworkIds })
+        /* Create a document for the Network in the Networks collection */
+        await networksCollection.doc(newNetwork.id).set(newNetwork)
+      }
 
-      /* Create a document for the Network in the Networks collection */
-      await networksCollection.doc(newNetwork.id).set(newNetwork)
-
-      /* Update state with the newNetwork */
+      /* Action for updating state with the new network */
       const action: ICreateNetworkAction = {
         type: NetworkActionTypes.CREATE,
         newNetwork,
       }
+
       return dispatch(action)
     } catch (error) {
       /* Failed to create the Network */

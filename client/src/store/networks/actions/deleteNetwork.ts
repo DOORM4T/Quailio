@@ -19,49 +19,53 @@ import { IUserDocument } from "../../auth/authTypes"
  */
 
 export const deleteNetwork = (networkId: string): AppThunk => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     try {
-      /* Database updates */
-      const networkDoc = networksCollection.doc(networkId)
-      const networkData = (await networkDoc.get()).data() as INetwork
-      if (!networkData) throw new Error("Network does not exist.")
+      /* Delete the network from Firestore if the user is authenticated (and if the network exists, of course) */
+      const uid = getState().auth.userId
+      if (uid) {
+        /* Ensure the network exists in Firestore */
+        const networkDoc = networksCollection.doc(networkId)
+        const networkData = (await networkDoc.get()).data() as INetwork
+        if (!networkData) throw new Error("Network does not exist.")
 
-      /* Delete the network from User docs containing the networkId */
-      const userDocs = await usersCollection
-        .where("networkIds", "array-contains", networkId)
-        .get()
-      userDocs.docs.forEach((doc) => {
-        const data = doc.data() as IUserDocument
-        const updatedNetworkIds = data.networkIds.filter(
-          (id) => id !== networkId,
-        )
-        doc.ref.update({ networkIds: updatedNetworkIds })
-      })
+        /* Delete the network from User docs containing the networkId */
+        const userDocs = await usersCollection
+          .where("networkIds", "array-contains", networkId)
+          .get()
+        userDocs.docs.forEach((doc) => {
+          const data = doc.data() as IUserDocument
+          const updatedNetworkIds = data.networkIds.filter(
+            (id) => id !== networkId,
+          )
+          doc.ref.update({ networkIds: updatedNetworkIds })
+        })
 
-      /* Delete all People in the Network */
-      const deletePeopleList = networkData.personIds.map(async (personId) => {
+        /* Delete all People in the Network */
+        const deletePeopleList = networkData.personIds.map(async (personId) => {
+          try {
+            await dispatch<any>(deletePerson(networkId, personId))
+          } catch (error) {
+            console.error(error)
+          }
+        })
+        await Promise.all(deletePeopleList)
+
+        /* Delete the Network */
+        await networkDoc.delete()
+
+        /* Delete all images used by the network */
         try {
-          await dispatch<any>(deletePerson(networkId, personId))
+          await deleteNetworkThumbnails(networkId)
         } catch (error) {
+          /* Continue execution even if thumbnail deletion fails. An error here indicates the network had no uploaded thumbnails. */
           console.error(error)
         }
-      })
-      await Promise.all(deletePeopleList)
-
-      /* Delete the Network */
-      await networkDoc.delete()
-
-      /* Delete all images used by the network */
-      try {
-        await deleteNetworkThumbnails(networkId)
-      } catch (error) {
-        /* Continue execution even if thumbnail deletion fails. An error here indicates the network had no uploaded thumbnails. */
-        console.error(error)
       }
 
-      /* Update state accordingly with networkId */
+      /* Action to update state using deleted network's ID */
       const action: IDeleteNetworkByIdAction = {
         type: NetworkActionTypes.DELETE,
         networkId,
