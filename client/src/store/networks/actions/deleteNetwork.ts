@@ -1,17 +1,17 @@
 import {
   deleteNetworkThumbnails,
   networksCollection,
+  peopleCollection,
   usersCollection,
 } from "../../../firebase/firebase"
+import { IUserDocument } from "../../auth/authTypes"
 import { AppThunk } from "../../store"
-import { deletePerson } from "./deletePerson"
 import {
   IDeleteNetworkByIdAction,
   INetwork,
   NetworkActionTypes,
 } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
-import { IUserDocument } from "../../auth/authTypes"
 
 /**
  * Delete a Network by its ID
@@ -46,8 +46,11 @@ export const deleteNetwork = (networkId: string): AppThunk => {
         /* Delete all People in the Network */
         const deletePeopleList = networkData.personIds.map(async (personId) => {
           try {
-            await dispatch<any>(deletePerson(networkId, personId))
+            /* NOT dispatching the deletePerson action since that updates relationships. 
+            We don't care about updating relationships since every person will be deleted. */
+            await peopleCollection.doc(personId).delete()
           } catch (error) {
+            /* Log any errors; keep going even if a person isn't found */
             console.error(error)
           }
         })
