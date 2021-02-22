@@ -2,7 +2,7 @@ import deepEqual from "deep-equal"
 import { Box, Keyboard, Menu, Select } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
 import AppHeader, { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ToolTipButton from "../../components/ToolTipButton"
@@ -18,6 +18,7 @@ import {
   setNetworkLoading,
 } from "../../store/networks/actions"
 import { INetwork } from "../../store/networks/networkTypes"
+import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 
 interface INetworkSelectOption {
   id: string
@@ -32,11 +33,7 @@ interface IProps {
 export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
   const isSmall = useSmallBreakpoint()
   const dispatch: ActionCreator<AnyAction> = useDispatch()
-
-  const [
-    selectedNetwork,
-    setSelectedNetwork,
-  ] = React.useState<INetworkSelectOption | null>(null)
+  const selectedNetwork = useSelector(getCurrentNetwork)
 
   const defaultNetworkOptions = networks.map((n) => ({
     id: n.id,
@@ -178,7 +175,6 @@ export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
       if (!event.value) throw new Error("Network not found.")
 
       await dispatch(setNetwork(event.value.id))
-      setSelectedNetwork(event.value)
       setSearching(false)
     } catch (error) {
       console.error(error)
