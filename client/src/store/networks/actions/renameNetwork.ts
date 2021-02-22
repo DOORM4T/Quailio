@@ -15,10 +15,15 @@ export const renameNetwork = (
   dispatch(setNetworkLoading(true))
 
   try {
-    /* Rename the network in Firestore, if it exists */
-    const networkDoc = await networksCollection.doc(networkId).get()
+    /* Update the database if the user is authenticated */
+    const uid = getState().auth.userId
+    if (uid) {
+      const networkDoc = await networksCollection.doc(networkId).get()
 
-    if (networkDoc.exists) {
+      /* Stop if the network does not exist */
+      if (!networkDoc.exists)
+        throw new Error(`Network ${networkId} does not exist`)
+
       /* Update the network's name field */
       await networkDoc.ref.update({ name })
     }

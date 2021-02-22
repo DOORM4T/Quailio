@@ -32,15 +32,21 @@ export const addPerson = (networkId: string, name: string): AppThunk => {
 
     try {
       /* Database updates, if applicable */
-      /* Get the network document that will add this new Person */
-      const networkDoc = networksCollection.doc(networkId)
-      const networkData: INetwork = (await networkDoc.get()).data() as INetwork
 
-      /* Update the database if the network exists */
-      if (networkData) {
+      /* Update the database if the user is authenticated */
+      const uid = getState().auth.userId
+      if (uid) {
+        /* Ensure the network exists in Firestore */
+        const networkDoc = await networksCollection.doc(networkId).get()
+        if (!networkDoc.exists)
+          throw new Error(`Network ${networkId} does not exist`)
+
+        /* Get the network's data */
+        const networkData: INetwork = networkDoc.data() as INetwork
+
         /* Update just the personIds field of the Network document */
         const updatedPersonIds = networkData.personIds.concat(newPerson.id)
-        await networkDoc.update({ personIds: updatedPersonIds })
+        await networkDoc.ref.update({ personIds: updatedPersonIds })
 
         /* Create a document for the new Person */
         await peopleCollection.doc(newPerson.id).set(newPerson)

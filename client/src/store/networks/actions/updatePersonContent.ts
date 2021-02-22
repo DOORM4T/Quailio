@@ -12,18 +12,23 @@ export const updatePersonContent = (
   personId: string,
   content: string,
 ): AppThunk => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     try {
-      const personDoc = await peopleCollection.doc(personId).get()
+      /* Update the database if the user is authenticated */
+      const uid = getState().auth.userId
+      if (uid) {
+        const personDoc = await peopleCollection.doc(personId).get()
 
-      /* Ensure the Person exists */
-      if (!personDoc.exists) throw new Error("That person does not exist.")
+        /* Stop if the Person does not exist */
+        if (!personDoc.exists) throw new Error("That person does not exist.")
 
-      /* Update person's content field  */
-      await personDoc.ref.update({ content })
+        /* Update person's content field  */
+        await personDoc.ref.update({ content })
+      }
 
+      /* Action to update state with the new person content */
       const action: IUpdatePersonContentAction = {
         type: NetworkActionTypes.UPDATE_PERSON_CONTENT,
         personId,

@@ -12,18 +12,23 @@ import { setNetworkLoading } from "./setNetworkLoading"
 export const updatePersonName = (
   personId: string,
   updatedName: string,
-): AppThunk => async (dispatch) => {
+): AppThunk => async (dispatch, getState) => {
   dispatch(setNetworkLoading(true))
 
   try {
-    /* Update the person document in firebase */
-    const personDoc = await peopleCollection.doc(personId).get()
+    /* Update the database if the user is authenticated */
+    const uid = getState().auth.userId
+    if (uid) {
+      /* Update the person document in firebase */
+      const personDoc = await peopleCollection.doc(personId).get()
 
-    /* Ensure each person exists */
-    if (!personDoc.exists) throw new Error("Person 1 does not exist.")
+      /* Stop if the person does not exist */
+      if (!personDoc.exists)
+        throw new Error(`Person ${personId} does not exist`)
 
-    /* Update the person's name field*/
-    personDoc.ref.update({ name: updatedName })
+      /* Update the person's name field*/
+      personDoc.ref.update({ name: updatedName })
+    }
 
     /* Update global state accordingly with personId and updatedName */
     const action: IUpdatePersonNameAction = {

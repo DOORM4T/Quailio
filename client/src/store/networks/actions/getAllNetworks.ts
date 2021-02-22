@@ -22,7 +22,7 @@ export const getAllNetworks = (): AppThunk => {
     dispatch(setNetworkLoading(true))
 
     try {
-      /* Check for an authenticated User */
+      /* Stop if the user is not authenticated (Offline mode doesn't need to use this action) */
       const uid = getState().auth.userId
       if (!uid) throw new Error("There is no currently authenticated user.")
 

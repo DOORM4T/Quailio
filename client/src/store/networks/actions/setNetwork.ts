@@ -18,11 +18,15 @@ import { setNetworkLoading } from "./setNetworkLoading"
  */
 
 export const setNetwork = (networkId: string): AppThunk => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     try {
-      /* Database updates */
+      /* Stop if the user is not authenticated (Offline mode doesn't need to use this action) */
+      const uid = getState().auth.userId
+      if (!uid) throw new Error("There is no currently authenticated user.")
+
+      /* Get data from Firestore  */
       /* Get the Network by its ID from the Networks collection */
       const networkData: INetwork = (
         await networksCollection.doc(networkId).get()

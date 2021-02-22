@@ -13,10 +13,17 @@ export const setPersonThumbnail = (
   networkId: string,
   personId: string,
   thumbnailFile: File,
-): AppThunk => async (dispatch) => {
+): AppThunk => async (dispatch, getState) => {
   dispatch(setNetworkLoading(true))
 
   try {
+    // TODO: Set thumbnail by URL -- this is important for unauthenticated users!
+    // For now, setting thumbnails is only available to authenticated users.
+
+    /* Stop if the user is not authenticated */
+    const uid = getState().auth.userId
+    if (!uid) throw new Error("There is no currently authenticated user.")
+
     const personDoc = peopleCollection.doc(personId)
 
     /* Ensure the Person exists */
