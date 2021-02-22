@@ -1,7 +1,6 @@
 import firebase from "firebase"
 import { v4 as uuidv4 } from "uuid"
 import {
-  auth,
   networksCollection,
   peopleCollection,
   usersCollection,
@@ -22,7 +21,7 @@ import { setNetworkLoading } from "./setNetworkLoading"
  */
 
 export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     // COPY THE NETWORK, BUT WITH NEW IDs
@@ -66,17 +65,16 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
     }
 
     try {
-      // Import to the Firestore
-      // Ensure the user is authenticated
-      const userId = auth.currentUser?.uid
-      if (userId) {
+      // Import to the Firestore if the user is authenticated (Offline users can still import; their data just isn't stored in Firestore)
+      const uid = getState().auth.userId
+      if (uid) {
         // Add the network's ID to the user doc networks list
         const addToNetworkIds: { networkIds: any } = {
           networkIds: firebase.firestore.FieldValue.arrayUnion(
             asCurrentNetwork.id,
           ),
         }
-        await usersCollection.doc(userId).update(addToNetworkIds)
+        await usersCollection.doc(uid).update(addToNetworkIds)
 
         //
         // Add the network
@@ -119,7 +117,7 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
         await Promise.all(uploadPersonPromises)
       }
 
-      // Dispatch the action to update global state
+      // Action to import the network to global state
       const action: IImportNetworkAction = {
         type: NetworkActionTypes.IMPORT_NETWORK,
         asCurrentNetwork,
