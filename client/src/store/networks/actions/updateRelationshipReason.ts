@@ -19,42 +19,46 @@ export const updateRelationshipReason = (
   p1Id: string,
   p2Id: string,
   p2MeaningToP1: string,
-): AppThunk => async (dispatch) => {
+): AppThunk => async (dispatch, getState) => {
   dispatch(setNetworkLoading(true))
 
   try {
-    const p1Doc = await peopleCollection.doc(p1Id).get()
-    const p2Doc = await peopleCollection.doc(p2Id).get()
+    /* Update the database if the user is authenticated */
+    const uid = getState().auth.userId
+    if (uid) {
+      const p1Doc = await peopleCollection.doc(p1Id).get()
+      const p2Doc = await peopleCollection.doc(p2Id).get()
 
-    /* Ensure each person exists */
-    if (!p1Doc.exists) throw new Error("Person 1 does not exist.")
-    if (!p2Doc.exists) throw new Error("Person 2 does not exist.")
+      /* Ensure each person exists */
+      if (!p1Doc.exists) throw new Error("Person 1 does not exist.")
+      if (!p2Doc.exists) throw new Error("Person 2 does not exist.")
 
-    /* Get person data */
-    const p1Data = p1Doc.data() as IPerson
-    const p2Data = p2Doc.data() as IPerson
+      /* Get person data */
+      const p1Data = p1Doc.data() as IPerson
+      const p2Data = p2Doc.data() as IPerson
 
-    /* Update the relationship */
-    const p1MeaningToP2 = p1Data.relationships[p2Id][0]
-    const updatedP1Relationships: IRelationships = {
-      ...p1Data.relationships,
-      [p2Id]: [p1MeaningToP2, p2MeaningToP1],
+      /* Update the relationship */
+      const p1MeaningToP2 = p1Data.relationships[p2Id][0] // Reuse this meaning in the new Relationships array for each person
+      const updatedP1Relationships: IRelationships = {
+        ...p1Data.relationships,
+        [p2Id]: [p1MeaningToP2, p2MeaningToP1],
+      }
+      const updatedP2Relationships: IRelationships = {
+        ...p2Data.relationships,
+        [p1Id]: [p2MeaningToP1, p1MeaningToP2],
+      }
+
+      /* Update each person's relationships field in Firestore */
+      p1Doc.ref.update({ relationships: updatedP1Relationships })
+      p2Doc.ref.update({ relationships: updatedP2Relationships })
     }
-    const updatedP2Relationships: IRelationships = {
-      ...p2Data.relationships,
-      [p1Id]: [p2MeaningToP1, p1MeaningToP2],
-    }
-
-    p1Doc.ref.update({ relationships: updatedP1Relationships })
-    p2Doc.ref.update({ relationships: updatedP2Relationships })
 
     /* Update state accordingly with personId and thumbnailUrl */
     const action: IUpdateRelationshipReasonAction = {
       type: NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP,
-      updatedP1Relationships,
-      updatedP2Relationships,
       p1Id,
       p2Id,
+      p2MeaningToP1,
     }
 
     return dispatch(action)

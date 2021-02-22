@@ -121,8 +121,7 @@ export interface IUpdateRelationshipReasonAction {
   type: NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP
   p1Id: string
   p2Id: string
-  updatedP1Relationships: IRelationships
-  updatedP2Relationships: IRelationships
+  p2MeaningToP1: string // Updated relationship reason -- what the other person means to the selected person
 }
 
 export interface IUpdatePersonNameAction {
