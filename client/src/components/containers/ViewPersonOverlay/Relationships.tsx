@@ -45,22 +45,20 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     /* Find the person to update */
-    const personToUpdate = relatedPeopleData.find((p) => p.id === personId)
-    if (!personToUpdate) return
+    const personToUpdateIndex = relatedPeopleData.findIndex(
+      (p) => p.id === personId,
+    )
+    if (personToUpdateIndex === -1) return
 
-    /* Update their relationship reason */
+    const personToUpdate = relatedPeopleData[personToUpdateIndex]
     const updatedPerson: IRelatedPersonData = {
       ...personToUpdate,
       reason: e.currentTarget.value,
     }
 
     /* Update the relatedPeople array */
-    const peopleWithoutUpdated = relatedPeopleData.filter(
-      (p) => p.id !== personId,
-    )
-    const updatedPeople = peopleWithoutUpdated
-      .concat(updatedPerson)
-      .sort((a, b) => a.name.localeCompare(b.name))
+    const updatedPeople = [...relatedPeopleData]
+    updatedPeople[personToUpdateIndex] = updatedPerson
 
     setRelatedPeopleData(updatedPeople)
     setDidChangeReason(true)
@@ -98,7 +96,7 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                         console.error(error)
                       }
                     }}
-                    label={person.name}
+                    label={`${person.name}-${person.id.slice(0, 3)}`}
                   />
                   <Box>
                     {props.isEditing ? (
