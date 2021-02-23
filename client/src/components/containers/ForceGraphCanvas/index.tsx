@@ -57,11 +57,18 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 }
 
 export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
-  /* Rerender only if the "people" changed */
+  /* Rerender only if the "people" names or relationships changed */
   const skipRerender = deepEqual(
-    prevProps.state?.people,
-    nextProps.state?.people,
+    prevProps.state?.people.map((p) => ({
+      name: p.name,
+      relationships: p.relationships,
+    })),
+    nextProps.state?.people.map((p) => ({
+      name: p.name,
+      relationships: p.relationships,
+    })),
   )
+
   return skipRerender
 })
 
