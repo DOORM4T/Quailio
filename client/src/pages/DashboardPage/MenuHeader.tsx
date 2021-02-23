@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { ActionCreator, AnyAction } from "redux"
 import AppHeader, { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ToolTipButton from "../../components/ToolTipButton"
-import { getNetworkJSON } from "../../firebase/getNetworkJSON"
+import { getCurrentNetworkJSON } from "../../helpers/getNetworkJSON"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
   addPerson,
@@ -121,8 +121,8 @@ export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
       /* Set loading */
       await dispatch(setNetworkLoading(true))
 
-      /* Get the network as JSON */
-      const networkJSON = await getNetworkJSON(currentNetwork.id)
+      /* Get the current network as JSON */
+      const networkJSON = await getCurrentNetworkJSON()
 
       /* Stop if no data was found */
       if (!networkJSON) return

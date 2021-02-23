@@ -5,7 +5,7 @@ import {
   peopleCollection,
   usersCollection,
 } from "../../../firebase/firebase"
-import { INetworkJSON } from "../../../firebase/getNetworkJSON"
+import { INetworkJSON } from "../../../helpers/getNetworkJSON"
 import { AppThunk } from "../../store"
 import {
   ICurrentNetwork,

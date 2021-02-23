@@ -1,4 +1,4 @@
-import { INetworkJSON } from "../../firebase/getNetworkJSON"
+import { INetworkJSON } from "../../helpers/getNetworkJSON"
 
 // -== STATE TYPES ==- //
 export interface INetworksState {
