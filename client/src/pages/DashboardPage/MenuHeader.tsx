@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal"
-import { Box, Menu, Select, Tip } from "grommet"
+import { Box, Menu, Select, Tip, Text } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -190,7 +190,7 @@ export const HeaderMenu: React.FC<IProps> = ({
   const handleCreateNetwork = async () => {
     /* If in Zero-login mode, this will delete the current network. Ask the user to confirm before creating a new network.
     (the old network will appear under the global 'networks' state, but will be unusable because person data will not be saved) */
-    if (isZeroLoginMode) {
+    if (currentNetwork && isZeroLoginMode) {
       const doContinue = window.confirm(
         "Create a new network?\n\nYour current network will NOT be saved -- be sure to export it first if you wish to save your work!\n\nPress OK to delete the current network and create a new one.",
       )
@@ -435,7 +435,9 @@ export const HeaderMenu: React.FC<IProps> = ({
         {currentNetwork && rightHeaderItems}
         {isZeroLoginMode && (
           <Tip content="The full Quailio experience minus the account. Though you won't be storing anything in our database, you can export and import your networks to save your progress.">
-            <div style={{ marginLeft: "auto" }}>Zero-login Mode</div>
+            <Text style={{ marginLeft: "auto" }} color="accent-4">
+              Zero-login Mode
+            </Text>
           </Tip>
         )}
       </Box>
