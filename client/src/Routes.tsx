@@ -32,7 +32,12 @@ const Routes: React.FC = () => {
       {
         // Hide the default AppHeader on the Dashboard -- the Dashboard page uses its own custom header
         history.location.pathname !== routeNames.DASHBOARD && (
-          <AppHeader title="Quailio" />
+          <AppHeader
+            title="Quailio"
+            children={
+              <span style={{ marginTop: "16px", color: "#00C781" }}>beta</span>
+            }
+          />
         )
       }
       <TransitionGroup>

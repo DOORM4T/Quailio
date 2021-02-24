@@ -124,7 +124,12 @@ const HomePage: React.FC = () => {
         align="center"
         justify="center"
       >
-        Coming Soon: GIF Demos
+        Coming Soon:
+        <ul>
+          <li>GIF demos</li>
+          <li>thumbnails by URL</li>
+          <li>and a feedback form!</li>
+        </ul>
       </Box>
     </Box>
   )
