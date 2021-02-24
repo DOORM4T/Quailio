@@ -7,6 +7,7 @@ import PersonMenu from "../../components/containers/PersonMenu"
 import ViewPersonOverlay from "../../components/containers/ViewPersonOverlay"
 import useAuth from "../../hooks/auth/useAuth"
 import useGetNetworks from "../../hooks/networks/useGetNetworks"
+import usePageExitConfirmation from "../../hooks/usePageExitConfirmation"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
@@ -27,6 +28,9 @@ const DashboardPage: React.FC = () => {
   /* Check if the user is authenticated -- if not, use zero-login features */
   const { isAuthenticated } = useAuth()
   const isZeroLoginMode = !isAuthenticated
+
+  /* Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes */
+  usePageExitConfirmation()
 
   return (
     <React.Fragment>

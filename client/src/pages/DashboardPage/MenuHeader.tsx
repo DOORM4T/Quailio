@@ -188,6 +188,17 @@ export const HeaderMenu: React.FC<IProps> = ({
 
   /* Create Network Function */
   const handleCreateNetwork = async () => {
+    /* If in Zero-login mode, this will delete the current network. Ask the user to confirm before creating a new network.
+    (the old network will appear under the global 'networks' state, but will be unusable because person data will not be saved) */
+    if (isZeroLoginMode) {
+      const doContinue = window.confirm(
+        "Create a new network?\n\nYour current network will NOT be saved -- be sure to export it first if you wish to save your work!\n\nPress OK to delete the current network and create a new one.",
+      )
+
+      // Stop if the user cancels
+      if (!doContinue) return
+    }
+
     const networkName = window.prompt("Name your network:")
     if (!networkName) {
       alert("Canceled network creation")
