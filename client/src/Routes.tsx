@@ -27,8 +27,6 @@ const Routes: React.FC = () => {
   const history = useHistory()
   const { isAuthenticated } = useAuthChange()
 
-  if (isAuthenticated === undefined) return <div />
-
   return (
     <React.Fragment>
       {
