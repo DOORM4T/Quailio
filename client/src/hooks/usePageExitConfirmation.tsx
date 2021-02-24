@@ -1,5 +1,6 @@
 import React from "react"
 
+// Ask the user to confirm before leaving the current page
 export default function usePageExitConfirmation() {
   React.useEffect(() => {
     // Add the listener to the page when the component using this hook mounts
