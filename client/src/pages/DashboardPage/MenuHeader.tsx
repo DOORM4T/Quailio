@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal"
-import { Box, Menu, Select } from "grommet"
+import { Box, Menu, Select, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -28,9 +28,14 @@ interface INetworkSelectOption {
 interface IProps {
   networks: INetwork[]
   currentNetwork: INetwork | null
+  isZeroLoginMode: boolean
 }
 
-export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
+export const HeaderMenu: React.FC<IProps> = ({
+  currentNetwork,
+  networks,
+  isZeroLoginMode,
+}) => {
   const isSmall = useSmallBreakpoint()
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const selectedNetwork = useSelector(getCurrentNetwork)
@@ -363,7 +368,27 @@ export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
         icon={<Icons.Upload color="light-1" />}
         onClick={handleImportFromJSON}
       />
-      <Box>{networkSelectMenu}</Box>
+      {/* 
+        Render the select menu IFF a user is authenticated
+          Unauthenticated users can only have ONE network active at a time, since multiple networks + people would have to be stored locally, 
+            which can be messy and reduce performance 
+            -- they should rely on import/export, since their networks are not saved on the backend.
+      */}
+      {isZeroLoginMode ? (
+        // Show just the current network name
+        currentNetwork ? (
+          <Tip content={currentNetwork.name}>
+            <h2 style={{ height: "0.5rem", lineHeight: "0.5rem" }}>
+              {currentNetwork.name.length > 15
+                ? `${currentNetwork.name.slice(0, 16)}...`
+                : currentNetwork.name}
+            </h2>
+          </Tip>
+        ) : null
+      ) : (
+        // Show the network select menu
+        <Box>{networkSelectMenu}</Box>
+      )}
     </Box>
   )
 
@@ -397,6 +422,11 @@ export const HeaderMenu: React.FC<IProps> = ({ currentNetwork, networks }) => {
       >
         {leftHeaderItems}
         {currentNetwork && rightHeaderItems}
+        {isZeroLoginMode && (
+          <Tip content="The full Quailio experience minus the account. Though you won't be storing anything in our database, you can export and import your networks to save your progress.">
+            <div style={{ marginLeft: "auto" }}>Zero-login Mode</div>
+          </Tip>
+        )}
       </Box>
     </AppHeader>
   )

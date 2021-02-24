@@ -5,6 +5,7 @@ import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
 import PersonMenu from "../../components/containers/PersonMenu"
 import ViewPersonOverlay from "../../components/containers/ViewPersonOverlay"
+import useAuth from "../../hooks/auth/useAuth"
 import useGetNetworks from "../../hooks/networks/useGetNetworks"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
@@ -23,9 +24,17 @@ const DashboardPage: React.FC = () => {
   /* Responsive breakpoint */
   const isSmall = useSmallBreakpoint()
 
+  /* Check if the user is authenticated -- if not, use zero-login features */
+  const { isAuthenticated } = useAuth()
+  const isZeroLoginMode = !isAuthenticated
+
   return (
     <React.Fragment>
-      <HeaderMenu networks={networks} currentNetwork={currentNetwork} />
+      <HeaderMenu
+        networks={networks}
+        currentNetwork={currentNetwork}
+        isZeroLoginMode={isZeroLoginMode}
+      />
       <Box
         direction={isSmall ? "column" : "row"}
         background="dark-1"
