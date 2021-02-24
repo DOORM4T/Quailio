@@ -62,13 +62,9 @@ const Routes: React.FC = () => {
               )}
             </Route>
 
-            {/* Dashboard Route. Redirects to Home Page if not authenticated. */}
+            {/* Dashboard Route */}
             <Route path={routeNames.DASHBOARD}>
-              {isAuthenticated ? (
-                <DashboardPage />
-              ) : (
-                <Redirect to={routeNames.HOME} />
-              )}
+              <DashboardPage />
             </Route>
 
             {/* Settings Route. Redirects to Home Page if not authenticated. */}
