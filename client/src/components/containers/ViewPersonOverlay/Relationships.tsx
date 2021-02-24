@@ -96,7 +96,7 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                         console.error(error)
                       }
                     }}
-                    label={`${person.name}-${person.id.slice(0, 3)}`}
+                    label={person.name}
                   />
                   <Box>
                     {props.isEditing ? (
