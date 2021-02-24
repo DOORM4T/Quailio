@@ -31,6 +31,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   )
 
   /* List of possible people to connect to */
+  // TODO: Change into a (multi-?)select menu
   const relationshipOptions = props.currentNetwork.people
     .map((p) => {
       /* Exclude already-related people */
@@ -51,14 +52,14 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const connectToPerson = async (event: { item?: {} | undefined }) => {
     const otherPerson = event.item as { id: string; name: string }
 
-    const p1Reason =
-      prompt(
-        `${props.currentPerson.name}'s relationship to ${otherPerson.name}:`,
-      ) || ""
-    const p2Reason =
-      prompt(
-        `${otherPerson.name}'s relationship to ${props.currentPerson.name}:`,
-      ) || ""
+    // const p1Reason =
+    //   prompt(
+    //     `${props.currentPerson.name}'s relationship to ${otherPerson.name}:`,
+    //   ) || ""
+    // const p2Reason =
+    //   prompt(
+    //     `${otherPerson.name}'s relationship to ${props.currentPerson.name}:`,
+    //   ) || ""
 
     const p1Id = props.currentPerson.id
     const p2Id = otherPerson.id
@@ -68,8 +69,8 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
         connectPeople(props.currentNetwork.id, {
           p1Id,
           p2Id,
-          p1Reason,
-          p2Reason,
+          // p1Reason,
+          // p2Reason,
         }),
       )
     } catch (error) {

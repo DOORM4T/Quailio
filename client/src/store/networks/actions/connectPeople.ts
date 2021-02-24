@@ -23,8 +23,8 @@ export const connectPeople = (
   relationship: {
     p1Id: string
     p2Id: string
-    p1Reason: string
-    p2Reason: string
+    p1Reason?: string
+    p2Reason?: string
   },
 ): AppThunk => {
   return async (dispatch, getState) => {
