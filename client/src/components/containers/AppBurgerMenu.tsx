@@ -25,24 +25,21 @@ export function MenuItems(props: IMenuProps) {
     },
   ]
 
+  labels.push({
+    label: (
+      <Link to="/dashboard" style={{ display: "inline-block", width: "100%" }}>
+        <Box fill pad="small" direction="row">
+          <Text margin={{ right: "small" }}>
+            <Icons.Dashboard color="accent-1" />
+          </Text>
+          <Text color="light-1">Dashboard</Text>
+        </Box>
+      </Link>
+    ),
+  })
+
   /* show user auth pages */
   if (props.isLoggedIn) {
-    labels.push({
-      label: (
-        <Link
-          to="/dashboard"
-          style={{ display: "inline-block", width: "100%" }}
-        >
-          <Box fill pad="small" direction="row">
-            <Text margin={{ right: "small" }}>
-              <Icons.Dashboard color="accent-1" />
-            </Text>
-            <Text color="light-1">Dashboard</Text>
-          </Box>
-        </Link>
-      ),
-    })
-
     labels.push({
       label: (
         <Link

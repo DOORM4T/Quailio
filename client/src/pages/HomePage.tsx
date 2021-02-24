@@ -4,7 +4,6 @@ import {
   Avatar,
   Box,
   Button,
-  Footer,
   Header as GrommetHeader,
   Heading,
   Text,
@@ -22,8 +21,8 @@ const HomePage: React.FC = () => {
   const isLoggedIn = useSelector(getIsAuthenticated)
 
   return (
-    <Box fill background="light-1">
-      <Box align="center" justify="start" direction="column" fill="horizontal">
+    <Box height="xxlarge" background="light-1">
+      <Box align="center" justify="start" direction="column">
         <GrommetHeader
           align="center"
           direction="row"
@@ -51,6 +50,7 @@ const HomePage: React.FC = () => {
             gap="medium"
             fill="horizontal"
             pad={{ bottom: "xlarge" }}
+            margin={{ top: "medium" }}
             animation={{ type: "fadeIn", delay: 500 }}
             style={{ height: "250px" }}
           >
@@ -67,13 +67,18 @@ const HomePage: React.FC = () => {
                 </Link>
               </Box>
             ) : (
-              <Box direction="row" gap="small">
-                <Link to="/login">
-                  <Button label="Sign In" id="sign-in-button" />
+              <Box direction="column" gap="small">
+                <Link to="/dashboard">
+                  <Button label="Zero-login dashboard" />
                 </Link>
-                <Link to="/register">
-                  <Button label="Register" id="register-button" />
-                </Link>
+                <Box direction="row" gap="small">
+                  <Link to="/login">
+                    <Button label="Sign in" id="sign-in-button" />
+                  </Link>
+                  <Link to="/register">
+                    <Button label="Register" id="register-button" />
+                  </Link>
+                </Box>
               </Box>
             )}
           </Box>
@@ -107,53 +112,20 @@ const HomePage: React.FC = () => {
               </AccordionPanel>
             </Accordion>
           </Box>
-
-          {/* TODO: replace legacy demo with zero-login demo */}
-          {/* <Box
-            align="center"
-            justify="center"
-            margin={{ top: "xlarge" }}
-            pad="large"
-            width="large"
-            height="large"
-          >
-            <Text size="xxlarge" margin={{ top: "xlarge" }}>
-              Try it out!
-            </Text>
-            <ForceGraphCanvas
-              id="network-sketch"
-              state={dummyState}
-              style={{
-                overflow: "hidden",
-                backgroundColor: "#DDD",
-                width: "500px",
-                height: "500px",
-              }}
-              disconnected={true}
-            />
-          </Box> */}
-          <Box
-            width="large"
-            height="large"
-            background="dark-1"
-            align="center"
-            justify="center"
-            margin={{ vertical: "xlarge" }}
-          >
-            <i>Zero-login demo coming soon!</i>
-          </Box>
         </Box>
       </Box>
-      <Footer
-        direction="row"
-        height="xsmall"
-        background="brand"
+
+      <Box
+        background="dark-1"
+        pad="large"
+        width="large"
+        height="large"
+        margin={{ horizontal: "auto", vertical: "large" }}
         align="center"
-        justify="end"
-        gap="medium"
+        justify="center"
       >
-        🦅
-      </Footer>
+        Coming Soon: GIF Demos
+      </Box>
     </Box>
   )
 }
