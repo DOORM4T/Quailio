@@ -1,4 +1,13 @@
-import { Box, Button, DropButton, Heading, List } from "grommet"
+import {
+  Box,
+  Button,
+  CheckBox,
+  DropButton,
+  Heading,
+  List,
+  Text,
+  TextInput,
+} from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch } from "react-redux"
@@ -6,6 +15,7 @@ import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import {
   connectPeople,
   deletePerson as deletePersonById,
+  disconnectPeople,
 } from "../../../store/networks/actions"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { togglePersonEditMenu } from "../../../store/ui/uiActions"
@@ -13,6 +23,12 @@ import { togglePersonEditMenu } from "../../../store/ui/uiActions"
 //                 //
 // -== BUTTONS ==- //
 //                 //
+interface IRelationshipOption {
+  id: string
+  name: string
+  isConnected: boolean
+}
+
 interface IOverlayButtonProps {
   currentNetwork: ICurrentNetwork
   currentPerson: IPerson
@@ -37,8 +53,8 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       /* Exclude already-related people */
       const isAlreadyRelated = currentRelationshipIds.includes(p.id)
       const isSelf = p.id === props.currentPerson.id
-      if (!isAlreadyRelated && !isSelf) {
-        return { id: p.id, name: p.name }
+      if (!isSelf) {
+        return { id: p.id, name: p.name, isConnected: isAlreadyRelated }
       } else {
         return {}
       }
@@ -47,32 +63,30 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       /* Exclude empty entries */
       const hasData = Object.keys(item).length !== 0
       return hasData
-    })
+    }) as IRelationshipOption[]
 
-  const connectToPerson = async (event: { item?: {} | undefined }) => {
-    const otherPerson = event.item as { id: string; name: string }
-
-    // const p1Reason =
-    //   prompt(
-    //     `${props.currentPerson.name}'s relationship to ${otherPerson.name}:`,
-    //   ) || ""
-    // const p2Reason =
-    //   prompt(
-    //     `${otherPerson.name}'s relationship to ${props.currentPerson.name}:`,
-    //   ) || ""
-
-    const p1Id = props.currentPerson.id
-    const p2Id = otherPerson.id
+  const toggleConnection = (id: string, isConnected: boolean) => async () => {
+    // Connect to the person the current person is not already connected to them
+    const doConnect = !isConnected
 
     try {
-      await dispatch(
-        connectPeople(props.currentNetwork.id, {
-          p1Id,
-          p2Id,
-          // p1Reason,
-          // p2Reason,
-        }),
-      )
+      // Add connection
+      if (doConnect) {
+        await dispatch(
+          connectPeople(props.currentNetwork.id, {
+            p1Id: props.currentPerson.id,
+            p2Id: id,
+          }),
+        )
+      } else {
+        // Remove connection
+        await dispatch(
+          disconnectPeople(props.currentNetwork.id, {
+            p1Id: props.currentPerson.id,
+            p2Id: id,
+          }),
+        )
+      }
     } catch (error) {
       console.error(error)
     }
@@ -137,20 +151,42 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
             icon={<Icons.Connect color="neutral-3" />}
             aria-label="Create connection"
             hoverIndicator
+            dropAlign={{ left: "right" }}
             dropContent={
               <React.Fragment>
-                <Heading level={4} textAlign="center" color="">
-                  Connect with:
+                <Heading level={4} textAlign="center">
+                  Manage Connections
                 </Heading>
+
+                {/* TODO: Search for people by name */}
+                <TextInput
+                  placeholder="Search by name (Coming Soon)"
+                  disabled
+                />
+
                 <List
                   id="add-relationship-buttons"
                   primaryKey="name"
-                  onClickItem={connectToPerson}
                   data={relationshipOptions}
-                />
+                  style={{ maxHeight: "350px", overflowY: "auto" }}
+                >
+                  {(data: IRelationshipOption) => (
+                    <Box
+                      direction="row"
+                      key={data.id}
+                      gap="small"
+                      width="medium"
+                      onClick={toggleConnection(data.id, data.isConnected)}
+                    >
+                      <Text>{data.name}</Text>
+                      <Box margin={{ left: "auto" }}>
+                        <CheckBox checked={data.isConnected} />
+                      </Box>
+                    </Box>
+                  )}
+                </List>
               </React.Fragment>
             }
-            dropAlign={{ top: "bottom" }}
           />
 
           {/* Delete the person */}
