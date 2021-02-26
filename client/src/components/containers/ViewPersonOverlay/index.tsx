@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
-import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
-import { getPersonInFocusData } from "../../../store/selectors/ui/getPersonInFocusData"
+import { getIsOverlayOpen } from "../../../store/selectors/ui/getIsOverlayOpen"
 import { togglePersonEditMenu } from "../../../store/ui/uiActions"
 import Overlay from "../../Overlay"
 import ContentPanel from "./ContentPanel"
@@ -17,21 +16,13 @@ interface IProps {
 }
 
 const ViewPersonOverlay: React.FC<IProps> = (props) => {
-  // -== GLOBAL STORE HOOKS ==- //
   const dispatch: Dispatch<any> = useDispatch()
+  const isOverlayOpen = useSelector(getIsOverlayOpen)
   const isSmall = useSmallBreakpoint()
-
-  /* Get the current network */
-  const currentNetwork = useSelector(getCurrentNetwork)
-
-  /* Get the current person in focus */
-  const currentPerson = useSelector(getPersonInFocusData)
-
-  // -== LOCAL STATE & OTHER HOOKS ==- //
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
 
-  /* Don't render if there is no selected Network or Person  */
-  if (!currentNetwork || !currentPerson) return null
+  // Do not render if the overlay shouldn't be open
+  if (!isOverlayOpen) return null
 
   // -== FUNCTIONS ==- //
   /**
@@ -48,29 +39,15 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
 
   // -== REUSABLE COMPONENTS (Reused for different layouts) ==- //
   const PersonHeaderContainer: React.ReactNode = (
-    <PersonHeader
-      currentNetwork={currentNetwork}
-      currentPerson={currentPerson}
-      isEditing={isEditing}
-      setIsEditing={setIsEditing}
-    />
+    <PersonHeader isEditing={isEditing} setIsEditing={setIsEditing} />
   )
 
   const RelationshipsContainer: React.ReactNode = (
-    <Relationships
-      currentNetwork={currentNetwork}
-      currentPerson={currentPerson}
-      isEditing={isEditing}
-      setIsEditing={setIsEditing}
-    />
+    <Relationships isEditing={isEditing} setIsEditing={setIsEditing} />
   )
 
   const ContentContainer: React.ReactNode = (
-    <ContentPanel
-      id="person-content-editor"
-      currentPersonId={currentPerson.id}
-      isEditing={isEditing}
-    />
+    <ContentPanel id="person-content-editor" isEditing={isEditing} />
   )
 
   // -== LAYOUTS ==- //

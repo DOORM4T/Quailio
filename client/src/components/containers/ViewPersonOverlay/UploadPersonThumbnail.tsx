@@ -1,19 +1,26 @@
 import { Box, Image, ThemeType } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { ThemeContext } from "styled-components"
 import { setPersonThumbnail } from "../../../store/networks/actions"
-import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
+import { getCurrentNetworkId } from "../../../store/selectors/networks/getCurrentNetwork"
+import {
+  getPersonInFocusId,
+  getPersonInFocusThumbnailURL,
+} from "../../../store/selectors/ui/getPersonInFocusData"
 
-interface IThumbnailProps {
-  currentNetwork: ICurrentNetwork
-  currentPerson: IPerson
-}
-const UploadPersonThumbnail: React.FC<IThumbnailProps> = (props) => {
+const UploadPersonThumbnail: React.FC = () => {
   const dispatch: Dispatch<any> = useDispatch()
   const thumbnailUploadRef = React.useRef<HTMLInputElement>(null) // Reference to the thumbnail file input DOM element
   const theme = React.useContext<ThemeType>(ThemeContext)
+
+  const currentNetworkId = useSelector(getCurrentNetworkId)
+  const currentPersonId = useSelector(getPersonInFocusId)
+  const currentPersonThumbnailURL = useSelector(getPersonInFocusThumbnailURL)
+
+  /* Do not render if no network or person is selected */
+  if (!currentNetworkId || !currentPersonId) return null
 
   /**
    * Open the file input menu
@@ -40,11 +47,7 @@ const UploadPersonThumbnail: React.FC<IThumbnailProps> = (props) => {
 
       /* Update the person in the database and in global state  */
       await dispatch(
-        setPersonThumbnail(
-          props.currentNetwork.id,
-          props.currentPerson.id,
-          file,
-        ),
+        setPersonThumbnail(currentNetworkId, currentPersonId, file),
       )
     } catch (error) {
       /* Failed to upload a thumbnail */
@@ -79,8 +82,8 @@ const UploadPersonThumbnail: React.FC<IThumbnailProps> = (props) => {
           hidden
           onChange={handleChangeThumbnail}
         />
-        {props.currentPerson.thumbnailUrl ? (
-          <Image src={props.currentPerson.thumbnailUrl} fill />
+        {currentPersonThumbnailURL ? (
+          <Image src={currentPersonThumbnailURL} fill />
         ) : (
           <Icons.User size="xlarge" color="dark-1" />
         )}

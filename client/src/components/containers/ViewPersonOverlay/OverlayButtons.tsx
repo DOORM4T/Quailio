@@ -10,14 +10,22 @@ import {
 } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import {
   connectPeople,
   deletePerson as deletePersonById,
   disconnectPeople,
 } from "../../../store/networks/actions"
-import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
+import {
+  getCurrentNetworkId,
+  getCurrentNetworkPeople,
+} from "../../../store/selectors/networks/getCurrentNetwork"
+import {
+  getPersonInFocusId,
+  getPersonInFocusName,
+  getPersonInFocusRelationships,
+} from "../../../store/selectors/ui/getPersonInFocusData"
 import { togglePersonEditMenu } from "../../../store/ui/uiActions"
 
 //                 //
@@ -30,29 +38,31 @@ interface IRelationshipOption {
 }
 
 interface IOverlayButtonProps {
-  currentNetwork: ICurrentNetwork
-  currentPerson: IPerson
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }
 const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
+  const currentNetworkId = useSelector(getCurrentNetworkId)
+  const currentPersonId = useSelector(getPersonInFocusId)
+  const currentPersonRelationships = useSelector(getPersonInFocusRelationships)
+  const currentPersonName = useSelector(getPersonInFocusName)
+  const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
 
-  /* Do not render if no network or person are selected */
-  if (!props.currentNetwork || !props.currentPerson) return null
+  /* Do not render if no network or person is selected */
+  if (!currentNetworkId || !currentPersonId) return null
 
   /* IDs of people related to the selected person */
-  const currentRelationshipIds: string[] = Object.keys(
-    props.currentPerson.relationships,
-  )
+  const currentRelationshipIds: string[] = currentPersonRelationships
+    ? Object.keys(currentPersonRelationships)
+    : []
 
   /* List of possible people to connect to */
-  // TODO: Change into a (multi-?)select menu
-  const relationshipOptions = props.currentNetwork.people
+  const relationshipOptions = currentNetworkPeople
     .map((p) => {
       /* Exclude already-related people */
       const isAlreadyRelated = currentRelationshipIds.includes(p.id)
-      const isSelf = p.id === props.currentPerson.id
+      const isSelf = p.id === currentPersonId
       if (!isSelf) {
         return { id: p.id, name: p.name, isConnected: isAlreadyRelated }
       } else {
@@ -73,16 +83,16 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       // Add connection
       if (doConnect) {
         await dispatch(
-          connectPeople(props.currentNetwork.id, {
-            p1Id: props.currentPerson.id,
+          connectPeople(currentNetworkId, {
+            p1Id: currentPersonId,
             p2Id: id,
           }),
         )
       } else {
         // Remove connection
         await dispatch(
-          disconnectPeople(props.currentNetwork.id, {
-            p1Id: props.currentPerson.id,
+          disconnectPeople(currentNetworkId, {
+            p1Id: currentPersonId,
             p2Id: id,
           }),
         )
@@ -97,11 +107,9 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
    * @param id
    */
   const deletePerson = (id: string) => async () => {
-    if (!props.currentNetwork) return
-
     /* Confirm deletion */
     const doDelete = window.confirm(
-      `Delete ${props.currentPerson.name}? This action cannot be reversed.`,
+      `Delete ${currentPersonName}? This action cannot be reversed.`,
     )
     if (!doDelete) return
 
@@ -110,7 +118,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
 
     /* Delete the person */
     try {
-      await dispatch(deletePersonById(props.currentNetwork.id, id))
+      await dispatch(deletePersonById(currentNetworkId, id))
     } catch (error) {
       console.error(error)
     }
@@ -163,7 +171,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
                   placeholder="Search by name (Coming Soon)"
                   disabled
                 />
-
                 <List
                   id="add-relationship-buttons"
                   primaryKey="name"
@@ -195,7 +202,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
             icon={<Icons.Trash color="status-critical" />}
             aria-label="Delete person"
             hoverIndicator
-            onClick={deletePerson(props.currentPerson.id)}
+            onClick={deletePerson(currentPersonId)}
           />
         </React.Fragment>
       )}

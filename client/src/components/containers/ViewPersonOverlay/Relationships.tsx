@@ -1,13 +1,21 @@
 import { Anchor, Box, Button, List, Text, TextInput } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import {
   disconnectPeople,
   updateRelationshipReason,
 } from "../../../store/networks/actions"
-import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
+import { IPerson, IRelationships } from "../../../store/networks/networkTypes"
+import {
+  getCurrentNetworkId,
+  getCurrentNetworkPeople,
+} from "../../../store/selectors/networks/getCurrentNetwork"
+import {
+  getPersonInFocusId,
+  getPersonInFocusRelationships,
+} from "../../../store/selectors/ui/getPersonInFocusData"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
 
 interface IRelatedPersonData {
@@ -17,14 +25,17 @@ interface IRelatedPersonData {
 }
 
 interface IRelationshipsProps {
-  currentNetwork: ICurrentNetwork
-  currentPerson: IPerson
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const Relationships: React.FC<IRelationshipsProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
+  const currentNetworkId = useSelector(getCurrentNetworkId)
+  const currentPersonId = useSelector(getPersonInFocusId)
+  const currentPersonRelationships = useSelector(getPersonInFocusRelationships)
+  const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
+
   const [didChangeReason, setDidChangeReason] = React.useState<boolean>(false)
 
   /* Relationship state based on the selected person */
@@ -34,11 +45,17 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
 
   /* Update relatedPeopleData state every time the selected person changes */
   React.useEffect(() => {
-    if (!props.currentPerson) return
+    /* Stop if there are no relationships */
+    if (!currentPersonRelationships) return () => {}
+
+    /* Set state based on related people */
     setRelatedPeopleData(
-      getRelatedPeople(props.currentPerson, props.currentNetwork),
+      getRelatedPeople(currentPersonRelationships, currentNetworkPeople),
     )
-  }, [props.currentPerson])
+  }, [currentPersonRelationships])
+
+  /* Do not render if no network or person is selected */
+  if (!currentNetworkId || !currentPersonId) return null
 
   /* Handle updates to individual relationship reasons, updating relatedPeopleData state */
   const handleReasonChange = (personId: string) => (
@@ -118,11 +135,14 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                             e.currentTarget.blur()
                         }}
                         onBlur={async (e) => {
+                          /* Stop if the relationship reason didn't change */
+                          if (!didChangeReason) return
+
                           /* Update the relationship */
                           try {
                             await dispatch(
                               updateRelationshipReason(
-                                props.currentPerson.id,
+                                currentPersonId,
                                 person.id,
                                 e.currentTarget.value,
                               ),
@@ -167,8 +187,8 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
                 /* Delete a relationship with the other person*/
                 try {
                   await dispatch(
-                    disconnectPeople(props.currentNetwork.id, {
-                      p1Id: props.currentPerson.id,
+                    disconnectPeople(currentNetworkId, {
+                      p1Id: currentPersonId,
                       p2Id: otherPerson.id,
                     }),
                   )
@@ -186,21 +206,19 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
 
 /* Get the array of people related to the selected person */
 function getRelatedPeople(
-  person: IPerson | null,
-  currentNetwork: ICurrentNetwork | null,
+  personRelationships: IRelationships,
+  currentNetworkPeople: IPerson[],
 ): IRelatedPersonData[] {
-  if (!person || !currentNetwork) return []
-
   return (
-    (Object.keys(person.relationships)
+    (Object.keys(personRelationships)
       .map((relationshipId) => {
         /* Get relationship details */
-        const [thisPersonReason, otherPersonReason] = person.relationships[
+        const [thisPersonReason, otherPersonReason] = personRelationships[
           relationshipId
         ]
 
         /* Find people related to the selected person */
-        const otherPerson = currentNetwork.people.find(
+        const otherPerson = currentNetworkPeople.find(
           (p) => p.id === relationshipId,
         )
         if (!otherPerson) return null

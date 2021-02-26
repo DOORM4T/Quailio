@@ -1,22 +1,33 @@
 import { Header, TextInput } from "grommet"
 import React, { CSSProperties } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { updatePersonName } from "../../../store/networks/actions"
-import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
+import { getCurrentNetworkId } from "../../../store/selectors/networks/getCurrentNetwork"
+import {
+  getPersonInFocusId,
+  getPersonInFocusName,
+} from "../../../store/selectors/ui/getPersonInFocusData"
 import OverlayButtons from "./OverlayButtons"
 import UploadPersonThumbnail from "./UploadPersonThumbnail"
 
 interface IProps {
-  currentNetwork: ICurrentNetwork
-  currentPerson: IPerson
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const PersonHeader: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
-  const [personName, setPersonName] = React.useState(props.currentPerson.name)
+  const currentNetworkId = useSelector(getCurrentNetworkId)
+  const currentPersonId = useSelector(getPersonInFocusId)
+  const currentPersonName = useSelector(getPersonInFocusName)
+
+  const [personName, setPersonName] = React.useState<string>(
+    currentPersonName || "",
+  )
+
+  /* Do not render if no network or person is selected */
+  if (!currentNetworkId || !currentPersonId) return null
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPersonName(e.currentTarget.value)
@@ -24,11 +35,11 @@ const PersonHeader: React.FC<IProps> = (props) => {
 
   const handleUpdateName = async () => {
     /* Skip updating if the name didn't change */
-    if (personName === props.currentPerson.name) return
+    if (personName === currentPersonName) return
 
     try {
       /* Dispatch the name change to the global store */
-      await dispatch(updatePersonName(props.currentPerson.id, personName))
+      await dispatch(updatePersonName(currentPersonId, personName))
     } catch (error) {
       console.error(error)
     }
@@ -36,10 +47,7 @@ const PersonHeader: React.FC<IProps> = (props) => {
 
   return (
     <Header direction="column" background="brand" pad="medium" justify="start">
-      <UploadPersonThumbnail
-        currentNetwork={props.currentNetwork}
-        currentPerson={props.currentPerson}
-      />
+      <UploadPersonThumbnail />
       {props.isEditing ? (
         <TextInput
           value={personName}
@@ -58,8 +66,6 @@ const PersonHeader: React.FC<IProps> = (props) => {
         </h1>
       )}
       <OverlayButtons
-        currentNetwork={props.currentNetwork}
-        currentPerson={props.currentPerson}
         isEditing={props.isEditing}
         setIsEditing={props.setIsEditing}
       />

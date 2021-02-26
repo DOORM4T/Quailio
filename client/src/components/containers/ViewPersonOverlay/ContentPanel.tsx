@@ -1,4 +1,5 @@
 import { Editor } from "@tinymce/tinymce-react"
+import deepEqual from "deep-equal"
 import { Text } from "grommet"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -9,24 +10,29 @@ import {
   addUnsavedChangeListener,
   removeUnsavedChangeListener,
 } from "../../../helpers/unsavedChangeEvent"
-import { getPersonInFocusData } from "../../../store/selectors/ui/getPersonInFocusData"
 import { updatePersonContent } from "../../../store/networks/actions/"
+import {
+  getPersonInFocusData,
+  getPersonInFocusId,
+} from "../../../store/selectors/ui/getPersonInFocusData"
 
 /* Content on the view panel when the user has no content */
 const DEFAULT_VIEW_CONTENT = "<p>Write anything!</p>"
 
 interface IProps {
   id: string
-  currentPersonId: string
   isEditing: boolean
 }
 
 const ContentPanel: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
+  const currentPersonId = useSelector(getPersonInFocusId)
   const initialContent = useSelector(getPersonInFocusData)?.content
   const [editorContent, setEditorContent] = React.useState(initialContent || "")
   const [isSaved, setSaved] = React.useState(true)
   const [isSaving, setSaving] = React.useState(false)
+
+  console.log(props)
 
   // Update saved state when editorContent state changes
   React.useEffect(() => {
@@ -36,6 +42,25 @@ const ContentPanel: React.FC<IProps> = (props) => {
     if (hasContent && didChange) setSaved(false)
     else setSaved(true)
   }, [editorContent])
+
+  // Prevent leaving with unsaved changes
+  React.useEffect(() => {
+    if (isSaved) {
+      /* Safe to close the window. Remove the prevention listener, if there is one */
+      removeUnsavedChangeListener(preventUnsavedChanges)
+    } else {
+      /* Prevent window closing if there are unsaved changes */
+      addUnsavedChangeListener(preventUnsavedChanges)
+    }
+
+    return () => {
+      /* Remove the prevention listener when this component unmounts */
+      removeUnsavedChangeListener(preventUnsavedChanges)
+    }
+  }, [isSaved])
+
+  /* Do not render if no person is selected */
+  if (!currentPersonId) return null
 
   // Handle controlled input changes
   const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
@@ -49,7 +74,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
 
     setSaving(true)
     try {
-      await dispatch(updatePersonContent(props.currentPersonId, editorContent))
+      await dispatch(updatePersonContent(currentPersonId, editorContent))
       setSaved(true)
     } catch (error) {
       console.error(error)
@@ -80,21 +105,6 @@ const ContentPanel: React.FC<IProps> = (props) => {
 
     e.preventDefault()
   }
-
-  React.useEffect(() => {
-    if (isSaved) {
-      /* Safe to close the window. Remove the prevention listener, if there is one */
-      removeUnsavedChangeListener(preventUnsavedChanges)
-    } else {
-      /* Prevent window closing if there are unsaved changes */
-      addUnsavedChangeListener(preventUnsavedChanges)
-    }
-
-    return () => {
-      /* Remove the prevention listener when this component unmounts */
-      removeUnsavedChangeListener(preventUnsavedChanges)
-    }
-  }, [isSaved])
 
   return (
     <article id={props.id} style={{ height: "100%" }}>
@@ -141,4 +151,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
   )
 }
 
-export default ContentPanel
+export default React.memo(ContentPanel, (props, nextProps) => {
+  const skipRerender = deepEqual(props, nextProps)
+  return skipRerender
+})

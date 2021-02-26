@@ -1,11 +1,12 @@
-import React from "react"
 import { Grommet } from "grommet"
 import { ThemeType } from "grommet/themes"
-
-import Routes from "./Routes"
-import { Provider } from "react-redux"
-import { store } from "./store/store"
+import React from "react"
+import { Provider, useSelector } from "react-redux"
 import LoadingOverlay from "./components/containers/LoadingOverlay"
+import ViewPersonOverlay from "./components/containers/ViewPersonOverlay"
+import Routes from "./Routes"
+import { getIsOverlayOpen } from "./store/selectors/ui/getIsOverlayOpen"
+import { store } from "./store/store"
 
 const customTheme: ThemeType = {
   global: {
@@ -27,6 +28,7 @@ function App() {
       <Grommet theme={customTheme}>
         <Routes />
         <LoadingOverlay />
+        <ViewPersonOverlay id="view-person-overlay" />
       </Grommet>
     </Provider>
   )
