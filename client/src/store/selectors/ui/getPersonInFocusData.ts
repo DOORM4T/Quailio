@@ -1,3 +1,4 @@
+import { createSelector } from "reselect"
 import { IPerson } from "../../networks/networkTypes"
 import { IApplicationState } from "../../store"
 
@@ -15,3 +16,25 @@ export const getPersonInFocusData = (
 
   return person
 }
+
+/* Get derived data */
+
+/* Individual selectors */
+const selectors = [getPersonInFocusData]
+
+export const getPersonInFocusName = createSelector(
+  selectors,
+  (person) => person?.name || null,
+)
+export const getPersonInFocusId = createSelector(
+  selectors,
+  (person) => person?.id || null,
+)
+export const getPersonInFocusRelationships = createSelector(
+  selectors,
+  (person) => person?.relationships,
+)
+export const getPersonInFocusThumbnailURL = createSelector(
+  selectors,
+  (person) => person?.thumbnailUrl || null,
+)
