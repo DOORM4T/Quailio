@@ -26,6 +26,11 @@ const PersonHeader: React.FC<IProps> = (props) => {
     currentPersonName || "",
   )
 
+  // Person in focus changed? Update state with the new name
+  React.useEffect(() => {
+    setPersonName(currentPersonName || "")
+  }, [currentPersonName])
+
   /* Do not render if no network or person is selected */
   if (!currentNetworkId || !currentPersonId) return null
 

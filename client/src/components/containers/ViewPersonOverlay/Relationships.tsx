@@ -108,7 +108,6 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
 
                         /* Navigate to the selected person's details */
                         await dispatch(setPersonInFocus(person.id))
-                        props.setIsEditing(false)
                       } catch (error) {
                         console.error(error)
                       }
