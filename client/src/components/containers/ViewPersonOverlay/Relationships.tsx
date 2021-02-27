@@ -179,10 +179,6 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
               icon={<Icons.Unlink color="status-critical" />}
               hoverIndicator
               onClick={async () => {
-                /* Ask to continue if there are unsaved changes */
-                const doContinue = fireUnsavedChangeEvent()
-                if (!doContinue) return
-
                 /* Delete a relationship with the other person*/
                 try {
                   await dispatch(
