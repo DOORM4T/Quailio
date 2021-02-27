@@ -1,6 +1,6 @@
 import { Editor } from "@tinymce/tinymce-react"
 import deepEqual from "deep-equal"
-import { Text } from "grommet"
+import { Box, Text } from "grommet"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
@@ -32,7 +32,10 @@ const ContentPanel: React.FC<IProps> = (props) => {
   const [isSaved, setSaved] = React.useState(true)
   const [isSaving, setSaving] = React.useState(false)
 
-  console.log(props)
+  // Initial editor content changed? Update state--the person in focus changed
+  React.useEffect(() => {
+    setEditorContent(initialContent || "")
+  }, [initialContent])
 
   // Update saved state when editorContent state changes
   React.useEffect(() => {
@@ -109,7 +112,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
   return (
     <article id={props.id} style={{ height: "100%" }}>
       {props.isEditing ? (
-        <React.Fragment>
+        <Box direction="column">
           <Text
             className="content-editor-save-status"
             color={
@@ -136,10 +139,9 @@ const ContentPanel: React.FC<IProps> = (props) => {
             }}
             onSaveContent={handleSave}
             onEditorChange={handleEditorChange}
-            onBlur={handleSave}
             value={editorContent}
           />
-        </React.Fragment>
+        </Box>
       ) : (
         <div
           dangerouslySetInnerHTML={{
