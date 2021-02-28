@@ -13,9 +13,13 @@ import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetw
 import HeaderMenu from "./MenuHeader"
 
 const DashboardPage: React.FC = () => {
-  /* Access global state */
   /* Fetch network data (network IDs, network names, person IDs)*/
   useGetNetworks()
+
+  /* Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes */
+  usePageExitConfirmation()
+
+  /* Global state selectors */
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
 
@@ -24,10 +28,9 @@ const DashboardPage: React.FC = () => {
 
   /* Check if the user is authenticated -- if not, use zero-login features */
   const { isAuthenticated } = useAuth()
-  const isZeroLoginMode = !isAuthenticated
 
-  /* Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes */
-  usePageExitConfirmation()
+  /* Variable for checking whether we're in zero-login mode or not */
+  const isZeroLoginMode = !isAuthenticated
 
   return (
     <React.Fragment>
@@ -67,4 +70,4 @@ const DashboardPage: React.FC = () => {
   )
 }
 
-export default DashboardPage
+export default React.memo(DashboardPage)

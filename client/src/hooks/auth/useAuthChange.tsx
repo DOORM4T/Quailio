@@ -3,12 +3,10 @@ import { useDispatch } from "react-redux"
 import { AnyAction } from "redux"
 import { auth } from "../../firebase/firebase"
 import { setUser } from "../../store/auth/authActions"
-import useAuth from "./useAuth"
 
-/* set user credentials in global state */
+/* Set user credentials in global state */
 function useAuthChange() {
   const dispatch: Dispatch<AnyAction> = useDispatch()
-  const { isAuthenticated } = useAuth()
 
   React.useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -24,9 +22,7 @@ function useAuthChange() {
     return () => {
       unsubscribe()
     }
-  }, [isAuthenticated])
-
-  return { isAuthenticated }
+  }, [])
 }
 
 export default useAuthChange

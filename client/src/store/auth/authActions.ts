@@ -15,7 +15,7 @@ import {
 
 // -== ACTION CREATORS ==- //
 /* Set isLoading state. Used by asynchronous auth action. */
-const setAuthLoading = (isLoading: boolean): IAuthLoading => ({
+export const setAuthLoading = (isLoading: boolean): IAuthLoading => ({
   type: AuthActionTypes.LOADING,
   isLoading,
 })
@@ -71,6 +71,11 @@ export const createAccount = (email: string, password: string): AppThunk => {
 export const login = (email: string, password: string): AppThunk => {
   return async (dispatch) => {
     dispatch(setAuthLoading(true))
+
+    /* Clear any existing networks -- zero-login networks created before the user logs in doesn't belong to them
+        To add a zero-login network to their account, users should export the network before logging in.
+        Then they import it after they're logged in */
+    dispatch(resetLocalNetworks())
 
     try {
       /* Sign in */

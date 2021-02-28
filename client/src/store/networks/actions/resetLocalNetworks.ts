@@ -1,7 +1,7 @@
 import { IResetClientNetworksAction, NetworkActionTypes } from "../networkTypes"
 
 /**
- * Reset local network state. Called when the logout/delete account actions are successful.
+ * Reset local network state. Called when with the login/logout/delete account actions
  */
 
 export const resetLocalNetworks = (): IResetClientNetworksAction => ({

@@ -11,6 +11,9 @@ function useGetNetworks(): { didGetNetworks: boolean } {
   const [didGetNetworks, setDidGetNetworks] = React.useState(false)
 
   React.useEffect(() => {
+    if (!isAuthenticated) return
+
+    // Get networks if the user is authenticated
     const getNetworks = async () => {
       try {
         await dispatch(getAllNetworks())
@@ -21,8 +24,8 @@ function useGetNetworks(): { didGetNetworks: boolean } {
       }
     }
 
-    if (isAuthenticated) getNetworks()
-  }, [])
+    getNetworks()
+  }, [isAuthenticated])
 
   return { didGetNetworks }
 }

@@ -1,5 +1,4 @@
-import deepEqual from "deep-equal"
-import { Box, Menu, Select, Tip, Text } from "grommet"
+import { Box, Menu, Select, Text, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -445,13 +444,4 @@ export const HeaderMenu: React.FC<IProps> = ({
   )
 }
 
-export default React.memo(HeaderMenu, (prevProps, nextProps) => {
-  /* Re-render only if the networks or currentNetwork changed */
-  const areCurrentNetworksEqual = deepEqual(
-    prevProps.currentNetwork,
-    nextProps.currentNetwork,
-  )
-  const areNetworksEqual = deepEqual(prevProps.networks, nextProps.networks)
-  const skipRerender = areCurrentNetworksEqual && areNetworksEqual
-  return skipRerender
-})
+export default HeaderMenu

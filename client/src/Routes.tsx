@@ -8,6 +8,7 @@ import {
 } from "react-router-dom"
 import { CSSTransition, TransitionGroup } from "react-transition-group"
 import AppHeader from "./components/containers/AppHeader"
+import useAuth from "./hooks/auth/useAuth"
 import useAuthChange from "./hooks/auth/useAuthChange"
 import DashboardPage from "./pages/DashboardPage"
 import HomePage from "./pages/HomePage"
@@ -24,8 +25,9 @@ enum routeNames {
 }
 
 const Routes: React.FC = () => {
+  useAuthChange()
+  const { isAuthenticated } = useAuth()
   const history = useHistory()
-  const { isAuthenticated } = useAuthChange()
 
   return (
     <React.Fragment>

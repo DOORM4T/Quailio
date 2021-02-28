@@ -17,9 +17,9 @@ interface IProps {
 }
 
 const AppHeader: React.FC<IProps> = (props) => {
-  const { isAuthenticated: isLoggedIn } = useAuth()
   const dispatch: Dispatch<any> = useDispatch()
   const history = useHistory()
+  const { isAuthenticated } = useAuth()
 
   const logoutFunction = async () => {
     try {
@@ -34,7 +34,7 @@ const AppHeader: React.FC<IProps> = (props) => {
     <Header
       title={props.title}
       height={HEADER_HEIGHT}
-      menuItems={MenuItems({ isLoggedIn, logoutFunction })}
+      menuItems={MenuItems({ isLoggedIn: isAuthenticated, logoutFunction })}
       children={
         <React.Fragment>
           {props.showLogo && (
