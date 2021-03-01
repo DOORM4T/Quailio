@@ -49,6 +49,22 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const currentPersonName = useSelector(getPersonInFocusName)
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
 
+  // Connection drop-button search state
+  const [search, setSearch] = React.useState<string>("")
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.currentTarget.value)
+  }
+
+  // Connection drop-button ref -- used to trigger a click to close the menu
+  const connectPeopleDropButtonRef = React.useRef<any>()
+
+  const handleCloseConnectionMenu = () => {
+    if (!connectPeopleDropButtonRef) return
+    const btn = connectPeopleDropButtonRef.current as HTMLButtonElement
+    btn.click()
+  }
+
   /* Do not render if no network or person is selected */
   if (!currentNetworkId || !currentPersonId) return null
 
@@ -124,87 +140,114 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }
   }
 
+  // Button for entering view mode
+  const viewModeButton: React.ReactNode = (
+    <Button
+      icon={<Icons.View color="status-ok" />}
+      aria-label="Viewer mode"
+      hoverIndicator
+      onClick={() => {
+        /* If there are unsaved changes, ask the user to confirm before switching modes */
+        const doContinue = fireUnsavedChangeEvent()
+        if (!doContinue) return
+
+        /* Switch away from edit mode to view mode */
+        props.setIsEditing(false)
+      }}
+    />
+  )
+
+  // Button for entering edit mode
+  const editModeButton: React.ReactNode = (
+    <Button
+      id="edit-button"
+      icon={<Icons.Edit color="neutral-3" />}
+      aria-label="Edit information"
+      hoverIndicator
+      onClick={() => props.setIsEditing(true)}
+    />
+  )
+
+  // Button for deleting the current person
+  const deleteCurrentPersonButton: React.ReactNode = (
+    <Button
+      id="delete-person-button"
+      icon={<Icons.Trash color="status-critical" />}
+      aria-label="Delete person"
+      hoverIndicator
+      onClick={deletePerson(currentPersonId)}
+    />
+  )
+
+  // Button that opens a menu for connecting to/disconnecting from other people
+  const ConnectPeopleDropButton: React.ReactNode = (
+    <DropButton
+      id="add-relationship-dropdown"
+      icon={<Icons.Connect color="neutral-3" />}
+      aria-label="Create connection"
+      hoverIndicator
+      dropAlign={{ left: "right" }}
+      ref={connectPeopleDropButtonRef}
+      dropContent={
+        <React.Fragment>
+          <Box direction="row" justify="center" pad="xsmall">
+            <Heading level={4} margin={{ left: "auto" }} textAlign="center">
+              Manage Connections
+            </Heading>
+            <Button
+              onClick={handleCloseConnectionMenu}
+              icon={<Icons.Close />}
+              aria-label="Close connection management menu"
+              margin={{ left: "auto" }}
+              hoverIndicator
+            />
+          </Box>
+
+          <TextInput
+            placeholder="Search by name"
+            value={search}
+            onChange={handleSearchChange}
+          />
+          <List
+            id="add-relationship-buttons"
+            primaryKey="name"
+            data={relationshipOptions.filter((r) =>
+              r.name.toLowerCase().includes(search.toLowerCase()),
+            )}
+            style={{ maxHeight: "350px", overflowY: "auto" }}
+          >
+            {(data: IRelationshipOption) => (
+              <Box
+                direction="row"
+                key={data.id}
+                gap="small"
+                width="medium"
+                onClick={toggleConnection(data.id, data.isConnected)}
+              >
+                <Text>{data.name}</Text>
+                <Box margin={{ left: "auto" }}>
+                  <CheckBox checked={data.isConnected} />
+                </Box>
+              </Box>
+            )}
+          </List>
+        </React.Fragment>
+      }
+    />
+  )
+
   return (
     <Box direction="row">
       {props.isEditing ? (
-        // Toggle view mode
-        <Button
-          icon={<Icons.View color="status-ok" />}
-          aria-label="Viewer mode"
-          hoverIndicator
-          onClick={() => {
-            /* If there are unsaved changes, ask the user to confirm before switching modes */
-            const doContinue = fireUnsavedChangeEvent()
-            if (!doContinue) return
-
-            /* Switch away from edit mode to view mode */
-            props.setIsEditing(false)
-          }}
-        />
-      ) : (
-        // Toggle edit mode
-        <Button
-          id="edit-button"
-          icon={<Icons.Edit color="neutral-3" />}
-          aria-label="Edit information"
-          hoverIndicator
-          onClick={() => props.setIsEditing(true)}
-        />
-      )}
-      {props.isEditing && (
+        // Edit Mode
         <React.Fragment>
-          {/* Connect to another person */}
-          <DropButton
-            id="add-relationship-dropdown"
-            icon={<Icons.Connect color="neutral-3" />}
-            aria-label="Create connection"
-            hoverIndicator
-            dropAlign={{ left: "right" }}
-            dropContent={
-              <React.Fragment>
-                <Heading level={4} textAlign="center">
-                  Manage Connections
-                </Heading>
-
-                {/* TODO: Search for people by name */}
-                <TextInput
-                  placeholder="Search by name (Coming Soon)"
-                  disabled
-                />
-                <List
-                  id="add-relationship-buttons"
-                  primaryKey="name"
-                  data={relationshipOptions}
-                  style={{ maxHeight: "350px", overflowY: "auto" }}
-                >
-                  {(data: IRelationshipOption) => (
-                    <Box
-                      direction="row"
-                      key={data.id}
-                      gap="small"
-                      width="medium"
-                      onClick={toggleConnection(data.id, data.isConnected)}
-                    >
-                      <Text>{data.name}</Text>
-                      <Box margin={{ left: "auto" }}>
-                        <CheckBox checked={data.isConnected} />
-                      </Box>
-                    </Box>
-                  )}
-                </List>
-              </React.Fragment>
-            }
-          />
-
-          {/* Delete the person */}
-          <Button
-            id="delete-person-button"
-            icon={<Icons.Trash color="status-critical" />}
-            aria-label="Delete person"
-            hoverIndicator
-            onClick={deletePerson(currentPersonId)}
-          />
+          {viewModeButton}
+          {ConnectPeopleDropButton}
+          {deleteCurrentPersonButton}
         </React.Fragment>
+      ) : (
+        // View Mode
+        <React.Fragment>{editModeButton}</React.Fragment>
       )}
     </Box>
   )
