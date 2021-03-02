@@ -52,7 +52,7 @@ const PersonHeader: React.FC<IProps> = (props) => {
 
   return (
     <Header direction="column" background="brand" pad="medium" justify="start">
-      <UploadPersonThumbnail />
+      <UploadPersonThumbnail isEditing={props.isEditing} />
       {props.isEditing ? (
         <TextInput
           value={personName}

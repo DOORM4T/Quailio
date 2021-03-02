@@ -9,8 +9,13 @@ import {
   getPersonInFocusId,
   getPersonInFocusThumbnailURL,
 } from "../../../store/selectors/ui/getPersonInFocusData"
+import ToolTipButton from "../../ToolTipButton"
 
-const UploadPersonThumbnail: React.FC = () => {
+interface IProps {
+  isEditing: boolean
+}
+
+const UploadPersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   const dispatch: Dispatch<any> = useDispatch()
   const theme = React.useContext<ThemeType>(ThemeContext)
 
@@ -59,10 +64,9 @@ const UploadPersonThumbnail: React.FC = () => {
   }
 
   return (
-    <Box>
-      <button
+    <Box direction="row">
+      <div
         id="change-thumbnail-button"
-        onClick={openFileInput}
         style={{
           background:
             theme.global?.colors?.["light-1"]?.toString() || "transparent",
@@ -82,7 +86,26 @@ const UploadPersonThumbnail: React.FC = () => {
         ) : (
           <Icons.User size="xlarge" color="dark-1" />
         )}
-      </button>
+      </div>
+
+      {isEditing && (
+        <Box direction="column">
+          <ToolTipButton
+            icon={<Icons.Image />}
+            onClick={openFileInput}
+            id="set-uploaded-image-button"
+            tooltip="Upload a thumbnail"
+            dropProps={{ align: { left: "right" } }}
+          />
+          <ToolTipButton
+            icon={<Icons.Link />}
+            id="set-url-button"
+            tooltip="Link to a thumbnail"
+            dropProps={{ align: { left: "right" } }}
+            isDisabled={true}
+          />
+        </Box>
+      )}
     </Box>
   )
 }
