@@ -1,4 +1,4 @@
-import { Button, Tip } from "grommet"
+import { Button, DropProps, Tip } from "grommet"
 import React, { CSSProperties } from "react"
 
 interface IProps {
@@ -9,6 +9,7 @@ interface IProps {
   isDisabled?: boolean
   ariaLabel?: string
   buttonStyle?: CSSProperties
+  dropProps?: DropProps
 }
 
 const ToolTipButton: React.FC<IProps> = (props) => {
@@ -26,7 +27,14 @@ const ToolTipButton: React.FC<IProps> = (props) => {
 
   if (props.isDisabled)
     return <React.Fragment>{StandaloneButton}</React.Fragment>
-  else return <Tip content={props.tooltip} children={StandaloneButton} />
+  else
+    return (
+      <Tip
+        content={props.tooltip}
+        children={StandaloneButton}
+        dropProps={props.dropProps}
+      />
+    )
 }
 
 ToolTipButton.defaultProps = {
