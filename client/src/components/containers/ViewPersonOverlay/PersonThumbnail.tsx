@@ -15,7 +15,7 @@ interface IProps {
   isEditing: boolean
 }
 
-const UploadPersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
+const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   const dispatch: Dispatch<any> = useDispatch()
   const theme = React.useContext<ThemeType>(ThemeContext)
 
@@ -63,6 +63,17 @@ const UploadPersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
     }
   }
 
+  const setThumbnailByURL = async () => {
+    const url = window.prompt("Thumbnail URL: ")
+    if (!url) return
+
+    try {
+      await dispatch(setPersonThumbnail(currentNetworkId, currentPersonId, url))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <Box direction="row">
       <div
@@ -98,11 +109,11 @@ const UploadPersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
             dropProps={{ align: { left: "right" } }}
           />
           <ToolTipButton
+            onClick={setThumbnailByURL}
             icon={<Icons.Link />}
             id="set-url-button"
             tooltip="Link to a thumbnail"
             dropProps={{ align: { left: "right" } }}
-            isDisabled={true}
           />
         </Box>
       )}
@@ -110,4 +121,4 @@ const UploadPersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   )
 }
 
-export default UploadPersonThumbnail
+export default PersonThumbnail

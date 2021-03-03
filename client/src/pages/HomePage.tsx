@@ -127,8 +127,7 @@ const HomePage: React.FC = () => {
         Coming Soon:
         <ul>
           <li>GIF demos</li>
-          <li>thumbnails by URL</li>
-          <li>and a feedback form!</li>
+          <li>Batch Actions</li>
         </ul>
       </Box>
     </Box>

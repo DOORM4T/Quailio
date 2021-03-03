@@ -9,7 +9,7 @@ import {
   getPersonInFocusName,
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import OverlayButtons from "./OverlayButtons"
-import UploadPersonThumbnail from "./UploadPersonThumbnail"
+import PersonThumbnail from "./PersonThumbnail"
 
 interface IProps {
   isEditing: boolean
@@ -52,7 +52,7 @@ const PersonHeader: React.FC<IProps> = (props) => {
 
   return (
     <Header direction="column" background="brand" pad="medium" justify="start">
-      <UploadPersonThumbnail isEditing={props.isEditing} />
+      <PersonThumbnail isEditing={props.isEditing} />
       {props.isEditing ? (
         <TextInput
           value={personName}
