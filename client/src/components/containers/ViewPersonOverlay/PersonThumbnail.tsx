@@ -74,6 +74,19 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
     }
   }
 
+  const removeThumbnail = async () => {
+    const doContinue = window.confirm(
+      "Are you sure you want to remove this thumbnail?",
+    )
+    if (!doContinue) return
+
+    try {
+      await dispatch(setPersonThumbnail(currentNetworkId, currentPersonId, ""))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <Box direction="row">
       <div
@@ -102,6 +115,13 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
       {isEditing && (
         <Box direction="column">
           <ToolTipButton
+            onClick={setThumbnailByURL}
+            icon={<Icons.Link />}
+            id="set-url-button"
+            tooltip="Link to a thumbnail"
+            dropProps={{ align: { left: "right" } }}
+          />
+          <ToolTipButton
             icon={<Icons.Image />}
             onClick={openFileInput}
             id="set-uploaded-image-button"
@@ -109,10 +129,10 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
             dropProps={{ align: { left: "right" } }}
           />
           <ToolTipButton
-            onClick={setThumbnailByURL}
-            icon={<Icons.Link />}
-            id="set-url-button"
-            tooltip="Link to a thumbnail"
+            icon={<Icons.FormSubtract color="status-critical" />}
+            onClick={removeThumbnail}
+            id="remove-thumbnail-button"
+            tooltip="Remove thumbnail"
             dropProps={{ align: { left: "right" } }}
           />
         </Box>
