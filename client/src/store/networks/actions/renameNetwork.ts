@@ -1,4 +1,4 @@
-import { networksCollection } from "../../../firebase/firebase"
+import { networksCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import { IRenameNetworkAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"

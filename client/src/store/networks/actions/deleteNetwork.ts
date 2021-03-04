@@ -1,9 +1,9 @@
 import {
-  deleteNetworkThumbnails,
   networksCollection,
   peopleCollection,
   usersCollection,
-} from "../../../firebase/firebase"
+} from "../../../firebase/services"
+import { deleteNetworkThumbnails } from "../../../firebase/thumbnailManagement"
 import { IUserDocument } from "../../auth/authTypes"
 import { AppThunk } from "../../store"
 import {

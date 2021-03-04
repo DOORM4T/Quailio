@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react"
 import { useDispatch } from "react-redux"
 import { AnyAction } from "redux"
-import { auth } from "../../firebase/firebase"
+import { auth } from "../../firebase/services"
 import { setUser } from "../../store/auth/authActions"
 
 /* Set user credentials in global state */

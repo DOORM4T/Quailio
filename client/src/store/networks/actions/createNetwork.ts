@@ -3,7 +3,7 @@ import {
   auth,
   networksCollection,
   usersCollection,
-} from "../../../firebase/firebase"
+} from "../../../firebase/services"
 import { IUserDocument } from "../../auth/authTypes"
 import { AppThunk } from "../../store"
 import {

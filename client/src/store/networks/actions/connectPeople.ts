@@ -1,7 +1,7 @@
 import {
   networksCollection,
   peopleCollection,
-} from "../../../firebase/firebase"
+} from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import {
   IConnectPeopleAction,

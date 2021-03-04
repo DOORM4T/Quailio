@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid"
 import {
   networksCollection,
   peopleCollection,
-} from "../../../firebase/firebase"
+} from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import {
   IAddPersonAction,

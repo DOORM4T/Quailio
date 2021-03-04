@@ -1,4 +1,5 @@
-import { peopleCollection, uploadThumbnail } from "../../../firebase/firebase"
+import { peopleCollection } from "../../../firebase/services"
+import { uploadThumbnail } from "../../../firebase/thumbnailManagement"
 import { AppThunk } from "../../store"
 import { ISetPersonThumbnailAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
