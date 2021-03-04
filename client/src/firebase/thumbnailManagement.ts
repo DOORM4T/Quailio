@@ -50,25 +50,23 @@ export async function deleteNetworkThumbnails(networkId: string) {
     throw error
   }
 }
-// // TODO: Delete by thumbnail ID. UI will show all images uploaded to the current network. Users can select which to delete.
-// /**
-//  * Delete a thumbnail from Firebase storage under a network
-//  * @param networkId
-//  * @param thumbnailId
-//  * @throws error if deletion fails
-//  */
-// export async function deleteThumbnail(networkId: string, thumbnailId: string) {
-//   try {
-//     /* Get the reference path to the thumbnail */
-//     const path = `${THUMBNAILS_PATH}/${networkId}/${thumbnailId}`
-//     /* Delete the file from Firebase Storage */
-//     const ref = storage.ref(path)
-//     await ref.delete()
-//   } catch (error) {
-//     /* Failed to delete the thumbnail */
-//     throw error
-//   }
-// }
+/**
+ * Delete a thumbnail from Firebase storage under a network
+ * @param networkId
+ * @param thumbnailId
+ * @throws error if deletion fails
+ */
+export async function deleteThumbnail(path: string) {
+  try {
+    /* Delete the file from Firebase Storage */
+    const ref = storage.ref(path)
+    await ref.delete()
+  } catch (error) {
+    /* Failed to delete the thumbnail */
+    throw error
+  }
+}
+
 /**
  * Generate a thumbnail storage path under a network's ID
  */
@@ -92,8 +90,8 @@ export async function getNetworkThumbnails(networkId: string) {
     const getUrls = thumbnails.items.map((item) => item.getDownloadURL())
     const urls = await Promise.all(getUrls)
 
-    const results: ThumbnailDetails[] = thumbnails.items.map((item, index) => {
-      return [item.fullPath, urls[index]]
+    const results: IThumbnailDetails[] = thumbnails.items.map((item, index) => {
+      return { path: item.fullPath, url: urls[index] }
     })
     return results
   } catch (error) {
@@ -101,4 +99,7 @@ export async function getNetworkThumbnails(networkId: string) {
     return []
   }
 }
-type ThumbnailDetails = [string, string]
+export interface IThumbnailDetails {
+  path: string
+  url: string
+}
