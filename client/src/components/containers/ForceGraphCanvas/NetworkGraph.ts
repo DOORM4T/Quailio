@@ -2,6 +2,7 @@ import ForceGraph, { LinkObject, NodeObject } from "force-graph"
 import { addPerson, connectPeople } from "../../../store/networks/actions"
 import {
   ICurrentNetwork,
+  IPerson,
   IRelationships,
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
@@ -14,12 +15,12 @@ const FOCUS_TIME = 1000
 const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 12
 
-interface IForceGraphData {
+export interface IForceGraphData {
   nodes: IPersonNode[]
   links: LinkObject[]
 }
 
-interface IPersonNode {
+export interface IPersonNode {
   id: string
   name: string
   thumbnail: HTMLImageElement | null
@@ -36,30 +37,93 @@ interface IPersonNode {
 export function createNetworkGraph(
   container: HTMLDivElement,
   state: ICurrentNetwork,
-  disconnected: boolean,
 ) {
   /* Create nodes from the People in the current Network */
   const gData: IForceGraphData = {
-    nodes: state.people.map((person) => {
-      let thumbnail: HTMLImageElement | null = null
-      if (person.thumbnailUrl) {
-        thumbnail = new Image()
-        thumbnail.src = person.thumbnailUrl
-      }
-
-      return {
-        id: person.id,
-        name: person.name,
-        thumbnail,
-        neighbors: [],
-        relationships: person.relationships,
-      }
-    }),
+    nodes: state.people.map(createPersonNode),
     links: [],
   }
 
   /* Link people by their relationship fields */
-  state.people.forEach((person) => {
+  state.people.forEach(createLinksByRelationships(gData))
+
+  // Set neighbors
+  gData.links.forEach(setNeighbors(gData))
+
+  // For highlight on hover
+  const highlightNodes = new Set<NodeObject>()
+  const highlightLinks = new Set<NodeObject>()
+  const hoverNode: { node: IPersonNode | null } = { node: null }
+
+  // For adding connections
+  const nodeToConnect: { node: IPersonNode | null } = { node: null }
+
+  // Create the Force Graph
+  const Graph = ForceGraph()(container)
+    .graphData(gData)
+    .nodeRelSize(NODE_SIZE)
+    .nodeCanvasObject(drawPersonNode({ highlightNodes, hoverNode }))
+    .nodeLabel(() => {
+      return ""
+    })
+    .nodeAutoColorBy("id")
+    .linkDirectionalParticles(1)
+    .linkDirectionalParticleWidth(1.4)
+    .onLinkHover(handleLinkHover({ highlightLinks, highlightNodes }))
+    .linkLabel(getLinkLabel)
+    .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
+    .linkColor((link) => (highlightLinks.has(link) ? "yellow" : "black"))
+    .onNodeHover(
+      handleNodeHover({
+        container,
+        gData,
+        highlightLinks,
+        highlightNodes,
+        hoverNode,
+      }),
+    )
+    .onNodeDrag(handleNodeDrag({ container }))
+    .onNodeDragEnd(handleNodeDragEnd({ container }))
+    .onNodeClick(handleNodeClick)
+    .onBackgroundRightClick(
+      handleBackgroundRightClick({ nodeToConnect, state }),
+    )
+    .onNodeRightClick(handleNodeRightClick({ nodeToConnect, state }))
+    .backgroundColor("#444")
+
+  return Graph
+}
+
+//
+// GRAPH DATA FUNCTIONS
+//
+
+/**
+ * @param person IPerson data passed from as props from the ForceGraphCanvas component
+ * @returns PersonNode for use in the Force Graph
+ */
+export function createPersonNode(person: IPerson): IPersonNode {
+  let thumbnail: HTMLImageElement | null = null
+  if (person.thumbnailUrl) {
+    thumbnail = new Image()
+    thumbnail.src = person.thumbnailUrl
+  }
+
+  return {
+    id: person.id,
+    name: person.name,
+    thumbnail,
+    neighbors: [],
+    relationships: person.relationships,
+  }
+}
+
+/**
+ * Creates an array pipeline function (for use by forEach) that adds links to a graph data object by Person relationships
+ * @param gData graph data to add links to
+ */
+function createLinksByRelationships(gData: IForceGraphData) {
+  return (person: IPerson) => {
     Object.keys(person.relationships).forEach((id) => {
       /* Ensure the other person in the relationship has a node */
       const doesOtherPersonExist = gData.nodes.some(
@@ -78,217 +142,264 @@ export function createNetworkGraph(
         target: id,
       })
     })
-  })
+  }
+}
 
-  // Set neighbors
-  gData.links.forEach((link) => {
+/**
+ * Creates an array pipeline function (for use by forEach) that sets the neighbors of each Person node
+ * @param gData graph data to use and modify
+ */
+function setNeighbors(gData: IForceGraphData) {
+  return (link: LinkObject) => {
     const a = gData.nodes.find((node) => node.id === link.source)
     const b = gData.nodes.find((node) => node.id === link.target)
     if (!a || !b) return
 
     a.neighbors.push(b)
     b.neighbors.push(a)
-  })
+  }
+}
 
-  // For highlight on hover
-  const highlightNodes = new Set()
-  const highlightLinks = new Set()
-  let hoverNode: IPersonNode | null = null
+//
+// GRAPH RENDERING & INTERACTIVITY FUNCTIONS
+//
+interface IGraphClosureData {
+  highlightNodes?: Set<NodeObject>
+  highlightLinks?: Set<NodeObject>
+  hoverNode?: { node: IPersonNode | null }
+  container?: HTMLDivElement
+  gData?: IForceGraphData
+  nodeToConnect?: { node: IPersonNode | null }
+  state?: ICurrentNetwork
+}
 
-  // For adding connections
-  let nodeToConnect: IPersonNode | null = null
+function drawPersonNode({ highlightNodes, hoverNode }: IGraphClosureData) {
+  return (node: NodeObject, ctx: CanvasRenderingContext2D) => {
+    const { thumbnail, x = 0, y = 0, name } = node as NodeObject & IPersonNode
 
-  const Graph = ForceGraph()(container)
-    .graphData(gData)
-    .nodeRelSize(NODE_SIZE)
-    .nodeCanvasObject((node, ctx) => {
-      const { thumbnail, x = 0, y = 0, name } = node as NodeObject & IPersonNode
+    // Highlight highlight nodes, if they exist
+    if (hoverNode && highlightNodes && highlightNodes.has(node)) {
+      ctx.beginPath()
+      const highlightSize = NODE_SIZE * 1.2
 
-      // add ring just for highlighted nodes
-      if (highlightNodes.has(node)) {
-        ctx.beginPath()
-        const highlightSize = NODE_SIZE * 1.2
+      ctx.rect(
+        x - highlightSize / 2,
+        y - highlightSize / 2,
+        highlightSize,
+        highlightSize,
+      )
+      ctx.fillStyle = node === hoverNode.node ? "red" : "orange"
+      ctx.fill()
+    }
 
-        ctx.rect(
-          x - highlightSize / 2,
-          y - highlightSize / 2,
-          highlightSize,
-          highlightSize,
+    if (thumbnail) {
+      try {
+        /* show profile pictures */
+        ctx.drawImage(
+          thumbnail,
+          x - NODE_SIZE / 2,
+          y - NODE_SIZE / 2,
+          NODE_SIZE,
+          NODE_SIZE,
         )
-        ctx.fillStyle = node === hoverNode ? "red" : "orange"
-        ctx.fill()
-      }
-
-      if (thumbnail) {
-        try {
-          /* show profile pictures */
-          ctx.drawImage(
-            thumbnail,
-            x - NODE_SIZE / 2,
-            y - NODE_SIZE / 2,
-            NODE_SIZE,
-            NODE_SIZE,
-          )
-        } catch (error) {
-          ctx.beginPath()
-          ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
-          ctx.fillStyle = "red"
-          ctx.fill()
-          ctx.strokeStyle = "black"
-          ctx.stroke()
-        }
-      } else {
+      } catch (error) {
         ctx.beginPath()
         ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
-        ctx.fillStyle = "white"
+        ctx.fillStyle = "red"
         ctx.fill()
         ctx.strokeStyle = "black"
         ctx.stroke()
       }
-
-      ctx.textAlign = "center"
-      ctx.textBaseline = "top"
-      ctx.fillStyle = "yellow"
+    } else {
+      ctx.beginPath()
+      ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+      ctx.fillStyle = "white"
+      ctx.fill()
       ctx.strokeStyle = "black"
-      ctx.lineWidth = 0.2
-      ctx.font = `${NODE_SIZE / 3}px Sans-Serif`
+      ctx.stroke()
+    }
 
-      // Show up to 30 chars of the node's name
+    ctx.textAlign = "center"
+    ctx.textBaseline = "top"
+    ctx.fillStyle = "yellow"
+    ctx.strokeStyle = "black"
+    ctx.lineWidth = 0.2
+    ctx.font = `${NODE_SIZE / 3}px Sans-Serif`
 
-      const text =
-        name.length > CHAR_DISPLAY_LIMIT
-          ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
-          : name
-      ctx.fillText(text, x, y + NODE_SIZE / 2)
-      ctx.strokeText(text, x, y + NODE_SIZE / 2)
-    })
-    .nodeLabel(() => {
-      return ""
-    })
-    .nodeAutoColorBy("id")
-    .linkDirectionalParticles(1)
-    .linkDirectionalParticleWidth(1.4)
-    .onLinkHover((link) => {
-      highlightNodes.clear()
-      highlightLinks.clear()
+    // Show up to 30 chars of the node's name
 
-      if (link) {
-        highlightLinks.add(link)
-        highlightNodes.add(link.source)
-        highlightNodes.add(link.target)
-      }
-    })
-    .linkLabel((link: any) => {
-      const [rel1, rel2] = link.source.relationships[link.target.id]
-      return `${link.source.name} (${rel1}) - ${link.target.name} (${rel2})`
-    })
-    .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
-    .linkColor((link) => (highlightLinks.has(link) ? "yellow" : "black"))
-    .onNodeHover((n) => {
-      const node = n as NodeObject & IPersonNode
-      highlightNodes.clear()
-      highlightLinks.clear()
-      if (node) {
-        highlightNodes.add(n)
-        node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
+    const text =
+      name.length > CHAR_DISPLAY_LIMIT
+        ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
+        : name
+    ctx.fillText(text, x, y + NODE_SIZE / 2)
+    ctx.strokeText(text, x, y + NODE_SIZE / 2)
+  }
+}
+
+function handleLinkHover({
+  highlightLinks,
+  highlightNodes,
+}: IGraphClosureData) {
+  return (link: LinkObject | null) => {
+    if (!highlightLinks || !highlightNodes) return
+
+    highlightNodes.clear()
+    highlightLinks.clear()
+
+    if (link) {
+      highlightLinks.add(link)
+      highlightNodes.add(link.source as NodeObject)
+      highlightNodes.add(link.target as NodeObject)
+    }
+  }
+}
+
+function getLinkLabel(link: LinkObject | null) {
+  if (!link) return ""
+
+  const sourceNode = link.source as IPersonNode
+  const targetNode = link.target as IPersonNode
+  const [rel1, rel2] = sourceNode.relationships[targetNode.id]
+  return `${sourceNode.name} (${rel1}) - ${targetNode.name} (${rel2})`
+}
+
+function handleNodeHover({
+  highlightNodes,
+  highlightLinks,
+  hoverNode,
+  container,
+  gData,
+}: IGraphClosureData) {
+  return (n: NodeObject | null) => {
+    if (container) container.style.cursor = n ? "help" : "grab"
+    if (!n) return
+
+    // Highlight the hovered node's neighbors
+    if (!hoverNode || !highlightNodes || !highlightLinks) return
+    const node = n as NodeObject & IPersonNode
+    highlightNodes.clear()
+    highlightLinks.clear()
+    if (node) {
+      highlightNodes.add(node as NodeObject)
+      node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
+      if (gData)
         gData.links.forEach((link) => {
           if (link.source === node.id || link.target === node.id)
             highlightLinks.add(link)
         })
+    }
+
+    hoverNode.node = node || null
+  }
+}
+
+function handleNodeDrag({ container }: IGraphClosureData) {
+  return (n: NodeObject | null) => {
+    if (container) container.style.cursor = n ? "grabbing" : "grab"
+  }
+}
+
+function handleNodeDragEnd({ container }: IGraphClosureData) {
+  return (n: NodeObject | null) => {
+    if (!n || !container) return
+
+    /* Fix the node at it's end drag position */
+    n.fx = n.x
+    n.fy = n.y
+    container.style.cursor = "grab"
+  }
+}
+
+async function handleNodeClick(n: NodeObject | null) {
+  if (!n) return
+  const node = n as NodeObject & IPersonNode
+  try {
+    // Focus on the clicked person & show their details
+    await store.dispatch<any>(setPersonInFocus(node.id))
+    store.dispatch<any>(togglePersonEditMenu(true))
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+function handleBackgroundRightClick({
+  nodeToConnect,
+  state,
+}: IGraphClosureData) {
+  return async () => {
+    if (!state || !nodeToConnect) return
+
+    /* if the user is in the middle of making a node connection  */
+    if (nodeToConnect.node) {
+      const doCancelConnectionAction = window.confirm(
+        "Cancel connection? Press OK to cancel the current connect action.",
+      )
+      if (doCancelConnectionAction) {
+        nodeToConnect.node = null
+      }
+      return
+    }
+
+    try {
+      const name = prompt("Add Node:")
+      if (name === null) {
+        alert("Canceled node creation")
+        return
       }
 
-      hoverNode = node || null
-      container.style.cursor = node ? "help" : ""
-    })
-    .onNodeDrag((n) => {
-      container.style.cursor = n ? "grab" : ""
-    })
-    .onNodeClick(async (n) => {
-      const node = n as NodeObject & IPersonNode
-      try {
-        // Focus on the clicked person & show their details
-        await store.dispatch<any>(setPersonInFocus(node.id))
-        store.dispatch<any>(togglePersonEditMenu(true))
-      } catch (error) {
-        console.error(error)
-      }
-    })
-    .onNodeDragEnd((node) => {
-      /* fix at end drag position */
-      node.fx = node.x
-      node.fy = node.y
-    })
-    .onBackgroundRightClick(async () => {
-      if (disconnected || !state.id) return
+      await store.dispatch<any>(addPerson(state.id, name))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+}
 
-      /* if the user is in the middle of making a node connection  */
-      if (nodeToConnect) {
-        const doCancelConnectionAction = window.confirm(
-          "Cancel connection? Press OK to cancel the connection.",
-        )
-        if (doCancelConnectionAction) {
-          nodeToConnect = null
-        }
+function handleNodeRightClick({ nodeToConnect, state }: IGraphClosureData) {
+  return async (n: NodeObject | null) => {
+    if (!n || !nodeToConnect || !state) return
+    const node = n as NodeObject & IPersonNode
+
+    /* Connect nodes */
+    if (!nodeToConnect.node) {
+      /* First node in the connection */
+      alert(`Link A: ${node.name}`)
+      nodeToConnect.node = node as NodeObject & IPersonNode
+    } else {
+      /* Connect the second node */
+      alert(`Link B: ${node.name}`)
+
+      /* Ask for relationship reasons */
+      const p1Reason = prompt(
+        `Who is ${nodeToConnect.node.name} in relation to ${node.name}?`,
+      )
+      if (p1Reason === null) {
+        alert("Canceled node connection.")
+        nodeToConnect.node = null
+        return
+      }
+
+      const p2Reason = prompt(
+        `Who is ${node.name} in relation to ${nodeToConnect.node.name}?`,
+      )
+      if (p2Reason === null) {
+        alert("Canceled node connection.")
+        nodeToConnect.node = null
         return
       }
 
       try {
-        const name = prompt("Add Person:")
-        if (name === null) {
-          alert("Canceled node creation")
-          return
-        }
-
-        await store.dispatch<any>(addPerson(state.id, name))
+        await store.dispatch<any>(
+          connectPeople(state.id, {
+            p1Id: nodeToConnect.node.id,
+            p2Id: node.id,
+            p1Reason,
+            p2Reason,
+          }),
+        )
       } catch (error) {
         console.error(error)
       }
-    })
-    .onNodeRightClick(async (n) => {
-      const node = n as NodeObject & IPersonNode
-
-      /* Stop if "disconnected" from Redux -- TODO: disconnect should only cancel database persistence for a demo dashboard */
-      if (disconnected) return
-
-      /* Connect nodes */
-      if (!nodeToConnect) {
-        /* First node in the connection */
-        alert(`Link A: ${node.name}`)
-        nodeToConnect = node as NodeObject & IPersonNode
-      } else {
-        /* Connect the second node */
-        alert(`Link B: ${node.name}`)
-
-        /* Ask for relationship reasons */
-        const p1Reason = prompt("What is Person 1 to Person 2?")
-        if (p1Reason === null) {
-          alert("Canceled node connection.")
-          nodeToConnect = null
-          return
-        }
-
-        const p2Reason = prompt("What is Person 2 to Person 1?")
-        if (p2Reason === null) {
-          alert("Canceled node connection.")
-          nodeToConnect = null
-          return
-        }
-
-        try {
-          await store.dispatch<any>(
-            connectPeople(state.id, {
-              p1Id: nodeToConnect.id,
-              p2Id: node.id,
-              p1Reason,
-              p2Reason,
-            }),
-          )
-        } catch (error) {
-          console.error(error)
-        }
-      }
-    })
-    .backgroundColor("#444")
-
-  return Graph
+    }
+  }
 }
