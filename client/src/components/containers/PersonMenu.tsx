@@ -10,6 +10,7 @@ import {
   togglePersonEditMenu,
 } from "../../store/ui/uiActions"
 
+const NAME_CHAR_LIMIT = 30
 const PersonMenu: React.FC<IProps> = (props) => {
   // -== STATE ==- //
   const dispatch: Dispatch<any> = useDispatch()
@@ -49,7 +50,9 @@ const PersonMenu: React.FC<IProps> = (props) => {
             maxWidth: "20ch",
           }}
         >
-          {item.name}
+          {item.name.length > NAME_CHAR_LIMIT
+            ? `${item.name.slice(0, NAME_CHAR_LIMIT)}...`
+            : item.name}
         </Text>
       </Box>
     )

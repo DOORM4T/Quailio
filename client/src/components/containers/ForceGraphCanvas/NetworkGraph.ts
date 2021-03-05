@@ -11,6 +11,7 @@ import {
 } from "../../../store/ui/uiActions"
 
 const FOCUS_TIME = 1000
+const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 12
 
 interface IForceGraphData {
@@ -151,10 +152,19 @@ export function createNetworkGraph(
       ctx.strokeStyle = "black"
       ctx.lineWidth = 0.2
       ctx.font = `${NODE_SIZE / 3}px Sans-Serif`
-      ctx.fillText(name, x, y + NODE_SIZE / 2)
-      ctx.strokeText(name, x, y + NODE_SIZE / 2)
+
+      // Show up to 30 chars of the node's name
+
+      const text =
+        name.length > CHAR_DISPLAY_LIMIT
+          ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
+          : name
+      ctx.fillText(text, x, y + NODE_SIZE / 2)
+      ctx.strokeText(text, x, y + NODE_SIZE / 2)
     })
-    .nodeLabel("name")
+    .nodeLabel(() => {
+      return ""
+    })
     .nodeAutoColorBy("id")
     .linkDirectionalParticles(1)
     .linkDirectionalParticleWidth(1.4)
@@ -188,7 +198,10 @@ export function createNetworkGraph(
       }
 
       hoverNode = node || null
-      container.style.cursor = node ? "-webkit-grab" : ""
+      container.style.cursor = node ? "help" : ""
+    })
+    .onNodeDrag((n) => {
+      container.style.cursor = n ? "grab" : ""
     })
     .onNodeClick(async (n) => {
       const node = n as NodeObject & IPersonNode
