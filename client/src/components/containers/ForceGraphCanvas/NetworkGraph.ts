@@ -122,7 +122,7 @@ export function createPersonNode(person: IPerson): IPersonNode {
  * Creates an array pipeline function (for use by forEach) that adds links to a graph data object by Person relationships
  * @param gData graph data to add links to
  */
-function createLinksByRelationships(gData: IForceGraphData) {
+export function createLinksByRelationships(gData: IForceGraphData) {
   return (person: IPerson) => {
     Object.keys(person.relationships).forEach((id) => {
       /* Ensure the other person in the relationship has a node */
@@ -256,10 +256,13 @@ function handleLinkHover({
 }
 
 function getLinkLabel(link: LinkObject | null) {
-  if (!link) return ""
+  if (!link || !link.source || !link.target) return ""
 
   const sourceNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
+  const relationship = sourceNode.relationships[targetNode.id]
+  if (!relationship) return ""
+
   const [rel1, rel2] = sourceNode.relationships[targetNode.id]
   return `${sourceNode.name} (${rel1}) - ${targetNode.name} (${rel2})`
 }
@@ -369,37 +372,20 @@ function handleNodeRightClick({ nodeToConnect, state }: IGraphClosureData) {
       /* Connect the second node */
       alert(`Link B: ${node.name}`)
 
-      /* Ask for relationship reasons */
-      const p1Reason = prompt(
-        `Who is ${nodeToConnect.node.name} in relation to ${node.name}?`,
-      )
-      if (p1Reason === null) {
-        alert("Canceled node connection.")
-        nodeToConnect.node = null
-        return
-      }
-
-      const p2Reason = prompt(
-        `Who is ${node.name} in relation to ${nodeToConnect.node.name}?`,
-      )
-      if (p2Reason === null) {
-        alert("Canceled node connection.")
-        nodeToConnect.node = null
-        return
-      }
-
+      // Create the connection in global state
       try {
         await store.dispatch<any>(
           connectPeople(state.id, {
             p1Id: nodeToConnect.node.id,
             p2Id: node.id,
-            p1Reason,
-            p2Reason,
           }),
         )
       } catch (error) {
         console.error(error)
       }
+
+      // Clear the node to connect
+      nodeToConnect.node = null
     }
   }
 }
