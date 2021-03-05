@@ -24,15 +24,10 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     const container = canvasRef.current
 
     if (container) {
-      /* TODO: remove when anonymous networks are implemented 
-      Whether the graph Dispatches Redux actions or not */
-      const isDisconnected = Boolean(props.disconnected)
-
       /* set canvas width and height based on container dimensions */
       const forceGraph = createNetworkGraph(
         container,
         graphState,
-        isDisconnected,
       ) as ForceGraphInstance
 
       const handleResize = () => {
@@ -79,5 +74,4 @@ interface IProps {
   style?: CSSProperties
   id: string
   state: ICurrentNetwork | null
-  disconnected?: boolean
 }
