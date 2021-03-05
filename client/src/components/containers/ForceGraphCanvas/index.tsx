@@ -43,6 +43,8 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       ) as ForceGraphInstance
 
       const handleResize = () => {
+        console.log("resize")
+
         if (!forceGraph) return
 
         const w = container.clientWidth
@@ -53,6 +55,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       }
 
       handleResize()
+      window.removeEventListener("resize", handleResize)
       window.addEventListener("resize", handleResize)
 
       return () => {
@@ -61,7 +64,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
         forceGraph._destructor()
       }
     }
-  }, [])
+  }, [props.state?.id])
 
   // Update the existing force graph when person state changes
   React.useEffect(() => {
