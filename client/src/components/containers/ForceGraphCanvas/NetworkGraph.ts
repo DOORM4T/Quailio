@@ -149,7 +149,7 @@ export function createLinksByRelationships(gData: IForceGraphData) {
  * Creates an array pipeline function (for use by forEach) that sets the neighbors of each Person node
  * @param gData graph data to use and modify
  */
-function setNeighbors(gData: IForceGraphData) {
+export function setNeighbors(gData: IForceGraphData) {
   return (link: LinkObject) => {
     const a = gData.nodes.find((node) => node.id === link.source)
     const b = gData.nodes.find((node) => node.id === link.target)
@@ -276,24 +276,23 @@ function handleNodeHover({
 }: IGraphClosureData) {
   return (n: NodeObject | null) => {
     if (container) container.style.cursor = n ? "help" : "grab"
-    if (!n) return
+    if (!n || !gData || !hoverNode || !highlightNodes || !highlightLinks) return
 
     // Highlight the hovered node's neighbors
-    if (!hoverNode || !highlightNodes || !highlightLinks) return
     const node = n as NodeObject & IPersonNode
+
+    // Clear current highlights
+    hoverNode.node = node || null
     highlightNodes.clear()
     highlightLinks.clear()
-    if (node) {
-      highlightNodes.add(node as NodeObject)
-      node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
-      if (gData)
-        gData.links.forEach((link) => {
-          if (link.source === node.id || link.target === node.id)
-            highlightLinks.add(link)
-        })
-    }
 
-    hoverNode.node = node || null
+    // Highlight nodes and links related to this node
+    highlightNodes.add(node as NodeObject)
+    node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
+    gData.links.forEach((link) => {
+      if (link.source === node.id || link.target === node.id)
+        highlightLinks.add(link)
+    })
   }
 }
 

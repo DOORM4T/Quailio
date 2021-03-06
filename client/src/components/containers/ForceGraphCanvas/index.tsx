@@ -83,7 +83,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     }
 
     // Handle adding new people
-    if (people.length > existingPeopleIds.size) {
+    const peopleLen = people.length
+    const existingLen = existingPeopleIds.size
+    if (peopleLen > existingLen) {
       // Find the newly added person(s) -- they shouldn't be in the existingPeopleIds set
       const newPeople = people.filter((p) => !existingPeopleIds.has(p.id))
 
@@ -93,7 +95,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       // Create person nodes out of the new people. These nodes will be added to the force graph.
       const newPersonNodes = newPeople.map(createPersonNode)
       updatedGraphData.nodes = [...nodes, ...newPersonNodes]
-    } else if (people.length < existingPeopleIds.size) {
+
+      // Links shouldn't change when a new person is added
+    } else if (peopleLen < existingLen) {
       // Handle deleting people
       // Get the IDs of people in the set who no longer exist in the "people" state
       const deletedPeopleIds = Array.from(existingPeopleIds).filter(
@@ -106,6 +110,43 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       // Filter out the deleted people from the current force graph node data
       const updatedNodes = nodes.filter((n) => !deletedPeopleIds.includes(n.id))
       updatedGraphData.nodes = updatedNodes
+    } else if (peopleLen === existingLen) {
+      // #people didn't change; check if a relationship reason changed
+      // Remove nodes whose relationship reasons changed
+      const updatedNodes = updatedGraphData.nodes
+        .map((n) => {
+          // Get the node from the people props field
+          const personFromProps = people.find((p) => p.id === n.id)
+          if (!personFromProps) return null // The node is missing? Something went wrong. Return null.
+
+          // Create a force-graph node out of the person's data
+          const nodeFromProps = createPersonNode(personFromProps)
+
+          // Check if the node's relationships field is different from the props node's relationships
+          const areRelationshipsSame = deepEqual(
+            nodeFromProps.relationships,
+            n.relationships,
+          )
+
+          // Get the updated node
+          if (!areRelationshipsSame) {
+            // Copy the relationships field from the node that will be updated
+            nodeFromProps.neighbors = n.neighbors
+
+            // Map to the updated node
+            return nodeFromProps
+          } else return null
+        })
+        .filter((n) => n !== null) as IPersonNode[]
+
+      // Replace the nodes whose relationships updated
+      updatedNodes.forEach((n) => {
+        const indexToReplace = updatedGraphData.nodes.findIndex(
+          (node) => node.id === n.id,
+        )
+
+        updatedGraphData.nodes[indexToReplace] = n
+      })
     }
 
     // Re-render all links
