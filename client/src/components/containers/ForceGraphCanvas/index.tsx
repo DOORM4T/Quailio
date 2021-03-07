@@ -9,6 +9,7 @@ import {
   createPersonNode,
   IForceGraphData,
   IPersonNode,
+  setNeighbors,
 } from "./NetworkGraph"
 
 /* Empty default state for when the Current Network is null */
@@ -130,9 +131,6 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
           // Get the updated node
           if (!areRelationshipsSame) {
-            // Copy the relationships field from the node that will be updated
-            nodeFromProps.neighbors = n.neighbors
-
             // Map to the updated node
             return nodeFromProps
           } else return null
@@ -149,8 +147,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       })
     }
 
-    // Re-render all links
+    // Re-render all links & neighbors
     people.forEach(createLinksByRelationships(updatedGraphData))
+    updatedGraphData.links.forEach(setNeighbors(updatedGraphData))
 
     // Update the force graph!
     forceGraph.graphData(updatedGraphData)
