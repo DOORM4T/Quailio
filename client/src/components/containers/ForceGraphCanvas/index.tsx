@@ -25,28 +25,30 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
   const canvasRef = React.useRef<HTMLDivElement>()
   const forceGraphRef = React.useRef<ForceGraphInstance | undefined>()
   const existingPeopleIdsRef = React.useRef<Set<string>>(new Set<string>())
-  const container = canvasRef.current
   const forceGraph = forceGraphRef.current
   const existingPeopleIds = existingPeopleIdsRef.current
 
   // ==- Instantiate the Force Graph -== //
-  React.useEffect(() => {
-    const graphState = props.state ? props.state : emptyState
+  const renderForceGraph = () => {
+    const graphState = props.currentNetwork ? props.currentNetwork : emptyState
+
+    const container = canvasRef.current
 
     if (container) {
+      console.log("change")
+
       // Add each person's ID to the existingPeopleIds set -- this is to track existing nodes while we dynamically add new nodes
       graphState.people.forEach((n) => existingPeopleIds.add(n.id))
 
-      /* set canvas width and height based on container dimensions */
+      /* Set canvas width and height based on container dimensions */
       forceGraphRef.current = createNetworkGraph(
         container,
         graphState,
       ) as ForceGraphInstance
 
       const handleResize = () => {
-        console.log("resize")
-
         if (!forceGraph) return
+        console.log("resize")
 
         const w = container.clientWidth
         const h = container.clientHeight
@@ -65,12 +67,15 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
         forceGraph._destructor()
       }
     }
-  }, [props.state?.id])
+  }
+
+  // Render force graph on container mount or when we switch to a different network
+  React.useEffect(renderForceGraph, [canvasRef, props.currentNetwork?.id])
 
   // Update the existing force graph when person state changes
   React.useEffect(() => {
-    if (!forceGraph || !props.state) return
-    const people = props.state.people
+    if (!forceGraph || !props.currentNetwork) return
+    const people = props.currentNetwork.people
 
     const { links, nodes } = forceGraph.graphData() as {
       links: LinkObject[]
@@ -160,7 +165,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
     // Update the force graph!
     forceGraph.graphData(updatedGraphData)
-  }, [props.state?.people])
+  }, [props.currentNetwork?.people])
 
   return <Canvas id={props.id} ref={canvasRef} style={props.style} />
 }
@@ -168,13 +173,13 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
   /* Rerender only if the "people" names, relationships, or thumbnail changed */
   const skipRerender = deepEqual(
-    prevProps.state?.people.map((p) => ({
+    prevProps.currentNetwork?.people.map((p) => ({
       id: p.id,
       name: p.name,
       relationships: p.relationships,
       thumbnail: p.thumbnailUrl,
     })),
-    nextProps.state?.people.map((p) => ({
+    nextProps.currentNetwork?.people.map((p) => ({
       id: p.id,
       name: p.name,
       relationships: p.relationships,
@@ -189,5 +194,5 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
 interface IProps {
   style?: CSSProperties
   id: string
-  state: ICurrentNetwork | null
+  currentNetwork: ICurrentNetwork | null
 }

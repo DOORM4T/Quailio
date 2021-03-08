@@ -45,26 +45,37 @@ const DashboardPage: React.FC = () => {
         style={{ height: `calc(100vh - ${HEADER_HEIGHT}px)` }}
         fill
       >
-        {/* Network Actions & Details */}
-        <Box direction="column" justify="start" align="stretch" width="large">
-          {currentNetwork && (
-            <PersonMenu
-              id="person-menu"
-              data={
-                currentNetwork
-                  ? currentNetwork.people.sort((p1, p2) =>
-                      p1.name.localeCompare(p2.name),
-                    )
-                  : []
-              }
+        {currentNetwork ? (
+          <React.Fragment>
+            {/* Network Actions & Details */}
+            <Box
+              direction="column"
+              justify="start"
+              align="stretch"
+              width="large"
+            >
+              <PersonMenu
+                id="person-menu"
+                data={
+                  currentNetwork
+                    ? currentNetwork.people.sort((p1, p2) =>
+                        p1.name.localeCompare(p2.name),
+                      )
+                    : []
+                }
+              />
+            </Box>
+            <ForceGraphCanvas
+              id="network-sketch"
+              currentNetwork={currentNetwork}
+              style={{ overflow: "hidden", backgroundColor: "#DDD" }}
             />
-          )}
-        </Box>
-        <ForceGraphCanvas
-          id="network-sketch"
-          state={currentNetwork}
-          style={{ overflow: "hidden", backgroundColor: "#DDD" }}
-        />
+          </React.Fragment>
+        ) : (
+          <Box margin={{ top: "xlarge", horizontal: "auto" }}>
+            Create{isAuthenticated && ", select, "} or import a network!
+          </Box>
+        )}
       </Box>
     </React.Fragment>
   )
