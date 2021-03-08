@@ -112,8 +112,8 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       const updatedNodes = nodes.filter((n) => !deletedPeopleIds.includes(n.id))
       updatedGraphData.nodes = updatedNodes
     } else if (peopleLen === existingLen) {
-      // #people didn't change; check if a relationship reason changed
-      // Remove nodes whose relationship reasons changed
+      // #people didn't change; check if a relationship reason or thumbnail changed
+      // Get nodes that changed
       const updatedNodes = updatedGraphData.nodes
         .map((n) => {
           // Get the node from the people props field
@@ -129,10 +129,17 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
             n.relationships,
           )
 
+          // Check if the node's thumbnail changed
+          const areThumbnailsSame =
+            nodeFromProps.thumbnail?.src === n.thumbnail?.src
+
           // Get the updated node
-          if (!areRelationshipsSame) {
+          if (!areRelationshipsSame || !areThumbnailsSame) {
+            // Merge the new node and previous node. New node properties override existing ones!
+            const mergedNode = { ...n, ...nodeFromProps }
+
             // Map to the updated node
-            return nodeFromProps
+            return mergedNode
           } else return null
         })
         .filter((n) => n !== null) as IPersonNode[]
