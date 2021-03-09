@@ -25,46 +25,49 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
   const canvasRef = React.useRef<HTMLDivElement>()
   const forceGraphRef = React.useRef<ForceGraphInstance | undefined>()
   const existingPeopleIdsRef = React.useRef<Set<string>>(new Set<string>())
-  const forceGraph = forceGraphRef.current
   const existingPeopleIds = existingPeopleIdsRef.current
 
   // ==- Instantiate the Force Graph -== //
   const renderForceGraph = () => {
     const graphState = props.currentNetwork ? props.currentNetwork : emptyState
 
-    const container = canvasRef.current
-
-    if (container) {
-      console.log("change")
-
+    if (canvasRef.current) {
       // Add each person's ID to the existingPeopleIds set -- this is to track existing nodes while we dynamically add new nodes
+      existingPeopleIds.clear()
       graphState.people.forEach((n) => existingPeopleIds.add(n.id))
+
+      // Create the force graph
+      // Destroy the previous force graph, if there was one
+      if (forceGraphRef.current) forceGraphRef.current._destructor()
 
       /* Set canvas width and height based on container dimensions */
       forceGraphRef.current = createNetworkGraph(
-        container,
+        canvasRef.current,
         graphState,
       ) as ForceGraphInstance
 
+      // Fit the force graph canvas when the window resizes
       const handleResize = () => {
-        if (!forceGraph) return
-        console.log("resize")
+        const currentForceGraph = forceGraphRef.current
+        const currentCanvasContainer = canvasRef.current
+        if (!currentForceGraph || !currentCanvasContainer) return
 
-        const w = container.clientWidth
-        const h = container.clientHeight
-        forceGraph.width(w)
-        forceGraph.height(h)
-        forceGraph.centerAt(0, 0, 500)
+        const { width, height } = currentCanvasContainer.getBoundingClientRect()
+
+        currentForceGraph.width(width).height(height)
       }
 
+      // Fit the initial force graph to the correct screen dimensions
       handleResize()
+
+      // Re-create the force graph when the window resizes
       window.removeEventListener("resize", handleResize)
       window.addEventListener("resize", handleResize)
 
       return () => {
         window.removeEventListener("resize", handleResize)
-        if (!forceGraph) return
-        forceGraph._destructor()
+        if (!forceGraphRef.current) return
+        forceGraphRef.current._destructor()
       }
     }
   }
@@ -74,10 +77,10 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
   // Update the existing force graph when person state changes
   React.useEffect(() => {
-    if (!forceGraph || !props.currentNetwork) return
+    if (!forceGraphRef.current || !props.currentNetwork) return
     const people = props.currentNetwork.people
 
-    const { links, nodes } = forceGraph.graphData() as {
+    const { links, nodes } = forceGraphRef.current.graphData() as {
       links: LinkObject[]
       nodes: IPersonNode[]
     }
@@ -164,7 +167,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     updatedGraphData.links.forEach(setNeighbors(updatedGraphData))
 
     // Update the force graph!
-    forceGraph.graphData(updatedGraphData)
+    forceGraphRef.current.graphData(updatedGraphData)
   }, [props.currentNetwork?.people])
 
   return <Canvas id={props.id} ref={canvasRef} style={props.style} />
