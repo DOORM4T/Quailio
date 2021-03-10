@@ -260,8 +260,7 @@ function getLinkLabel(link: LinkObject | null) {
 
   const sourceNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
-  const relationship = sourceNode.relationships[targetNode.id]
-  if (!relationship) return ""
+  if (!(targetNode.id in sourceNode.relationships)) return ""
 
   const [rel1, rel2] = sourceNode.relationships[targetNode.id]
   return `${sourceNode.name} (${rel1}) - ${targetNode.name} (${rel2})`
