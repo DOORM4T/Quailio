@@ -1,5 +1,9 @@
 import ForceGraph, { LinkObject, NodeObject } from "force-graph"
-import { addPerson, connectPeople } from "../../../store/networks/actions"
+import {
+  addPerson,
+  connectPeople,
+  disconnectPeople,
+} from "../../../store/networks/actions"
 import {
   ICurrentNetwork,
   IPerson,
@@ -363,21 +367,34 @@ function handleNodeRightClick({ nodeToConnect, state }: IGraphClosureData) {
 
     /* Connect nodes */
     if (!nodeToConnect.node) {
-      /* First node in the connection */
+      /* Picked the first node to dis(connect) */
       alert(`Link A: ${node.name}`)
       nodeToConnect.node = node as NodeObject & IPersonNode
     } else {
-      /* Connect the second node */
+      /* Picked the second node to dis(connect) */
       alert(`Link B: ${node.name}`)
 
-      // Create the connection in global state
+      // Check if the node are already connected
+      const areNodesConnected = node.id in nodeToConnect.node.relationships
+
+      // Disconnect the nodes if they are already connected
       try {
-        await store.dispatch<any>(
-          connectPeople(state.id, {
-            p1Id: nodeToConnect.node.id,
-            p2Id: node.id,
-          }),
-        )
+        if (areNodesConnected) {
+          await store.dispatch<any>(
+            disconnectPeople(state.id, {
+              p1Id: nodeToConnect.node.id,
+              p2Id: node.id,
+            }),
+          )
+        } else {
+          // Otherwise, connect the nodes
+          await store.dispatch<any>(
+            connectPeople(state.id, {
+              p1Id: nodeToConnect.node.id,
+              p2Id: node.id,
+            }),
+          )
+        }
       } catch (error) {
         console.error(error)
       }
