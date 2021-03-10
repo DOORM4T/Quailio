@@ -80,7 +80,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const LargeScreenLayout: React.FC = () => (
     <Grid
       fill
-      rows={["auto", "auto"]}
+      rows={["auto", "medium"]}
       columns={["medium", "auto"]}
       areas={[
         { name: "header", start: [0, 0], end: [0, 0] },
