@@ -132,17 +132,20 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
           const nodeFromProps = createPersonNode(personFromProps)
 
           // Check if the node's relationships field is different from the props node's relationships
-          const areRelationshipsSame = deepEqual(
+          const didRelationshipsChange = !deepEqual(
             nodeFromProps.relationships,
             n.relationships,
           )
 
-          // Check if the node's thumbnail changed
-          const areThumbnailsSame =
-            nodeFromProps.thumbnail?.src === n.thumbnail?.src
+          // Check whether the node's thumbnail changed or not
+          const didThumbnailChange =
+            nodeFromProps.thumbnail?.src !== n.thumbnail?.src
+
+          // Check whether the node's name changed or not
+          const didNameChange = nodeFromProps.name !== n.name
 
           // Get the updated node
-          if (!areRelationshipsSame || !areThumbnailsSame) {
+          if (didRelationshipsChange || didThumbnailChange || didNameChange) {
             // Merge the new node and previous node. New node properties override existing ones!
             const mergedNode = { ...n, ...nodeFromProps }
 
