@@ -1,17 +1,7 @@
-import {
-  Box,
-  Button,
-  Grid,
-  Heading,
-  Image,
-  Layer,
-  Stack,
-  ThemeType,
-} from "grommet"
+import { Box, Button, Grid, Heading, Image, Layer, Stack } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { ThemeContext } from "styled-components"
 import {
   deleteThumbnail,
   getNetworkThumbnails,
@@ -36,7 +26,6 @@ interface IProps {
 const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   const dispatch: Dispatch<any> = useDispatch()
   const { isAuthenticated } = useAuth()
-  const theme = React.useContext<ThemeType>(ThemeContext)
 
   const currentNetworkId = useSelector(getCurrentNetworkId)
   const currentPersonId = useSelector(getPersonInFocusId)
@@ -170,18 +159,19 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
         icon={<Icons.Link />}
         id="set-url-button"
         tooltip="Link to a thumbnail"
-        dropProps={{ align: { right: "left" } }}
+        dropProps={{ align: { bottom: "top" } }}
+      />
+
+      <ToolTipButton
+        icon={<Icons.Image />}
+        onClick={openFileInput}
+        id="set-uploaded-image-button"
+        tooltip="Upload a thumbnail"
+        dropProps={{ align: { top: "bottom" } }}
       />
 
       {isAuthenticated && (
         <React.Fragment>
-          <ToolTipButton
-            icon={<Icons.Image />}
-            onClick={openFileInput}
-            id="set-uploaded-image-button"
-            tooltip="Upload a thumbnail"
-            dropProps={{ align: { right: "left" } }}
-          />
           <ToolTipButton
             icon={<Icons.AppsRounded />}
             onClick={selectPreviouslyUploaded}

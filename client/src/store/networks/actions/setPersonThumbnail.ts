@@ -20,12 +20,9 @@ export const setPersonThumbnail = (
   let thumbnailUrl: string | null = null
 
   try {
-    // TODO: Set thumbnail by URL -- this is important for unauthenticated users!
-    // For now, setting thumbnails is only available to authenticated users.
-
-    /* Stop if the user is not authenticated */
     const uid = getState().auth.userId
     if (uid) {
+      /* If the user is authenticated, try to upload the image to Firebase storage */
       const personDoc = peopleCollection.doc(personId)
 
       /* Ensure the Person exists */
@@ -45,12 +42,30 @@ export const setPersonThumbnail = (
       /* Set the Person's thumbnail url field */
       await personDoc.set({ thumbnailUrl }, { merge: true }) // set + merge in case the field is undefined
     } else {
-      // Zero-login mode: user can only use URL strings for thumbnails
-      if (thumbnail instanceof File)
-        throw new Error("Only authenticated users can upload thumbnails.")
+      /* 
+        1. Uploaded images are represented as data URLs in Zero-login mode
+        2. OR Set the image by using a link
+        */
+      if (thumbnail instanceof File) {
+        // Convert the uploaded image to a data URL
+        const buffer = await thumbnail.arrayBuffer()
+        const blob = new Blob([buffer])
 
-      // The thumbnail is a URL string
-      thumbnailUrl = thumbnail
+        const reader = new FileReader()
+        reader.readAsDataURL(blob)
+
+        // Should get a data:application/octet-stream data url
+        const result = await new Promise((res) => {
+          reader.onloadend = () => {
+            res(reader.result)
+          }
+        })
+
+        thumbnailUrl = result as string
+      } else {
+        // The thumbnail is a URL string
+        thumbnailUrl = thumbnail
+      }
     }
 
     /* Update state accordingly with personId and thumbnailUrl */
