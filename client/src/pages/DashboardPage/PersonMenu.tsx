@@ -14,8 +14,14 @@ import {
 interface IProps {
   id: string
   data: IPerson[]
-  selected: string[]
-  setSelected: React.Dispatch<React.SetStateAction<string[]>>
+  selected: {
+    [key: string]: boolean
+  }
+  setSelected: React.Dispatch<
+    React.SetStateAction<{
+      [key: string]: boolean
+    }>
+  >
 }
 
 const NAME_CHAR_LIMIT = 30
@@ -76,17 +82,42 @@ const PersonMenu: React.FC<IProps> = (props) => {
     }
   }
 
+  /* Add/remove a person from list of selected people 
+      This list is for performing batch operations on multiple people */
+  const toggleSelected = (id: string) => () => {
+    const newSelected = { ...props.selected }
+    if (props.selected[id]) {
+      newSelected[id] = false
+    } else {
+      newSelected[id] = true
+    }
+    props.setSelected(newSelected)
+  }
+
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
+    const isSelected = props.selected[item.id]
+
     return (
       <Box
+        key={`${item.id}-${index}`}
         direction="row"
         align="center"
         justify="start"
-        key={`${item.id}-${index}`}
         gap="small"
       >
-        <Box width="64px" height="64px" align="start" justify="center">
+        <Box
+          // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
+          aria-label="Select person"
+          width="64px"
+          height="64px"
+          align="start"
+          justify="center"
+          style={{
+            cursor: "pointer",
+            filter: isSelected ? "brightness(25%)" : undefined,
+          }}
+        >
           {item.thumbnailUrl ? (
             <Image src={item.thumbnailUrl} height="64px" width="64px" />
           ) : (

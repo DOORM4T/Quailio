@@ -33,7 +33,7 @@ const DashboardPage: React.FC = () => {
   const isZeroLoginMode = !isAuthenticated
 
   // List of people selected in the PersonMenu -- this list is used to perform operations on multiple people by their ID
-  const [selected, setSelected] = React.useState<string[]>([])
+  const [selected, setSelected] = React.useState<{ [key: string]: boolean }>({})
 
   return (
     <React.Fragment>
@@ -56,6 +56,7 @@ const DashboardPage: React.FC = () => {
               justify="start"
               align="stretch"
               width="large"
+              height={isSmall ? "50%" : "100%"}
             >
               <PersonMenu
                 id="person-menu"
