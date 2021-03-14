@@ -11,6 +11,13 @@ import {
   togglePersonEditMenu,
 } from "../../store/ui/uiActions"
 
+interface IProps {
+  id: string
+  data: IPerson[]
+  selected: string[]
+  setSelected: React.Dispatch<React.SetStateAction<string[]>>
+}
+
 const NAME_CHAR_LIMIT = 30
 const PersonMenu: React.FC<IProps> = (props) => {
   // -== STATE ==- //
@@ -72,25 +79,35 @@ const PersonMenu: React.FC<IProps> = (props) => {
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
     return (
-      <Box direction="column" align="start" key={`${item.id}-${index}`}>
-        <Box>
+      <Box
+        direction="row"
+        align="center"
+        justify="start"
+        key={`${item.id}-${index}`}
+        gap="small"
+      >
+        <Box width="64px" height="64px" align="start" justify="center">
           {item.thumbnailUrl ? (
-            <Image src={item.thumbnailUrl} height="64px" />
+            <Image src={item.thumbnailUrl} height="64px" width="64px" />
           ) : (
-            <Icons.User height="64px" />
+            <Box background="brand" fill align="center" justify="center">
+              <Icons.User width="100%" />
+            </Box>
           )}
         </Box>
-        <Text
-          style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "20ch",
-          }}
-        >
-          {item.name.length > NAME_CHAR_LIMIT
-            ? `${item.name.slice(0, NAME_CHAR_LIMIT)}...`
-            : item.name}
-        </Text>
+        <Box>
+          <Text
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: "20ch",
+            }}
+          >
+            {item.name.length > NAME_CHAR_LIMIT
+              ? `${item.name.slice(0, NAME_CHAR_LIMIT)}...`
+              : item.name}
+          </Text>
+        </Box>
       </Box>
     )
   }
@@ -121,7 +138,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
       {/* -== PERSON LIST ==- */}
       {personListData.length > 0 ? (
         <List
-          {...props}
+          id={props.id}
           data={personListData}
           style={{ overflowY: "auto" }}
           action={(person: IPerson) => (
@@ -144,8 +161,3 @@ const PersonMenu: React.FC<IProps> = (props) => {
 }
 
 export default PersonMenu
-
-interface IProps {
-  data: IPerson[]
-  [key: string]: any
-}

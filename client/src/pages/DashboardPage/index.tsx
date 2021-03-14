@@ -3,7 +3,6 @@ import React from "react"
 import { useSelector } from "react-redux"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
-import PersonMenu from "./PersonMenu"
 import useAuth from "../../hooks/auth/useAuth"
 import useGetNetworks from "../../hooks/networks/useGetNetworks"
 import usePageExitConfirmation from "../../hooks/usePageExitConfirmation"
@@ -11,26 +10,30 @@ import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import HeaderMenu from "./MenuHeader"
+import PersonMenu from "./PersonMenu"
 
 const DashboardPage: React.FC = () => {
-  /* Fetch network data (network IDs, network names, person IDs)*/
+  // Fetch network data (network IDs, network names, person IDs)
   useGetNetworks()
 
-  /* Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes */
+  // Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes
   usePageExitConfirmation()
 
-  /* Global state selectors */
+  // Global state selectors
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
 
-  /* Responsive breakpoint */
+  // Responsive breakpoint
   const isSmall = useSmallBreakpoint()
 
-  /* Check if the user is authenticated -- if not, use zero-login features */
+  // Check if the user is authenticated -- if not, use zero-login features
   const { isAuthenticated } = useAuth()
 
-  /* Variable for checking whether we're in zero-login mode or not */
+  // Variable for checking whether we're in zero-login mode or not
   const isZeroLoginMode = !isAuthenticated
+
+  // List of people selected in the PersonMenu -- this list is used to perform operations on multiple people by their ID
+  const [selected, setSelected] = React.useState<string[]>([])
 
   return (
     <React.Fragment>
@@ -56,6 +59,8 @@ const DashboardPage: React.FC = () => {
             >
               <PersonMenu
                 id="person-menu"
+                selected={selected}
+                setSelected={setSelected}
                 data={
                   currentNetwork
                     ? currentNetwork.people.sort((p1, p2) =>
