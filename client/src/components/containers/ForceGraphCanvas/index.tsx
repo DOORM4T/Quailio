@@ -88,6 +88,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
   // Update the existing force graph when person state changes
   React.useEffect(() => {
     if (!forceGraphRef.current || !props.currentNetwork) return
+    const forceGraph = forceGraphRef.current
     const people = props.currentNetwork.people
 
     const { links, nodes } = forceGraphRef.current.graphData() as {
@@ -99,6 +100,16 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     const updatedGraphData: IForceGraphData = {
       nodes,
       links: [],
+    }
+
+    // Reusable function to update the graph using the updatedGraphData object
+    const updateGraph = () => {
+      // Re-render all links & neighbors
+      people.forEach(createLinksByRelationships(updatedGraphData))
+      updatedGraphData.links.forEach(setNeighbors(updatedGraphData))
+
+      // Update the force graph!
+      forceGraph.graphData(updatedGraphData)
     }
 
     // Handle adding new people
@@ -116,6 +127,16 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       updatedGraphData.nodes = [...nodes, ...newPersonNodes]
 
       // Links shouldn't change when a new person is added
+      ////
+
+      // Update graph data before zooming in on the last person node
+      updateGraph()
+
+      // Zoom in on the latest-added person
+      const lastNewPerson = newPeople[newPeople.length - 1]
+      setTimeout(() => {
+        dispatch(zoomToPerson(lastNewPerson.id))
+      }, 1000)
     } else if (peopleLen < existingLen) {
       // Handle deleting people
       // Get the IDs of people in the set who no longer exist in the "people" state
@@ -129,6 +150,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       // Filter out the deleted people from the current force graph node data
       const updatedNodes = nodes.filter((n) => !deletedPeopleIds.includes(n.id))
       updatedGraphData.nodes = updatedNodes
+
+      // Update the graph
+      updateGraph()
     } else if (peopleLen === existingLen) {
       // #people didn't change; check if a relationship reason or thumbnail changed
       // Get nodes that changed
@@ -173,14 +197,10 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
         updatedGraphData.nodes[indexToReplace] = n
       })
+
+      // Update the graph
+      updateGraph()
     }
-
-    // Re-render all links & neighbors
-    people.forEach(createLinksByRelationships(updatedGraphData))
-    updatedGraphData.links.forEach(setNeighbors(updatedGraphData))
-
-    // Update the force graph!
-    forceGraphRef.current.graphData(updatedGraphData)
   }, [props.currentNetwork?.people])
 
   // Zoom in on a person node
@@ -200,7 +220,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       if (x === undefined || y === undefined) return
 
       // Zoom into the node's coordinates!
-      forceGraph.centerAt(x, y, 250).zoom(12, 250)
+      forceGraph.centerAt(x, y, 250).zoom(8, 1000)
     }
   }, [personIdToZoom])
 
