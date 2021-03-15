@@ -9,6 +9,7 @@ const initialState: IUserInterfaceState = {
   isLoading: false,
   isPersonEditMenuOpen: false,
   personInFocus: null,
+  personInZoom: null,
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -32,6 +33,13 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         isPersonEditMenuOpen: action.isOpen,
+      }
+    }
+
+    case UserInterfaceActionTypes.ZOOM_TO_PERSON: {
+      return {
+        ...state,
+        personInZoom: action.personId,
       }
     }
 

@@ -3,7 +3,8 @@ import { AppThunk } from "../store"
 import {
   IFocusOnPersonAction,
   ISetUILoadingAction,
-  ITogglePersonEditMenu,
+  ITogglePersonEditMenuAction,
+  IZoomToPersonAction,
   UserInterfaceActionTypes,
 } from "./uiTypes"
 
@@ -47,9 +48,13 @@ export const setPersonInFocus = (personId: string | null): AppThunk => {
   }
 }
 
-export const togglePersonEditMenu: ActionCreator<ITogglePersonEditMenu> = (
+export const togglePersonEditMenu: ActionCreator<ITogglePersonEditMenuAction> = (
   isOpen: boolean,
 ) => ({
   type: UserInterfaceActionTypes.TOGGLE_PERSON_EDIT_MENU,
   isOpen,
 })
+
+export const zoomToPerson: ActionCreator<IZoomToPersonAction> = (
+  personId: string | null,
+) => ({ type: UserInterfaceActionTypes.ZOOM_TO_PERSON, personId })

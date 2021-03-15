@@ -9,6 +9,7 @@ import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetw
 import {
   setPersonInFocus,
   togglePersonEditMenu,
+  zoomToPerson,
 } from "../../store/ui/uiActions"
 
 interface IProps {
@@ -94,6 +95,9 @@ const PersonMenu: React.FC<IProps> = (props) => {
     props.setSelected(newSelected)
   }
 
+  // Function to un-zoom on a person
+  const resetZoomedPerson = () => dispatch(zoomToPerson(null))
+
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
     const isSelected = props.selected[item.id]
@@ -107,7 +111,10 @@ const PersonMenu: React.FC<IProps> = (props) => {
         gap="small"
       >
         <Box
+          onClick={viewPerson(item.id)} // Open the person overlay when clicked
           // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
+          onMouseEnter={() => dispatch(zoomToPerson(item.id))} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
+          onMouseLeave={resetZoomedPerson}
           aria-label="Select person"
           width="64px"
           height="64px"
@@ -172,14 +179,6 @@ const PersonMenu: React.FC<IProps> = (props) => {
           id={props.id}
           data={personListData}
           style={{ overflowY: "auto" }}
-          action={(person: IPerson) => (
-            <Button
-              className="view-person-button"
-              icon={<Icons.View />}
-              onClick={viewPerson(person.id)}
-              key={`view-${person.id}`}
-            />
-          )}
           children={renderItem}
         />
       ) : (

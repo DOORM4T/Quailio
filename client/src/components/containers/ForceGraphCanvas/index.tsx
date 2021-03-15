@@ -1,7 +1,11 @@
 import deepEqual from "deep-equal"
 import { ForceGraphInstance, LinkObject } from "force-graph"
 import React, { CSSProperties } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { Dispatch } from "redux"
 import { ICurrentNetwork } from "../../../store/networks/networkTypes"
+import { IApplicationState } from "../../../store/store"
+import { zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
 import {
   createLinksByRelationships,
@@ -21,11 +25,17 @@ const emptyState: ICurrentNetwork = {
 }
 
 const ForceGraphCanvas: React.FC<IProps> = (props) => {
-  /* create a ref for forwarding to the Canvas presentational component */
+  // create a ref for forwarding to the Canvas presentational component
   const canvasRef = React.useRef<HTMLDivElement>()
   const forceGraphRef = React.useRef<ForceGraphInstance | undefined>()
   const existingPeopleIdsRef = React.useRef<Set<string>>(new Set<string>())
   const existingPeopleIds = existingPeopleIdsRef.current
+
+  // Global state tracking a person to zoom-in on
+  const dispatch: Dispatch<any> = useDispatch()
+  const personIdToZoom = useSelector(
+    (state: IApplicationState) => state.ui.personInZoom,
+  )
 
   // ==- Instantiate the Force Graph -== //
   const renderForceGraph = () => {
@@ -172,6 +182,27 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     // Update the force graph!
     forceGraphRef.current.graphData(updatedGraphData)
   }, [props.currentNetwork?.people])
+
+  // Zoom in on a person node
+  React.useEffect(() => {
+    if (!personIdToZoom || !forceGraphRef.current) return // Stop if null or if there's no force-graph
+    const forceGraph = forceGraphRef.current
+
+    const nodes = forceGraph.graphData().nodes
+    const nodeToZoom = nodes.find((n) => n.id === personIdToZoom)
+    if (!nodeToZoom) {
+      // Clear the zoom global state if the node doesn't exist
+      dispatch(zoomToPerson(null))
+      return
+    } else {
+      // Ensure x and y exist
+      const { x, y } = nodeToZoom
+      if (x === undefined || y === undefined) return
+
+      // Zoom into the node's coordinates!
+      forceGraph.centerAt(x, y, 250).zoom(12, 250)
+    }
+  }, [personIdToZoom])
 
   return <Canvas id={props.id} ref={canvasRef} style={props.style} />
 }
