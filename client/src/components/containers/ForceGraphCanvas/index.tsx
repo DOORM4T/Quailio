@@ -8,9 +8,11 @@ import { IApplicationState } from "../../../store/store"
 import { zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
 import {
+  clearHighlights,
   createLinksByRelationships,
   createNetworkGraph,
   createPersonNode,
+  highlightNode,
   IForceGraphData,
   IPersonNode,
   setNeighbors,
@@ -205,11 +207,17 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
   // Zoom in on a person node
   React.useEffect(() => {
-    if (!personIdToZoom || !forceGraphRef.current) return // Stop if null or if there's no force-graph
-    const forceGraph = forceGraphRef.current
+    // Stop if null or if there's no force-graph
+    if (!personIdToZoom || !forceGraphRef.current) {
+      clearHighlights()
+      return
+    }
 
+    // Get the node to zoom in on
+    const forceGraph = forceGraphRef.current
     const nodes = forceGraph.graphData().nodes
     const nodeToZoom = nodes.find((n) => n.id === personIdToZoom)
+
     if (!nodeToZoom) {
       // Clear the zoom global state if the node doesn't exist
       dispatch(zoomToPerson(null))
@@ -221,6 +229,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
       // Zoom into the node's coordinates!
       forceGraph.centerAt(x, y, 250).zoom(8, 1000)
+
+      // Highlight the node
+      highlightNode(nodeToZoom, forceGraph.graphData() as IForceGraphData)
     }
   }, [personIdToZoom])
 

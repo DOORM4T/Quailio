@@ -15,10 +15,6 @@ import {
   togglePersonEditMenu,
 } from "../../../store/ui/uiActions"
 
-const FOCUS_TIME = 1000
-const CHAR_DISPLAY_LIMIT = 30
-const NODE_SIZE = 12
-
 export interface IForceGraphData {
   nodes: IPersonNode[]
   links: LinkObject[]
@@ -31,6 +27,24 @@ export interface IPersonNode {
   neighbors: IPersonNode[]
   relationships: IRelationships
 }
+
+//
+// Global variables
+//
+const CHAR_DISPLAY_LIMIT = 30
+const NODE_SIZE = 12
+
+// For highlight on hover
+const highlightNodes = new Set<NodeObject>()
+const highlightLinks = new Set<NodeObject>()
+const hoverNode: { node: IPersonNode | null } = { node: null }
+
+// For adding connections
+const nodeToConnect: { node: IPersonNode | null } = { node: null }
+
+//
+// Force Graph
+//
 
 /**
  *
@@ -54,26 +68,18 @@ export function createNetworkGraph(
   // Set neighbors
   gData.links.forEach(setNeighbors(gData))
 
-  // For highlight on hover
-  const highlightNodes = new Set<NodeObject>()
-  const highlightLinks = new Set<NodeObject>()
-  const hoverNode: { node: IPersonNode | null } = { node: null }
-
-  // For adding connections
-  const nodeToConnect: { node: IPersonNode | null } = { node: null }
-
   // Create the Force Graph
   const Graph = ForceGraph()(container)
     .graphData(gData)
     .nodeRelSize(NODE_SIZE)
-    .nodeCanvasObject(drawPersonNode({ highlightNodes, hoverNode }))
+    .nodeCanvasObject(drawPersonNode())
     .nodeLabel(() => {
       return ""
     })
     .nodeAutoColorBy("id")
     .linkDirectionalParticles(1)
     .linkDirectionalParticleWidth(1.4)
-    .onLinkHover(handleLinkHover({ highlightLinks, highlightNodes }))
+    .onLinkHover(handleLinkHover())
     .linkLabel(getLinkLabel)
     .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
     .linkColor((link) => (highlightLinks.has(link) ? "yellow" : "black"))
@@ -81,9 +87,6 @@ export function createNetworkGraph(
       handleNodeHover({
         container,
         gData,
-        highlightLinks,
-        highlightNodes,
-        hoverNode,
       }),
     )
     .onNodeDrag(handleNodeDrag({ container }))
@@ -168,16 +171,13 @@ export function setNeighbors(gData: IForceGraphData) {
 // GRAPH RENDERING & INTERACTIVITY FUNCTIONS
 //
 interface IGraphClosureData {
-  highlightNodes?: Set<NodeObject>
-  highlightLinks?: Set<NodeObject>
-  hoverNode?: { node: IPersonNode | null }
   container?: HTMLDivElement
   gData?: IForceGraphData
   nodeToConnect?: { node: IPersonNode | null }
   state?: ICurrentNetwork
 }
 
-function drawPersonNode({ highlightNodes, hoverNode }: IGraphClosureData) {
+function drawPersonNode() {
   return (node: NodeObject, ctx: CanvasRenderingContext2D) => {
     const { thumbnail, x = 0, y = 0, name } = node as NodeObject & IPersonNode
 
@@ -241,10 +241,7 @@ function drawPersonNode({ highlightNodes, hoverNode }: IGraphClosureData) {
   }
 }
 
-function handleLinkHover({
-  highlightLinks,
-  highlightNodes,
-}: IGraphClosureData) {
+function handleLinkHover() {
   return (link: LinkObject | null) => {
     if (!highlightLinks || !highlightNodes) return
 
@@ -270,33 +267,36 @@ function getLinkLabel(link: LinkObject | null) {
   return `${sourceNode.name} (${rel1}) - ${targetNode.name} (${rel2})`
 }
 
-function handleNodeHover({
-  highlightNodes,
-  highlightLinks,
-  hoverNode,
-  container,
-  gData,
-}: IGraphClosureData) {
+function handleNodeHover({ container, gData }: IGraphClosureData) {
   return (n: NodeObject | null) => {
+    clearHighlights()
+
     if (container) container.style.cursor = n ? "help" : "grab"
-    if (!n || !gData || !hoverNode || !highlightNodes || !highlightLinks) return
+    if (!n || !gData) return
 
     // Highlight the hovered node's neighbors
-    const node = n as NodeObject & IPersonNode
-
-    // Clear current highlights
-    hoverNode.node = node || null
-    highlightNodes.clear()
-    highlightLinks.clear()
-
-    // Highlight nodes and links related to this node
-    highlightNodes.add(node as NodeObject)
-    node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
-    gData.links.forEach((link) => {
-      if (link.source === node.id || link.target === node.id)
-        highlightLinks.add(link)
-    })
+    highlightNode(n, gData)
   }
+}
+
+export function highlightNode(n: NodeObject, gData: IForceGraphData) {
+  const node = n as NodeObject & IPersonNode
+
+  // Clear current highlights
+  hoverNode.node = node || null
+
+  // Highlight nodes and links related to this node
+  highlightNodes.add(node as NodeObject)
+  node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
+  gData.links.forEach((link) => {
+    if (link.source === node.id || link.target === node.id)
+      highlightLinks.add(link)
+  })
+}
+
+export function clearHighlights() {
+  highlightNodes.clear()
+  highlightLinks.clear()
 }
 
 function handleNodeDrag({ container }: IGraphClosureData) {
@@ -328,10 +328,7 @@ async function handleNodeClick(n: NodeObject | null) {
   }
 }
 
-function handleBackgroundRightClick({
-  nodeToConnect,
-  state,
-}: IGraphClosureData) {
+function handleBackgroundRightClick({ state }: IGraphClosureData) {
   return async () => {
     if (!state || !nodeToConnect) return
 
@@ -360,7 +357,7 @@ function handleBackgroundRightClick({
   }
 }
 
-function handleNodeRightClick({ nodeToConnect, state }: IGraphClosureData) {
+function handleNodeRightClick({ state }: IGraphClosureData) {
   return async (n: NodeObject | null) => {
     if (!n || !nodeToConnect || !state) return
     const node = n as NodeObject & IPersonNode
