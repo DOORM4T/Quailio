@@ -1,11 +1,10 @@
-import { Editor } from "@tinymce/tinymce-react"
 import deepEqual from "deep-equal"
 import { Box, Text } from "grommet"
 import React from "react"
+import Quill from "react-quill"
+import "react-quill/dist/quill.snow.css"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import { Editor as TinyMCEEditor } from "tinymce"
-import { TINY_MCE_KEY } from "../../../.tinyMCEKey"
 import {
   addUnsavedChangeListener,
   removeUnsavedChangeListener,
@@ -66,8 +65,8 @@ const ContentPanel: React.FC<IProps> = (props) => {
   if (!currentPersonId) return null
 
   // Handle controlled input changes
-  const handleEditorChange = (newContent: string, editor: TinyMCEEditor) => {
-    setEditorContent(newContent)
+  const handleEditorChange = (value: string) => {
+    setEditorContent(value)
   }
 
   // Save to global state
@@ -109,10 +108,21 @@ const ContentPanel: React.FC<IProps> = (props) => {
     e.preventDefault()
   }
 
+  // Save upon CTRL+S
+  const handleSaveKeyCombo = (e: KeyboardEvent) => {
+    if (e.ctrlKey && e.key === "s") {
+      e.preventDefault()
+      e.stopPropagation()
+      console.log("save")
+
+      handleSave()
+    }
+  }
+
   return (
     <article id={props.id} style={{ height: "100%" }}>
       {props.isEditing ? (
-        <Box direction="column">
+        <Box direction="column" fill>
           <Text
             className="content-editor-save-status"
             color={
@@ -125,22 +135,32 @@ const ContentPanel: React.FC<IProps> = (props) => {
           >
             {isSaving ? "Saving..." : isSaved ? "Saved" : "Unsaved Changes"}
           </Text>
-          <Editor
-            apiKey={TINY_MCE_KEY}
-            init={{
-              min_height: 400,
-              plugins: ["image", "save"],
-              toolbar: ["save"],
-              removed_menuitems: "newdocument visualaid",
-              save_onsavecallback: () => {
-                console.log("Saved.")
-              },
-              auto_focus: true,
-            }}
-            onSaveContent={handleSave}
-            onEditorChange={handleEditorChange}
-            value={editorContent}
-          />
+          <Box height="100vh">
+            <Quill
+              onChange={handleEditorChange}
+              value={editorContent}
+              onKeyDown={handleSaveKeyCombo}
+              modules={{
+                toolbar: [
+                  [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                  [{ font: [] }],
+
+                  ["bold", "italic", "underline", "strike"],
+
+                  [{ list: "ordered" }, { list: "bullet" }],
+                  [{ script: "sub" }, { script: "super" }],
+
+                  [{ color: [] }, { background: [] }],
+                  [{ align: [] }],
+
+                  ["clean"], // remove formatting button
+
+                  ["image", "link"],
+                ],
+              }}
+              style={{ height: "100%", maxHeight: 500 }}
+            />
+          </Box>
         </Box>
       ) : (
         <div
