@@ -46,7 +46,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   /**
    * Handle thumbnail uploading
    */
-  const handleChangeThumbnail = async (fileInput: HTMLInputElement) => {
+  const handleUploadThumbnail = async (fileInput: HTMLInputElement) => {
     try {
       /* Get the file (first file, multiple files at once are not accepted) */
       const file = fileInput.files ? fileInput.files[0] : null
@@ -75,7 +75,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
 
     /* Wait for the user to upload an image file*/
     fileInput.onchange = async () => {
-      await handleChangeThumbnail(fileInput)
+      await handleUploadThumbnail(fileInput)
       fileInput.remove()
     }
   }
@@ -166,7 +166,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
         icon={<Icons.Image />}
         onClick={openFileInput}
         id="set-uploaded-image-button"
-        tooltip="Upload a thumbnail"
+        tooltip="Upload a thumbnail (1 MB Limit)"
         dropProps={{ align: { top: "bottom" } }}
       />
 

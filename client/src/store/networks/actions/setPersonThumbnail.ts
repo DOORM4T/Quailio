@@ -4,6 +4,8 @@ import { AppThunk } from "../../store"
 import { ISetPersonThumbnailAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
 
+const UPLOAD_LIMIT = 1024 * 1024 // 1 MB Limit
+
 /**
  * Set a person's thumbnail
  * @param personId
@@ -17,9 +19,16 @@ export const setPersonThumbnail = (
 ): AppThunk => async (dispatch, getState) => {
   dispatch(setNetworkLoading(true))
 
-  let thumbnailUrl: string | null = null
-
   try {
+    // If a thumbnail was uploaded, ensure it fits the size limit
+    if (thumbnail instanceof File) {
+      if (thumbnail.size > UPLOAD_LIMIT) {
+        throw new Error("Uploaded thumbnail must be under 1 MB")
+      }
+    }
+
+    let thumbnailUrl: string | null = null
+
     const uid = getState().auth.userId
     if (uid) {
       /* If the user is authenticated, try to upload the image to Firebase storage */
