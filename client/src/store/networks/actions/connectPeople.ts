@@ -23,14 +23,13 @@ export const connectPeople = (
   relationship: {
     p1Id: string
     p2Id: string
-    p1Reason?: string
-    p2Reason?: string
+    sharedReason?: string
   },
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
-    const { p1Id, p2Id, p1Reason = "", p2Reason = "" } = relationship
+    const { p1Id, p2Id, sharedReason = "" } = relationship
 
     try {
       let p1Data: IPerson | undefined
@@ -73,11 +72,11 @@ export const connectPeople = (
       /* Copy existing relationships and add the new relationship for each person */
       const updatedP1Rels: IRelationships = {
         ...p1Data.relationships,
-        [p2Id]: [p1Reason, p2Reason],
+        [p2Id]: sharedReason,
       }
       const updatedP2Rels: IRelationships = {
         ...p2Data.relationships,
-        [p1Id]: [p2Reason, p1Reason],
+        [p1Id]: sharedReason,
       }
 
       /* Updated person data fetched from the database? Then update the database with the new data. */

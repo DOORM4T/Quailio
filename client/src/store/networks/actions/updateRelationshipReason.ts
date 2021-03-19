@@ -12,13 +12,13 @@ import { setNetworkLoading } from "./setNetworkLoading"
  * Update a person's relationship reason from the person 1's point of view
  * @param p1Id ID of person 1
  * @param p2Id ID of person 2
- * @param p2MeaningToP1 what person 2 means to person 1
+ * @param newReason what person 2 means to person 1
  */
 
 export const updateRelationshipReason = (
   p1Id: string,
   p2Id: string,
-  p2MeaningToP1: string,
+  newReason: string,
 ): AppThunk => async (dispatch, getState) => {
   dispatch(setNetworkLoading(true))
 
@@ -38,14 +38,13 @@ export const updateRelationshipReason = (
       const p2Data = p2Doc.data() as IPerson
 
       /* Update the relationship */
-      const p1MeaningToP2 = p1Data.relationships[p2Id][0] // Reuse this meaning in the new Relationships array for each person
       const updatedP1Relationships: IRelationships = {
         ...p1Data.relationships,
-        [p2Id]: [p1MeaningToP2, p2MeaningToP1],
+        [p2Id]: newReason,
       }
       const updatedP2Relationships: IRelationships = {
         ...p2Data.relationships,
-        [p1Id]: [p2MeaningToP1, p1MeaningToP2],
+        [p1Id]: newReason,
       }
 
       /* Update each person's relationships field in Firestore */
@@ -58,7 +57,7 @@ export const updateRelationshipReason = (
       type: NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP,
       p1Id,
       p2Id,
-      p2MeaningToP1,
+      newReason,
     }
 
     return dispatch(action)

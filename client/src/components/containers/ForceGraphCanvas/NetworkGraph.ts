@@ -263,8 +263,15 @@ function getLinkLabel(link: LinkObject | null) {
   const targetNode = link.target as IPersonNode
   if (!(targetNode.id in sourceNode.relationships)) return ""
 
-  const [rel1, rel2] = sourceNode.relationships[targetNode.id]
-  return `${sourceNode.name} (${rel1}) - ${targetNode.name} (${rel2})`
+  // Display the reason shared between the two nodes
+  let reason = sourceNode.relationships[targetNode.id]
+
+  // If the relationship uses a legacy [p1ToP2Rel, p2ToP1Rel] relationship, join the relationships into a single string
+  if ((reason as unknown) instanceof Array) {
+    reason = ((reason as unknown) as string[]).join(" - ")
+  }
+
+  return `${reason}`
 }
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {

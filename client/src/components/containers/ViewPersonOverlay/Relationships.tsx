@@ -207,12 +207,15 @@ function getRelatedPeople(
   return (
     (Object.keys(personRelationships)
       .map((relationshipId) => {
-        /* Get relationship details */
-        const [thisPersonReason, otherPersonReason] = personRelationships[
-          relationshipId
-        ]
+        // Get the shared relationship reason
+        let reason = personRelationships[relationshipId]
 
-        /* Find people related to the selected person */
+        // If the relationship uses a legacy [p1ToP2Rel, p2ToP1Rel] relationship, join the relationships into a single string
+        if ((reason as unknown) instanceof Array) {
+          reason = ((reason as unknown) as string[]).join(" - ")
+        }
+
+        // Find people related to the selected person
         const otherPerson = currentNetworkPeople.find(
           (p) => p.id === relationshipId,
         )
@@ -222,7 +225,7 @@ function getRelatedPeople(
         return {
           id: otherPerson.id,
           name: otherPerson.name,
-          reason: otherPersonReason,
+          reason,
         }
       })
       /* Remove null items */

@@ -34,8 +34,8 @@ export interface IPerson {
 }
 
 /* string 1: this person in relation to the other person 
-   string 2: other person in relation to this person */
-export type IRelationships = { [otherPersonId: string]: [string, string] }
+   string 2: the shared relationship reason with the other person (the other person will use the same reason) */
+export type IRelationships = { [otherPersonId: string]: string }
 
 // -== ACTION TYPES ==- //
 export enum NetworkActionTypes {
@@ -121,7 +121,7 @@ export interface IUpdateRelationshipReasonAction {
   type: NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP
   p1Id: string
   p2Id: string
-  p2MeaningToP1: string // Updated relationship reason -- what the other person means to the selected person
+  newReason: string // Updated relationship reason -- what the other person means to the selected person
 }
 
 export interface IUpdatePersonNameAction {

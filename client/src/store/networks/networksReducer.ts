@@ -237,14 +237,13 @@ function getUpdatedPersonRelationshipState(
   if (!p1Data || !p2Data) return state
 
   /* Create the updated relationship */
-  const p1MeaningToP2 = p1Data.relationships[action.p2Id][0] // Reuse this meaning in the new Relationships array for each person
   const updatedP1Relationships: IRelationships = {
     ...p1Data.relationships,
-    [action.p2Id]: [p1MeaningToP2, action.p2MeaningToP1],
+    [action.p2Id]: action.newReason,
   }
   const updatedP2Relationships: IRelationships = {
     ...p2Data.relationships,
-    [action.p1Id]: [action.p2MeaningToP1, p1MeaningToP2],
+    [action.p1Id]: action.newReason,
   }
 
   /* Update each person */
