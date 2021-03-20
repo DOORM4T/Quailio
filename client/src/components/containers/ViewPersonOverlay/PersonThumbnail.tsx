@@ -81,7 +81,10 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   }
 
   const setThumbnailByURL = async () => {
-    const url = window.prompt("Thumbnail URL: ")
+    const url = window.prompt(
+      "Thumbnail URL: ",
+      currentPersonThumbnailURL || "",
+    )
     if (!url) return
 
     try {
