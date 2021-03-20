@@ -11,6 +11,8 @@ export const handlePasswordReset = () => {
     if (!email) return
 
     auth.sendPasswordResetEmail(email)
-    window.alert(`Sent a password reset request to ${email}`)
+    window.alert(
+      `Sent a password reset request to ${email}, if it is registered with Quailio.`,
+    )
   }
 }
