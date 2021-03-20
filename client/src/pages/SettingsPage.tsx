@@ -3,16 +3,18 @@ import {
   AccordionPanel,
   Box,
   Button,
-  CheckBoxGroup,
   Heading,
-  List,
   Text,
   TextInput,
 } from "grommet"
-import React from "react"
+import * as Icons from "grommet-icons"
+import React, { FormEvent } from "react"
 import { useDispatch } from "react-redux"
 import { useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
+import { auth } from "../firebase/services"
+import { handlePasswordReset } from "../helpers/handlePasswordReset"
+import useAuth from "../hooks/auth/useAuth"
 import { deleteAccount } from "../store/auth/authActions"
 import { resetLocalNetworks } from "../store/networks/actions"
 
@@ -20,7 +22,22 @@ const SettingsPage: React.FC = () => {
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const history = useHistory()
 
-  const handleDeleteAccount = async () => {
+  const isAuthenticated = useAuth()
+
+  // This page shouldn't render if the user isn't authenticated
+  if (!isAuthenticated) return null
+
+  const handleDeleteAccount = async (e: FormEvent) => {
+    e.preventDefault()
+
+    const email = (e.currentTarget as HTMLFormElement)["email"].value
+
+    // Stop if the email is invalid
+    if (email !== auth.currentUser?.email) {
+      window.alert("Invalid email")
+      return
+    }
+
     const doDelete = window.confirm(
       "Are you sure you want to delete your account? This action cannot be reversed.",
     )
@@ -47,67 +64,72 @@ const SettingsPage: React.FC = () => {
       >
         <Box align="center" justify="center">
           <Heading level={2}>General Settings</Heading>
-          <Accordion width="large" multiple={false}>
-            <AccordionPanel label="My Information">
-              <Box
-                align="center"
-                justify="start"
-                direction="row"
-                gap="xsmall"
-                pad="xsmall"
-                fill={false}
+          <Box pad="large">
+            <Accordion width="large">
+              <AccordionPanel
+                label={
+                  <Heading level={3}>
+                    <Icons.Lock />
+                    <span style={{ marginLeft: "1rem" }}>Reset Password</span>
+                  </Heading>
+                }
               >
-                <Text>Email:</Text>
-                <TextInput size="small" defaultValue="user's email" />
-              </Box>
-              <Box
-                align="stretch"
-                justify="start"
-                direction="column"
-                gap="xsmall"
-                pad="xsmall"
-                fill={false}
+                <Box pad={{ bottom: "large", horizontal: "large" }}>
+                  <Box style={{ textAlign: "right" }}>
+                    <Button
+                      onClick={handlePasswordReset}
+                      type="submit"
+                      label={
+                        <Text style={{ fontWeight: "bold" }}>
+                          Reset Password
+                        </Text>
+                      }
+                      id="change-password-button"
+                      margin={{ left: "auto", top: "medium" }}
+                    />
+                  </Box>
+                </Box>
+              </AccordionPanel>
+              <AccordionPanel
+                label={
+                  <Heading level={3} color="status-critical">
+                    <Icons.Alert color="status-critical" size="medium" />
+                    <span style={{ marginLeft: "1rem" }}>Delete Account</span>
+                  </Heading>
+                }
               >
-                <Text>
-                  My Token Information (Check to show in family trees)
-                </Text>
-                <CheckBoxGroup
-                  options={[
-                    { label: "Name: User's Name" },
-                    { label: "Birthday: User's Birthday" },
-                    { label: "Hometown: User's Hometown" },
-                  ]}
-                />
-              </Box>
-            </AccordionPanel>
-            <AccordionPanel label="Manage My Account" id="manage-accordion">
-              <Text size="xlarge">My Trees</Text>
-              <List
-                data={[
-                  { name: "Eric", count: 5 },
-                  { name: "Shimi", count: 7 },
-                ]}
-              />
-              <Text size="xlarge" margin={{ top: "medium" }}>
-                Delete Account
-              </Text>
-              <Text size="medium" margin={{ top: "xsmall" }}>
-                Enter your email address then press the Delete button to
-                confirm. Deleting your account will not delete trees for active
-                collaborators.
-              </Text>
-              <TextInput />
-              <Box pad="large">
-                <Button
-                  label="Delete Account"
-                  onClick={handleDeleteAccount}
-                  id="delete-account-button"
-                />
-              </Box>
-            </AccordionPanel>
-            <Box align="center" justify="center" pad="medium" />
-            <Button label="Log out" />
-          </Accordion>
+                <Box pad={{ bottom: "large", horizontal: "large" }}>
+                  <Text color="status-critical">
+                    Please enter your email address below to confirm.
+                  </Text>
+                  <form
+                    onSubmit={handleDeleteAccount}
+                    style={{ textAlign: "right" }}
+                  >
+                    <TextInput
+                      name="email"
+                      type="email"
+                      placeholder={auth.currentUser?.email || ""}
+                    />
+                    <Button
+                      type="submit"
+                      label={
+                        <Text
+                          color="status-critical"
+                          style={{ fontWeight: "bold" }}
+                        >
+                          Delete Account
+                        </Text>
+                      }
+                      color="status-critical"
+                      id="delete-account-button"
+                      margin={{ left: "auto", top: "medium" }}
+                    />
+                  </form>
+                </Box>
+              </AccordionPanel>
+            </Accordion>
+          </Box>
         </Box>
       </Box>
     </React.Fragment>

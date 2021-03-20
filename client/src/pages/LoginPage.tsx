@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Box,
   Button,
   Card,
@@ -16,6 +17,7 @@ import React from "react"
 import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
+import { handlePasswordReset } from "../helpers/handlePasswordReset"
 import { login } from "../store/auth/authActions"
 
 const LoginPage: React.FC = () => {
@@ -67,7 +69,11 @@ const LoginPage: React.FC = () => {
               <FormField name="password" label="Password" id="password-field">
                 <TextInput name="password" type="password" />
               </FormField>
+
               <Box direction="column" gap="medium" pad={{ bottom: "large" }}>
+                <Anchor onClick={handlePasswordReset}>
+                  Forgot your password?
+                </Anchor>
                 {errorMessage && (
                   <Box>
                     <Text color="status-error" size="xsmall">

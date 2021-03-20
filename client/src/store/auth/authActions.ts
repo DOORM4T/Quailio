@@ -1,4 +1,5 @@
 import { ActionCreator } from "redux"
+import { convertTypeAcquisitionFromJson } from "typescript"
 import { auth, usersCollection } from "../../firebase/services"
 import { deleteNetwork, resetLocalNetworks } from "../networks/actions"
 import { AppThunk } from "../store"
@@ -49,6 +50,9 @@ export const createAccount = (email: string, password: string): AppThunk => {
 
       /* Save the user document */
       await usersCollection.doc(credentials.user.uid).set(userDocument)
+
+      /* Send the user an email verification message */
+      credentials.user.sendEmailVerification()
 
       /* Update state with the logged in user ID */
       const action: IAuthCreateAccountAction = {
