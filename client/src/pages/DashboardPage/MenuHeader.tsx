@@ -397,7 +397,7 @@ export const HeaderMenu: React.FC<IProps> = ({
         ) : null
       ) : (
         // Show the network select menu
-        <Box>{networkSelectMenu}</Box>
+        networkSelectMenu
       )}
     </Box>
   )
