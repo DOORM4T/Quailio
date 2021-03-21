@@ -33,13 +33,14 @@ const ContentPanel: React.FC<IProps> = (props) => {
 
   // Initial editor content changed? Update state--the person in focus changed
   React.useEffect(() => {
-    setEditorContent(initialContent || "")
+    setEditorContent(initialContent || "<p><br></p>")
   }, [initialContent])
 
   // Update saved state when editorContent state changes
   React.useEffect(() => {
     /* Unsaved changes if the new content is different from the initial content */
-    const hasContent = initialContent !== undefined
+    const hasContent =
+      initialContent !== undefined && editorContent !== "<p><br></p>"
     const didChange = editorContent !== initialContent
     if (hasContent && didChange) setSaved(false)
     else setSaved(true)
