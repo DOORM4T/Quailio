@@ -38,6 +38,12 @@ const PersonMenu: React.FC<IProps> = (props) => {
   // Add/Search input
   const [topInput, setTopInput] = React.useState("")
 
+  // State to navigate through the found persons list
+  const [foundIndex, setFoundIndex] = React.useState(0)
+
+  // List ref for managing the list DOM  (e.g. to focus on an item)
+  const listRef = React.useRef<HTMLUListElement>()
+
   // Update the person list whenever it changes or when the topInput search changes
   React.useEffect(() => {
     // Filter the person list
@@ -46,22 +52,37 @@ const PersonMenu: React.FC<IProps> = (props) => {
       person.name.toLowerCase().includes(search),
     )
     setPersonListData(filtered)
+    setFoundIndex(-1)
   }, [props.data, topInput])
+
+  // Focus on the person at a corresponding foundIndex
+  React.useEffect(() => {
+    // Stop if there's no list ref
+    if (!listRef.current) return
+
+    // Ensure the foundIndex exists
+    if (foundIndex >= 0 && foundIndex < personListData.length) {
+      // Scroll the person node into view
+      listRef.current.children[foundIndex].scrollIntoView({
+        behavior: "smooth",
+      })
+
+      // Zoom in on the selected person in the force-graph
+      dispatch(zoomToPerson(personListData[foundIndex].id))
+    }
+  }, [foundIndex])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTopInput(e.currentTarget.value)
   }
 
   // Add a person to the network
-  const handleAddPerson = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault() // Prevent form default behavior
-
+  const handleAddPerson = async () => {
     // Stop if the current network doesn't exist or if the user didn't type anything in the top input
     if (!currentNetwork || topInput === "") return
 
     try {
       await dispatch(addPerson(currentNetwork.id, topInput)) // Add the person in global state
-      setTopInput("") // Clear input
     } catch (error) {
       console.error(error)
     }
@@ -100,7 +121,8 @@ const PersonMenu: React.FC<IProps> = (props) => {
 
   /* How the list renders the item */
   const renderItem = (item: IPerson, index: number) => {
-    const isSelected = props.selected[item.id]
+    // TODO: Batch select -- const isSelected = props.selected[item.id]
+    const isSelected = foundIndex === index
 
     return (
       <Box
@@ -113,7 +135,10 @@ const PersonMenu: React.FC<IProps> = (props) => {
         <Box
           onClick={viewPerson(item.id)} // Open the person overlay when clicked
           // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
-          onMouseEnter={() => dispatch(zoomToPerson(item.id))} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
+          onMouseEnter={() => {
+            dispatch(zoomToPerson(item.id))
+            setFoundIndex(-1) // Clear the foundPerson highlight
+          }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
           onMouseLeave={resetZoomedPerson}
           aria-label="Select person"
           width="64px"
@@ -122,16 +147,16 @@ const PersonMenu: React.FC<IProps> = (props) => {
           justify="center"
           style={{
             cursor: "pointer",
-            filter: isSelected ? "brightness(25%)" : undefined,
+            filter: isSelected ? "brightness(200%)" : undefined,
           }}
         >
-          {item.thumbnailUrl ? (
-            <Image src={item.thumbnailUrl} height="64px" width="64px" />
-          ) : (
-            <Box background="brand" fill align="center" justify="center">
+          <Box background="brand" fill align="center" justify="center">
+            {item.thumbnailUrl ? (
+              <Image src={item.thumbnailUrl} height="64px" width="64px" />
+            ) : (
               <Icons.User width="100%" />
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
         <Box>
           <Text
@@ -150,42 +175,64 @@ const PersonMenu: React.FC<IProps> = (props) => {
     )
   }
 
+  const handleShortkeys = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (e.ctrlKey) {
+        // Add the person in the search box if CTRL+ENTER
+        await handleAddPerson()
+      } else if (e.shiftKey) {
+        // Select previous if SHIFT+ENTER
+        let prevIndex = foundIndex - 1
+        if (prevIndex < 0) prevIndex = personListData.length - 1
+        setFoundIndex(prevIndex)
+      } else {
+        // Select next if ENTER
+        setFoundIndex((foundIndex + 1) % personListData.length)
+      }
+    } else if (e.key === "Escape") {
+      e.currentTarget.blur()
+    }
+  }
   return (
     <React.Fragment>
       {/* Top input for searching/adding people */}
-      <form onSubmit={handleAddPerson}>
-        <Box direction="row" align="center" pad="small" gap="none">
-          <TextInput
-            width="75%"
-            placeholder="Search for or add a person"
-            onChange={handleInputChange}
-            onClick={(e) => e.currentTarget.select()}
-            value={topInput}
+      <Box direction="row" align="center" pad="small" gap="none">
+        <TextInput
+          width="75%"
+          placeholder="Search for (ENTER, SHIFT+ENTER) or add a person (CTRL+ENTER)"
+          onChange={handleInputChange}
+          onClick={(e) => e.currentTarget.select()}
+          value={topInput}
+          onKeyUp={handleShortkeys}
+          style={{ fontSize: "12px" }}
+        />
+        <Box direction="row" width="25%" justify="center">
+          <Button
+            onClick={handleAddPerson}
+            type="submit"
+            icon={<Icons.Add />}
+            aria-label="Add person (Click or CTRL+ENTER)"
+            hoverIndicator
           />
-          <Box direction="row" width="25%" justify="center">
-            <Button
-              type="submit"
-              icon={<Icons.Add />}
-              aria-label="Add person"
-              hoverIndicator
-            />
-          </Box>
         </Box>
-      </form>
+      </Box>
 
       {/* -== PERSON LIST ==- */}
-      {personListData.length > 0 ? (
-        <List
-          id={props.id}
-          data={personListData}
-          style={{ overflowY: "auto" }}
-          children={renderItem}
-        />
-      ) : (
-        <Text textAlign="center">
-          No results. Press enter to create the person.
-        </Text>
-      )}
+      <Box fill>
+        {personListData.length > 0 ? (
+          <List
+            id={props.id}
+            data={personListData}
+            style={{ overflowY: "auto" }}
+            children={renderItem}
+            ref={(el: any) => (listRef.current = el)}
+          />
+        ) : (
+          <Text textAlign="center">
+            No results. Press enter to create the person.
+          </Text>
+        )}
+      </Box>
     </React.Fragment>
   )
 }
