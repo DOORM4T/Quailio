@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal"
-import { Box, Text } from "grommet"
+import { Box, Button, Text } from "grommet"
 import React from "react"
 import ReactQuill from "react-quill"
 import "react-quill/dist/quill.snow.css"
@@ -14,6 +14,7 @@ import {
   getPersonInFocusData,
   getPersonInFocusId,
 } from "../../../store/selectors/ui/getPersonInFocusData"
+import * as Icons from "grommet-icons"
 
 /* Content on the view panel when the user has no content */
 const DEFAULT_VIEW_CONTENT = "<p>Write anything!</p>"
@@ -50,9 +51,6 @@ const ContentPanel: React.FC<IProps> = (props) => {
         ?.replace(/<p><br><\/p>/g, "")
         .replaceAll("\n", "")
         .trim() || ""
-
-    console.log(initialWithoutBreaks)
-    console.log(editorContentWithoutBreaks)
 
     const didChange = editorContentWithoutBreaks !== initialWithoutBreaks
     if (!isEmpty && didChange) setSaved(false)
@@ -127,7 +125,6 @@ const ContentPanel: React.FC<IProps> = (props) => {
     if (e.ctrlKey && e.key === "s") {
       e.preventDefault()
       e.stopPropagation()
-      console.log("save")
 
       handleSave()
     }
@@ -137,18 +134,33 @@ const ContentPanel: React.FC<IProps> = (props) => {
     <article id={props.id} style={{ height: "100%" }}>
       {props.isEditing ? (
         <Box direction="column" fill>
-          <Text
-            className="content-editor-save-status"
-            color={
-              isSaving
-                ? "status-warning"
-                : isSaved
-                ? "status-success"
-                : "status-critical"
-            }
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "0.5rem",
+            }}
           >
-            {isSaving ? "Saving..." : isSaved ? "Saved" : "Unsaved Changes"}
-          </Text>
+            <Button
+              icon={<Icons.StatusGood color="brand" />}
+              aria-label="Save content"
+              style={{ marginRight: "0.2rem", padding: 0 }}
+              hoverIndicator
+              onClick={handleSave}
+            />
+            <Text
+              className="content-editor-save-status"
+              color={
+                isSaving
+                  ? "status-warning"
+                  : isSaved
+                  ? "status-success"
+                  : "status-critical"
+              }
+            >
+              {isSaving ? "Saving..." : isSaved ? "Saved" : "Unsaved Changes"}
+            </Text>
+          </div>
           <Box height="100vh">
             <ReactQuill
               onChange={handleEditorChange}
