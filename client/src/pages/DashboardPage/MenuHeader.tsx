@@ -387,9 +387,12 @@ export const HeaderMenu: React.FC<IProps> = ({
       {isZeroLoginMode ? (
         // Show just the current network name
         currentNetwork ? (
-          <Tip content={currentNetwork.name}>
+          <Tip
+            content={currentNetwork.name}
+            dropProps={{ align: { left: "right" } }}
+          >
             <h2 style={{ height: "0.5rem", lineHeight: "0.5rem" }}>
-              {currentNetwork.name.length > 15
+              {currentNetwork.name.length > 16
                 ? `${currentNetwork.name.slice(0, 16)}...`
                 : currentNetwork.name}
             </h2>

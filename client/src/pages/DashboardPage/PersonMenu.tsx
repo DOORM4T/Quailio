@@ -202,6 +202,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
           placeholder="Search for (ENTER, SHIFT+ENTER) or add a person (CTRL+ENTER)"
           onChange={handleInputChange}
           onClick={(e) => e.currentTarget.select()}
+          onBlur={() => setFoundIndex(-1)}
           value={topInput}
           onKeyUp={handleShortkeys}
           style={{ fontSize: "12px" }}
@@ -229,7 +230,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
           />
         ) : (
           <Text textAlign="center">
-            No results. Press enter to create the person.
+            {topInput.length > 0 ? "No results" : "Nothing here... yet!"}
           </Text>
         )}
       </Box>

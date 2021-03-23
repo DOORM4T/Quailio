@@ -8,6 +8,7 @@ import {
   IThumbnailDetails,
 } from "../../../firebase/thumbnailManagement"
 import useAuth from "../../../hooks/auth/useAuth"
+import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
 import {
   setNetworkLoading,
   setPersonThumbnail,
@@ -26,6 +27,7 @@ interface IProps {
 const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   const dispatch: Dispatch<any> = useDispatch()
   const { isAuthenticated } = useAuth()
+  const isSmall = useSmallBreakpoint()
 
   const currentNetworkId = useSelector(getCurrentNetworkId)
   const currentPersonId = useSelector(getPersonInFocusId)
@@ -162,14 +164,14 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
         icon={<Icons.Link />}
         id="set-url-button"
         tooltip="Link to a thumbnail"
-        dropProps={{ align: { bottom: "top" } }}
+        dropProps={{ align: isSmall ? { top: "bottom" } : { bottom: "top" } }}
       />
 
       <ToolTipButton
         icon={<Icons.Image />}
         onClick={openFileInput}
         id="set-uploaded-image-button"
-        tooltip="Upload a thumbnail (1 MB Limit)"
+        tooltip={`Upload a thumbnail ${isAuthenticated ? "(1 MB Limit)" : ""}`}
         dropProps={{ align: { top: "bottom" } }}
       />
 
@@ -196,7 +198,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
           onClick={removeThumbnail}
           id="remove-thumbnail-button"
           tooltip="Remove thumbnail"
-          dropProps={{ align: { left: "right" } }}
+          dropProps={{ align: isSmall ? { top: "bottom" } : { bottom: "top" } }}
         />
       )}
     </Box>
