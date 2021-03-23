@@ -1,7 +1,7 @@
 import deepEqual from "deep-equal"
 import { Box, Text } from "grommet"
 import React from "react"
-import Quill from "react-quill"
+import ReactQuill from "react-quill"
 import "react-quill/dist/quill.snow.css"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
@@ -31,18 +31,31 @@ const ContentPanel: React.FC<IProps> = (props) => {
   const [isSaved, setSaved] = React.useState(true)
   const [isSaving, setSaving] = React.useState(false)
 
-  // Initial editor content changed? Update state--the person in focus changed
   React.useEffect(() => {
-    setEditorContent(initialContent || "<p><br></p>")
+    setEditorContent(initialContent || "")
   }, [initialContent])
 
   // Update saved state when editorContent state changes
   React.useEffect(() => {
-    /* Unsaved changes if the new content is different from the initial content */
-    const hasContent =
-      initialContent !== undefined && editorContent !== "<p><br></p>"
-    const didChange = editorContent !== initialContent
-    if (hasContent && didChange) setSaved(false)
+    // QuillJS uses these tags to denote the first, empty line -- this is the same as having no content
+    const isEmpty = editorContent === "<p><br></p>"
+
+    // Check if the user updated content (replace newline chars and trim to remove extraneous changes (such as newlines) from the QuillJS editor)
+    const editorContentWithoutBreaks = editorContent
+      .replace(/<p><br><\/p>/g, "")
+      .replaceAll("\n", "")
+      .trim()
+    const initialWithoutBreaks =
+      initialContent
+        ?.replace(/<p><br><\/p>/g, "")
+        .replaceAll("\n", "")
+        .trim() || ""
+
+    console.log(initialWithoutBreaks)
+    console.log(editorContentWithoutBreaks)
+
+    const didChange = editorContentWithoutBreaks !== initialWithoutBreaks
+    if (!isEmpty && didChange) setSaved(false)
     else setSaved(true)
   }, [editorContent])
 
@@ -66,8 +79,8 @@ const ContentPanel: React.FC<IProps> = (props) => {
   if (!currentPersonId) return null
 
   // Handle controlled input changes
-  const handleEditorChange = (value: string) => {
-    setEditorContent(value)
+  const handleEditorChange = (content: string) => {
+    setEditorContent(content)
   }
 
   // Save to global state
@@ -137,7 +150,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
             {isSaving ? "Saving..." : isSaved ? "Saved" : "Unsaved Changes"}
           </Text>
           <Box height="100vh">
-            <Quill
+            <ReactQuill
               onChange={handleEditorChange}
               value={editorContent}
               onKeyDown={handleSaveKeyCombo}
