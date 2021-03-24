@@ -11,6 +11,7 @@ import {
   ICurrentNetwork,
   IImportNetworkAction,
   INetwork,
+  IRelationship,
   NetworkActionTypes,
 } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"

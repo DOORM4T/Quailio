@@ -7,6 +7,7 @@ import {
 import {
   ICurrentNetwork,
   IPerson,
+  IRelationship,
   IRelationships,
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
@@ -261,19 +262,16 @@ function getLinkLabel(link: LinkObject | null) {
 
   const sourceNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
-  const doesNodeHaveRelationships = "relationships" in sourceNode
+  const doesNodeHaveRelationships = Boolean(sourceNode.relationships)
   const doRelationshipsContainId = targetNode.id in sourceNode.relationships
   if (!doesNodeHaveRelationships || !doRelationshipsContainId) return ""
 
   // Display the reason shared between the two nodes
-  let reason = sourceNode.relationships[targetNode.id]
+  const relationship: IRelationship = sourceNode.relationships[targetNode.id]
 
-  // If the relationship uses a legacy [p1ToP2Rel, p2ToP1Rel] relationship, join the relationships into a single string
-  if ((reason as unknown) instanceof Array) {
-    reason = ((reason as unknown) as string[]).join(" - ")
-  }
+  const reason = relationship.reason || ""
 
-  return `${reason}`
+  return reason
 }
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {

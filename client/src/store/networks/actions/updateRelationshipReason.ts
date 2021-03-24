@@ -40,11 +40,11 @@ export const updateRelationshipReason = (
       /* Update the relationship */
       const updatedP1Relationships: IRelationships = {
         ...p1Data.relationships,
-        [p2Id]: newReason,
+        [p2Id]: { ...p1Data.relationships[p2Id], reason: newReason },
       }
       const updatedP2Relationships: IRelationships = {
         ...p2Data.relationships,
-        [p1Id]: newReason,
+        [p1Id]: { ...p2Data.relationships[p1Id], reason: newReason },
       }
 
       /* Update each person's relationships field in Firestore */

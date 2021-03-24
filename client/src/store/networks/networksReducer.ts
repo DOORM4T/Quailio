@@ -1,4 +1,5 @@
 import { Reducer } from "redux"
+import { restructureLegacyCurrentNetwork } from "./helpers/restructureLegacyCurrentNetwork"
 import {
   IAddPersonAction,
   IConnectPeopleAction,
@@ -143,10 +144,15 @@ function getImportedNetworkState(
   const { id, name, personIds } = action.asCurrentNetwork
   const asNetworkListItem: INetwork = { id, name, personIds }
 
+  /* Ensure backwards compatibility by restructuring legacy data types */
+  const currentNetwork = restructureLegacyCurrentNetwork(
+    action.asCurrentNetwork,
+  )
+
   return {
     ...state,
     networks: state.networks.concat(asNetworkListItem),
-    currentNetwork: action.asCurrentNetwork,
+    currentNetwork,
     isLoading: false,
   }
 }
@@ -239,11 +245,17 @@ function getUpdatedPersonRelationshipState(
   /* Create the updated relationship */
   const updatedP1Relationships: IRelationships = {
     ...p1Data.relationships,
-    [action.p2Id]: action.newReason,
+    [action.p2Id]: {
+      ...p1Data.relationships[action.p2Id],
+      reason: action.newReason,
+    },
   }
   const updatedP2Relationships: IRelationships = {
     ...p2Data.relationships,
-    [action.p1Id]: action.newReason,
+    [action.p1Id]: {
+      ...p2Data.relationships[action.p1Id],
+      reason: action.newReason,
+    },
   }
 
   /* Update each person */
@@ -455,9 +467,14 @@ function getSetCurrentNetworkState(
   state: INetworksState,
   action: ISetNetworkAction,
 ): INetworksState {
+  console.log(action.currentNetwork)
+
+  /* Ensure backwards compatibility by restructuring legacy data types, if there are any */
+  const currentNetwork = restructureLegacyCurrentNetwork(action.currentNetwork)
+
   return {
     ...state,
-    currentNetwork: action.currentNetwork,
+    currentNetwork,
     isLoading: false,
   }
 }

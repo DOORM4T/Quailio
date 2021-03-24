@@ -1,5 +1,3 @@
-import { INetworkJSON } from "../../helpers/getNetworkJSON"
-
 // -== STATE TYPES ==- //
 export interface INetworksState {
   readonly isLoading: boolean
@@ -33,9 +31,14 @@ export interface IPerson {
   content?: string
 }
 
-/* string 1: this person in relation to the other person 
-   string 2: the shared relationship reason with the other person (the other person will use the same reason) */
-export type IRelationships = { [otherPersonId: string]: string }
+// A person's Relationships object maps a relationship to another person by their ID
+export type IRelationships = { [otherPersonId: string]: IRelationship }
+
+// A Relationship consists of a reason and a map of groups the relationship covers
+export type IRelationship = {
+  reason: string
+  groups: { [groupId: string]: boolean }
+}
 
 // -== ACTION TYPES ==- //
 export enum NetworkActionTypes {
