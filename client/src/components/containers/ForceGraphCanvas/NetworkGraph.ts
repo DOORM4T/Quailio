@@ -261,7 +261,9 @@ function getLinkLabel(link: LinkObject | null) {
 
   const sourceNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
-  if (!(targetNode.id in sourceNode.relationships)) return ""
+  const doesNodeHaveRelationships = "relationships" in sourceNode
+  const doRelationshipsContainId = targetNode.id in sourceNode.relationships
+  if (!doesNodeHaveRelationships || !doRelationshipsContainId) return ""
 
   // Display the reason shared between the two nodes
   let reason = sourceNode.relationships[targetNode.id]
