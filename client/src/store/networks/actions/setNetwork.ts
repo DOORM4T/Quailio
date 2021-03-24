@@ -7,6 +7,7 @@ import {
   ICurrentNetwork,
   INetwork,
   IPerson,
+  IRelationshipGroups,
   ISetNetworkAction,
   NetworkActionTypes,
 } from "../networkTypes"
@@ -37,10 +38,14 @@ export const setNetwork = (networkId: string): AppThunk => {
       /* Get all Person documents related to the Person IDs in the Network */
       const peopleData: IPerson[] = await getAllPersonDataFromDB(networkId)
 
+      // Get all Relationship Group documents related to the Group IDs in the network
+      const groupsData: IRelationshipGroups = {} // TODO: get all groups from Firestore
+
       /* Create a current network object from Network and People state  */
       const currentNetwork: ICurrentNetwork = {
         ...networkData,
         people: peopleData,
+        relationshipGroups: groupsData,
       }
 
       /* Update state with the currentNetwork */

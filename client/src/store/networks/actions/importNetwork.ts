@@ -63,6 +63,7 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
       id: newNetworkId,
       people: peopleCopy,
       personIds: updatedPersonIds,
+      groupIds: [], // TODO: Update group IDs
     }
 
     try {
@@ -95,6 +96,7 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
           id: asCurrentNetwork.id,
           name: asCurrentNetwork.name,
           personIds: asCurrentNetwork.personIds,
+          groupIds: [], // TODO: Update group IDs
         }
         await networkDoc.ref.set(network)
 

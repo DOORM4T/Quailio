@@ -24,6 +24,8 @@ const emptyState: ICurrentNetwork = {
   name: "",
   people: [],
   personIds: [],
+  groupIds: [],
+  relationshipGroups: {},
 }
 
 const ForceGraphCanvas: React.FC<IProps> = (props) => {

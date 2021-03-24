@@ -1,4 +1,4 @@
-import { IPerson } from "../store/networks/networkTypes"
+import { IPerson, IRelationshipGroups } from "../store/networks/networkTypes"
 import { store } from "../store/store"
 
 //
@@ -9,18 +9,20 @@ export interface INetworkJSON {
   id: string
   name: string
   people: IPerson[]
+  relationshipGroups: IRelationshipGroups
 }
 
 export async function getCurrentNetworkJSON(): Promise<INetworkJSON | null> {
   const currentNetwork = store.getState().networks.currentNetwork
   if (!currentNetwork) return null
 
-  const { id, name, people } = currentNetwork
+  const { id, name, people, relationshipGroups } = currentNetwork
 
   const asNetworkJSON: INetworkJSON = {
     id,
     name,
     people,
+    relationshipGroups,
   }
 
   return asNetworkJSON

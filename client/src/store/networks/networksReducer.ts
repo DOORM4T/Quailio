@@ -141,8 +141,8 @@ function getImportedNetworkState(
   state: INetworksState,
   action: IImportNetworkAction,
 ): INetworksState {
-  const { id, name, personIds } = action.asCurrentNetwork
-  const asNetworkListItem: INetwork = { id, name, personIds }
+  const { id, name, personIds, groupIds } = action.asCurrentNetwork
+  const asNetworkListItem: INetwork = { id, name, personIds, groupIds }
 
   /* Ensure backwards compatibility by restructuring legacy data types */
   const currentNetwork = restructureLegacyCurrentNetwork(
@@ -467,8 +467,6 @@ function getSetCurrentNetworkState(
   state: INetworksState,
   action: ISetNetworkAction,
 ): INetworksState {
-  console.log(action.currentNetwork)
-
   /* Ensure backwards compatibility by restructuring legacy data types, if there are any */
   const currentNetwork = restructureLegacyCurrentNetwork(action.currentNetwork)
 
@@ -486,7 +484,11 @@ function getCreateNetworkState(
   return {
     ...state,
     networks: state.networks.concat(action.newNetwork),
-    currentNetwork: { ...action.newNetwork, people: [] },
+    currentNetwork: {
+      ...action.newNetwork,
+      people: [],
+      relationshipGroups: {},
+    },
     isLoading: false,
   }
 }

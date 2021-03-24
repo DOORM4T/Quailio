@@ -1,9 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import {
-  auth,
-  networksCollection,
-  usersCollection,
-} from "../../../firebase/services"
+import { networksCollection, usersCollection } from "../../../firebase/services"
 import { IUserDocument } from "../../auth/authTypes"
 import { AppThunk } from "../../store"
 import {
@@ -27,6 +23,7 @@ export const createNetwork = (name: string): AppThunk => {
       id: uuidv4(),
       name,
       personIds: [],
+      groupIds: [],
     }
 
     try {

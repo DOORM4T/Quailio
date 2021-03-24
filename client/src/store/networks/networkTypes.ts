@@ -13,6 +13,7 @@ export interface INetwork {
   id: string
   name: string
   personIds: string[] // IDs of people in the network
+  groupIds: string[] // IDs of relationship groups in the network
 }
 
 /* 
@@ -21,6 +22,7 @@ export interface INetwork {
 */
 export interface ICurrentNetwork extends INetwork {
   people: IPerson[] // People in the current network
+  relationshipGroups: IRelationshipGroups // Map of Relationship Groups in the current network
 }
 
 export interface IPerson {
@@ -38,6 +40,16 @@ export type IRelationships = { [otherPersonId: string]: IRelationship }
 export type IRelationship = {
   reason: string
   groups: { [groupId: string]: boolean }
+}
+
+// Map of Relationship Groups using their IDs as keys
+export type IRelationshipGroups = { [groupId: string]: IRelationshipGroup }
+
+// A Relationship Group has a name and associated color (used for the group and its link colors)
+export type IRelationshipGroup = {
+  name: string
+  backgroundColor: string
+  textColor: string
 }
 
 // -== ACTION TYPES ==- //

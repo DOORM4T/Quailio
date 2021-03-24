@@ -15,11 +15,13 @@ enum firebaseCollections {
   USERS = "users",
   NETWORKS = "networks",
   PEOPLE = "people",
+  GROUPS = "groups",
 }
 
 export const usersCollection = db.collection(firebaseCollections.USERS)
 export const networksCollection = db.collection(firebaseCollections.NETWORKS)
 export const peopleCollection = db.collection(firebaseCollections.PEOPLE)
+export const groupsCollection = db.collection(firebaseCollections.GROUPS)
 
 // ==- AUTHENTICATION -== //
 export const auth = app.auth()
