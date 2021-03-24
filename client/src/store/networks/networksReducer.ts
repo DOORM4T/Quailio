@@ -3,6 +3,7 @@ import { restructureLegacyCurrentNetwork } from "./helpers/restructureLegacyCurr
 import {
   IAddPersonAction,
   IConnectPeopleAction,
+  ICreateGroupAction,
   ICreateNetworkAction,
   ICurrentNetwork,
   IDeleteNetworkByIdAction,
@@ -96,8 +97,57 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.RENAME_NETWORK:
       return getRenamedNetworksState(state, action)
 
+    //
+    // GROUPS
+    //
+    case NetworkActionTypes.CREATE_GROUP:
+      return getCreateGroupState(state, action)
+
     default:
       return state
+  }
+}
+
+function getCreateGroupState(
+  state: INetworksState,
+  action: ICreateGroupAction,
+): INetworksState {
+  // Ensure the current network is being updated
+  if (state.currentNetwork?.id !== action.networkId) return state
+
+  // Get the index of the network in the global networks state
+  const networkIndex = state.networks.findIndex(
+    (n) => n.id === action.networkId,
+  )
+  if (networkIndex === -1) return state
+  const network = state.networks[networkIndex]
+
+  // Add the new group ID to the network groupIds list
+  const updatedNetwork: INetwork = {
+    ...network,
+    groupIds: network.groupIds ? network.groupIds.concat(action.uuid) : [], // Create the groupIds array if it doesn't exist
+  }
+
+  // Update the whole list of networks with the updated network
+  const updatedNetworks = [...state.networks]
+  updatedNetworks[networkIndex] = updatedNetwork
+
+  // Add the RelationshipGroup to current the current network
+  const currentNetworkCopy: ICurrentNetwork = { ...state.currentNetwork }
+  currentNetworkCopy.groupIds = currentNetworkCopy.groupIds.concat(action.uuid)
+
+  // No relationship groups object? Set it. This might be because the currentNetwork was a legacy network before relationshipGroups were implemented
+  if (!currentNetworkCopy.relationshipGroups) {
+    currentNetworkCopy.relationshipGroups = {}
+  }
+
+  currentNetworkCopy.relationshipGroups[action.uuid] = action.groupData
+
+  return {
+    ...state,
+    networks: updatedNetworks,
+    currentNetwork: currentNetworkCopy,
+    isLoading: false,
   }
 }
 

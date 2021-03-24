@@ -72,6 +72,8 @@ export enum NetworkActionTypes {
   UPDATE_PERSON_CONTENT = "NETWORK/UPDATE_PERSON_CONTENT",
   IMPORT_NETWORK = "NETWORK/IMPORT_NETWORK",
   RENAME_NETWORK = "NETWORK/RENAME_NETWORK",
+
+  CREATE_GROUP = "GROUP/CREATE",
 }
 
 export interface INetworkLoadingAction {
@@ -162,6 +164,13 @@ export interface IRenameNetworkAction {
   newName: string
 }
 
+export interface ICreateGroupAction {
+  type: NetworkActionTypes.CREATE_GROUP
+  networkId: string
+  uuid: string
+  groupData: IRelationshipGroup
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -180,3 +189,4 @@ export type NetworksActions =
   | IUpdatePersonContentAction
   | IImportNetworkAction
   | IRenameNetworkAction
+  | ICreateGroupAction
