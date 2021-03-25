@@ -82,8 +82,8 @@ export function createNetworkGraph(
     .linkDirectionalParticleWidth(1.4)
     .onLinkHover(handleLinkHover())
     .linkLabel(getLinkLabel)
-    .linkWidth((link) => (highlightLinks.has(link) ? 5 : 1))
-    .linkColor((link) => (highlightLinks.has(link) ? "yellow" : "black"))
+    .linkWidth((link) => (highlightLinks.has(link) ? 5 : 2))
+    .linkColor(getLinkColor)
     .onNodeHover(
       handleNodeHover({
         container,
@@ -268,10 +268,39 @@ function getLinkLabel(link: LinkObject | null) {
 
   // Display the reason shared between the two nodes
   const relationship: IRelationship = sourceNode.relationships[targetNode.id]
-
   const reason = relationship.reason || ""
 
   return reason
+}
+
+const DEFAULT_LINK_COLOR = "black"
+function getLinkColor(link: LinkObject | null) {
+  if (!link) return DEFAULT_LINK_COLOR
+
+  // Ensure each node in the link exists
+  const srcNode = link.source as IPersonNode
+  const targetNode = link.target as IPersonNode
+  if (
+    !srcNode.relationships ||
+    !targetNode.relationships ||
+    !srcNode.relationships[targetNode.id]
+  )
+    return DEFAULT_LINK_COLOR
+
+  // Get the group color
+  // TODO: Filter colors based on filtered colors
+  const groupIds = Object.keys(srcNode.relationships[targetNode.id].groups)
+  const relGroupObjects = store.getState().networks.currentNetwork
+    ?.relationshipGroups
+  if (!relGroupObjects) return DEFAULT_LINK_COLOR
+
+  const groupColors = groupIds.map(
+    (groupId) => relGroupObjects[groupId].backgroundColor,
+  )
+
+  const linkColor = groupColors.length > 0 ? groupColors[0] : DEFAULT_LINK_COLOR
+
+  return highlightLinks.has(link) ? "yellow" : linkColor
 }
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {
