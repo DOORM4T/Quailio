@@ -247,7 +247,14 @@ const PersonMenu: React.FC<IProps> = (props) => {
                   backgroundColor: "#AAA",
                   color: "#222",
                 }}
-                label="All"
+                label={
+                  <React.Fragment>
+                    <span style={{ marginLeft: "1rem" }}>All</span>
+                    <span style={{ marginLeft: "auto" }}>
+                      [{personListData.length}]
+                    </span>
+                  </React.Fragment>
+                }
               >
                 <List
                   id={props.id}
@@ -259,9 +266,26 @@ const PersonMenu: React.FC<IProps> = (props) => {
 
               {/* Render user-created groups */}
               {currentNetwork.relationshipGroups &&
-                Object.keys(currentNetwork.relationshipGroups).map(
-                  (groupId, index) => {
+                Object.entries(currentNetwork.relationshipGroups)
+                  // Sort each group by name in alphanumeric order
+                  .sort((e1, e2) =>
+                    e1[1].name
+                      .toLowerCase()
+                      .localeCompare(e2[1].name.toLowerCase()),
+                  )
+
+                  // Get each key
+                  .map((entry) => entry[0])
+
+                  // For each key, render the group
+                  .map((groupId, index) => {
                     const group = currentNetwork.relationshipGroups[groupId]
+                    const peopleInGroup = personListData.filter((person) =>
+                      Object.values(person.relationships).some(
+                        (rel) => rel.groups[groupId],
+                      ),
+                    )
+                    const isEmpty = peopleInGroup.length === 0
 
                     return (
                       <AccordionPanel
@@ -270,21 +294,28 @@ const PersonMenu: React.FC<IProps> = (props) => {
                           height: "48px",
                           backgroundColor: group.backgroundColor,
                           color: group.textColor,
+                          filter: isEmpty
+                            ? "brightness(50%) saturate(50%)"
+                            : undefined,
                         }}
-                        label={group.name}
+                        label={
+                          <React.Fragment>
+                            <span style={{ marginLeft: "1rem" }}>
+                              {group.name}
+                            </span>
+                            <span style={{ marginLeft: "auto" }}>
+                              [{peopleInGroup.length}]
+                            </span>
+                          </React.Fragment>
+                        }
                       >
                         <List
-                          data={personListData.filter((person) =>
-                            Object.values(person.relationships).some(
-                              (rel) => rel.groups[groupId],
-                            ),
-                          )}
+                          data={peopleInGroup}
                           children={renderItem(false)}
                         />
                       </AccordionPanel>
                     )
-                  },
-                )}
+                  })}
             </Accordion>
           ) : (
             <Text textAlign="center">
