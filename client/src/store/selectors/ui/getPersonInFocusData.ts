@@ -32,7 +32,7 @@ export const getPersonInFocusId = createSelector(
 )
 export const getPersonInFocusRelationships = createSelector(
   selectors,
-  (person) => person?.relationships,
+  (person) => person?.relationships || {},
 )
 export const getPersonInFocusThumbnailURL = createSelector(
   selectors,

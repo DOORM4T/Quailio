@@ -1,4 +1,13 @@
-import { Box, Button, Image, List, Text, TextInput } from "grommet"
+import {
+  Accordion,
+  AccordionPanel,
+  Box,
+  Button,
+  Image,
+  List,
+  Text,
+  TextInput,
+} from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -119,10 +128,13 @@ const PersonMenu: React.FC<IProps> = (props) => {
   // Function to un-zoom on a person
   const resetZoomedPerson = () => dispatch(zoomToPerson(null))
 
-  /* How the list renders the item */
-  const renderItem = (item: IPerson, index: number) => {
+  /**
+   * How the lists render items
+   * @param canSearch whether the search item can be highlighted or not (this will only be enabled for the "ALL" list)
+   */
+  const renderItem = (canSearch: boolean) => (item: IPerson, index: number) => {
     // TODO: Batch select -- const isSelected = props.selected[item.id]
-    const isSelected = foundIndex === index
+    const isSelected = canSearch && foundIndex === index
 
     return (
       <Box
@@ -219,21 +231,68 @@ const PersonMenu: React.FC<IProps> = (props) => {
       </Box>
 
       {/* -== PERSON LIST ==- */}
-      <Box fill>
-        {personListData.length > 0 ? (
-          <List
-            id={props.id}
-            data={personListData}
-            style={{ overflowY: "auto" }}
-            children={renderItem}
-            ref={(el: any) => (listRef.current = el)}
-          />
-        ) : (
-          <Text textAlign="center">
-            {topInput.length > 0 ? "No results" : "Nothing here... yet!"}
-          </Text>
-        )}
-      </Box>
+      {currentNetwork && (
+        <Box fill style={{ overflowY: "auto" }}>
+          {personListData.length > 0 ? (
+            <Accordion
+              animate={false}
+              multiple={true}
+              activeIndex={foundIndex > -1 ? 0 : undefined}
+            >
+              {/* Group for ALL people in the network */}
+              <AccordionPanel
+                key="group-all"
+                style={{
+                  height: "48px",
+                  backgroundColor: "#AAA",
+                  color: "#222",
+                }}
+                label="All"
+              >
+                <List
+                  id={props.id}
+                  data={personListData}
+                  children={renderItem(true)}
+                  ref={(el: any) => (listRef.current = el)}
+                />
+              </AccordionPanel>
+
+              {/* Render user-created groups */}
+              {currentNetwork.relationshipGroups &&
+                Object.keys(currentNetwork.relationshipGroups).map(
+                  (groupId, index) => {
+                    const group = currentNetwork.relationshipGroups[groupId]
+
+                    return (
+                      <AccordionPanel
+                        key={`group-${group.name}-${index}`}
+                        style={{
+                          height: "48px",
+                          backgroundColor: group.backgroundColor,
+                          color: group.textColor,
+                        }}
+                        label={group.name}
+                      >
+                        <List
+                          data={personListData.filter((person) =>
+                            Object.values(person.relationships).some(
+                              (rel) => rel.groups[groupId],
+                            ),
+                          )}
+                          children={renderItem(false)}
+                        />
+                      </AccordionPanel>
+                    )
+                  },
+                )}
+            </Accordion>
+          ) : (
+            <Text textAlign="center">
+              {topInput.length > 0 ? "No results" : "Nothing here... yet!"}
+            </Text>
+          )}
+        </Box>
+      )}
     </React.Fragment>
   )
 }

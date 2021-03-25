@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  CheckBox,
   DropButton,
   Heading,
   List,
@@ -16,8 +15,11 @@ import {
   connectPeople,
   deletePerson as deletePersonById,
   disconnectPeople,
+  toggleGroupInRelationship,
 } from "../../../store/networks/actions"
+import { IRelationships } from "../../../store/networks/networkTypes"
 import {
+  getCurrentNetworkGroups,
   getCurrentNetworkId,
   getCurrentNetworkPeople,
 } from "../../../store/selectors/networks/getCurrentNetwork"
@@ -35,6 +37,7 @@ interface IRelationshipOption {
   id: string
   name: string
   isConnected: boolean
+  currentRelationships: IRelationships
 }
 
 interface IOverlayButtonProps {
@@ -48,6 +51,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const currentPersonRelationships = useSelector(getPersonInFocusRelationships)
   const currentPersonName = useSelector(getPersonInFocusName)
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
+  const currentNetworkGroups = useSelector(getCurrentNetworkGroups)
 
   // Connection drop-button search state
   const [search, setSearch] = React.useState<string>("")
@@ -80,7 +84,13 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       const isAlreadyRelated = currentRelationshipIds.includes(p.id)
       const isSelf = p.id === currentPersonId
       if (!isSelf) {
-        return { id: p.id, name: p.name, isConnected: isAlreadyRelated }
+        const relOption: IRelationshipOption = {
+          id: p.id,
+          name: p.name,
+          isConnected: isAlreadyRelated,
+          currentRelationships: p.relationships,
+        }
+        return relOption
       } else {
         return {}
       }
@@ -179,6 +189,25 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
+  const handleToggleGroup = (
+    groupId: string,
+    otherPersonId: string,
+    toggleTo: boolean,
+  ) => async () => {
+    try {
+      await dispatch(
+        toggleGroupInRelationship(
+          groupId,
+          currentPersonId,
+          otherPersonId,
+          toggleTo,
+        ),
+      )
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   // Button that opens a menu for connecting to/disconnecting from other people
   const ConnectPeopleDropButton: React.ReactNode = (
     <DropButton
@@ -216,17 +245,59 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
             )}
             style={{ maxHeight: "350px", overflowY: "auto" }}
           >
-            {(data: IRelationshipOption) => (
+            {(otherPerson: IRelationshipOption) => (
               <Box
                 direction="row"
-                key={data.id}
+                key={otherPerson.id}
                 gap="small"
-                width="medium"
-                onClick={toggleConnection(data.id, data.isConnected)}
+                width={{ min: "medium" }}
+                // onClick={toggleConnection(data.id, data.isConnected)}
               >
-                <Text>{data.name}</Text>
-                <Box margin={{ left: "auto" }}>
-                  <CheckBox checked={data.isConnected} />
+                <Text>{otherPerson.name}</Text>
+                <Box direction="row" margin={{ left: "auto" }}>
+                  {/* <CheckBox checked={data.isConnected} /> */}
+
+                  {/* Toggleable Group Badges */}
+                  {Object.keys(currentNetworkGroups).map((groupId) => {
+                    const {
+                      name,
+                      backgroundColor,
+                      textColor,
+                    } = currentNetworkGroups[groupId]
+
+                    // Whether to highlight this badge or not
+                    let isInGroup = false
+                    const relationship =
+                      currentPersonRelationships[otherPerson.id]
+                    const isOptionRelatedToCurrentPerson = Boolean(relationship)
+                    if (isOptionRelatedToCurrentPerson) {
+                      // If undefined or false, toggle state is false. Otherwise, it is true.
+                      isInGroup = Boolean(relationship.groups[groupId])
+                    }
+
+                    return (
+                      <Button
+                        onClick={handleToggleGroup(
+                          groupId,
+                          otherPerson.id,
+                          !isInGroup,
+                        )}
+                        aria-label={`Toggle connection over group ${name}`}
+                        key={`group-badge-${groupId}`}
+                        style={{
+                          backgroundColor: isInGroup ? backgroundColor : "#AAA",
+                          color: textColor,
+                          borderRadius: "4px",
+                          margin: "0 4px",
+                          padding: "2px 4px",
+                          cursor: "pointer",
+                        }}
+                        hoverIndicator
+                      >
+                        {name}
+                      </Button>
+                    )
+                  })}
                 </Box>
               </Box>
             )}

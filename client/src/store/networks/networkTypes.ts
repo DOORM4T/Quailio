@@ -74,6 +74,7 @@ export enum NetworkActionTypes {
   RENAME_NETWORK = "NETWORK/RENAME_NETWORK",
 
   CREATE_GROUP = "GROUP/CREATE",
+  TOGGLE_GROUP_IN_RELATIONSHIP = "GROUP/TOGGLE",
 }
 
 export interface INetworkLoadingAction {
@@ -171,6 +172,14 @@ export interface ICreateGroupAction {
   groupData: IRelationshipGroup
 }
 
+export interface IToggleGroupAction {
+  type: NetworkActionTypes.TOGGLE_GROUP_IN_RELATIONSHIP
+  groupId: string
+  p1Id: string
+  p2Id: string
+  toggleTo: boolean
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -190,3 +199,4 @@ export type NetworksActions =
   | IImportNetworkAction
   | IRenameNetworkAction
   | ICreateGroupAction
+  | IToggleGroupAction

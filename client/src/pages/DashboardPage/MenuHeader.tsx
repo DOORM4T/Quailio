@@ -9,6 +9,7 @@ import { getCurrentNetworkJSON } from "../../helpers/getNetworkJSON"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
   addPerson,
+  createGroup,
   createNetwork,
   deleteNetwork,
   importNetwork,
@@ -244,14 +245,44 @@ export const HeaderMenu: React.FC<IProps> = ({
     }
   }
 
+  const handleCreateGroup = async () => {
+    if (!currentNetwork) {
+      alert("Please select a Network!")
+      return
+    }
+
+    /* get name of person to add */
+    const groupName = window.prompt("Name of group:")
+    if (!groupName) {
+      alert("Canceled create group action")
+      return
+    }
+
+    try {
+      await dispatch(createGroup(currentNetwork.id, groupName))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const actionButtons = [
     <ToolTipButton
-      key={"add-person-button"}
+      key="add-person-button"
       id="add-person-button"
       tooltip="Add person"
       ariaLabel="Add a person to the network"
       icon={<Icons.UserAdd color="light-1" />}
       onClick={handleAddPerson}
+      isDisabled={!currentNetwork}
+    />,
+
+    <ToolTipButton
+      key="create-group-button"
+      id="create-group-button"
+      tooltip="Create relationship group"
+      ariaLabel="Create a relationship group"
+      icon={<Icons.Folder color="light-1" />}
+      onClick={handleCreateGroup}
       isDisabled={!currentNetwork}
     />,
 

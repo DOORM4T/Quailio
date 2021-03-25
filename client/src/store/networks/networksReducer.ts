@@ -14,10 +14,12 @@ import {
   INetwork,
   INetworksState,
   IPerson,
+  IRelationship,
   IRelationships,
   IRenameNetworkAction,
   ISetNetworkAction,
   ISetPersonThumbnailAction,
+  IToggleGroupAction,
   IUpdatePersonContentAction,
   IUpdatePersonNameAction,
   IUpdateRelationshipReasonAction,
@@ -102,9 +104,68 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     //
     case NetworkActionTypes.CREATE_GROUP:
       return getCreateGroupState(state, action)
+    case NetworkActionTypes.TOGGLE_GROUP_IN_RELATIONSHIP:
+      return getToggleGroupState(state, action)
 
     default:
       return state
+  }
+}
+
+function getToggleGroupState(
+  state: INetworksState,
+  action: IToggleGroupAction,
+): INetworksState {
+  // Stop if there's no network currently selected
+  if (!state.currentNetwork) return state
+
+  // Get each person's index. Stop if either doesn't exist.
+  const p1Index = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.p1Id,
+  )
+  const p2Index = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.p2Id,
+  )
+  if (p1Index === -1 || p2Index === -1) return state
+
+  // Create updated person objects
+  const p1 = state.currentNetwork.people[p1Index]
+  const p2 = state.currentNetwork.people[p2Index]
+
+  // P1 and P2 share a relationship -- just grab it from p1
+  const relationship = p1.relationships[action.p2Id]
+
+  // Create an updated relationship with the group toggled on/off
+  const updatedRelationship: IRelationship = {
+    ...relationship,
+    groups: { ...relationship.groups, [action.groupId]: action.toggleTo }, // Toggle
+  }
+
+  // Update each person with the updated relationship
+  const updatedP1: IPerson = {
+    ...p1,
+    relationships: { ...p1.relationships, [action.p2Id]: updatedRelationship },
+  }
+  const updatedP2: IPerson = {
+    ...p2,
+    relationships: { ...p2.relationships, [action.p1Id]: updatedRelationship },
+  }
+
+  // Update the list of people
+  const updatedPeople = [...state.currentNetwork.people]
+  updatedPeople[p1Index] = updatedP1
+  updatedPeople[p2Index] = updatedP2
+
+  // Update the current network
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 
