@@ -3,8 +3,11 @@ import {
   AccordionPanel,
   Box,
   Button,
+  Heading,
   Image,
   List,
+  Tab,
+  Tabs,
   Text,
   TextInput,
 } from "grommet"
@@ -12,7 +15,9 @@ import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
+import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
 import { addPerson } from "../../store/networks/actions"
+import { togglePersonInGroup } from "../../store/networks/actions/togglePersonInGroup"
 import { IPerson } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import {
@@ -205,6 +210,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
       e.currentTarget.blur()
     }
   }
+
   return (
     <React.Fragment>
       {/* Top input for searching/adding people */}
@@ -230,15 +236,11 @@ const PersonMenu: React.FC<IProps> = (props) => {
         </Box>
       </Box>
 
-      {/* -== PERSON LIST ==- */}
+      {/* -== PERSON LISTS ==- */}
       {currentNetwork && (
         <Box fill style={{ overflowY: "auto" }}>
           {personListData.length > 0 ? (
-            <Accordion
-              animate={false}
-              multiple={true}
-              activeIndex={foundIndex > -1 ? 0 : undefined}
-            >
+            <Accordion animate={false} multiple={true}>
               {/* Group for ALL people in the network */}
               <AccordionPanel
                 key="group-all"
@@ -275,15 +277,33 @@ const PersonMenu: React.FC<IProps> = (props) => {
                       .localeCompare(e2[1].name.toLowerCase()),
                   )
 
-                  // Get each key
-                  .map((entry) => entry[1])
-
-                  // For each key, render the group
-                  .map((group, index) => {
+                  .map((entry, index) => {
+                    const [groupId, group] = entry
                     const peopleInGroup = personListData.filter((person) =>
-                      group.personIds.has(person.id),
+                      group.personIds.includes(person.id),
                     )
                     const isEmpty = peopleInGroup.length === 0
+
+                    // Function to toggle this person in group
+                    const createTogglePersonInGroupFunc = (
+                      personId: string,
+                      isInGroup: boolean,
+                    ) => async () => {
+                      const doAdd = !isInGroup
+
+                      try {
+                        await dispatch(
+                          togglePersonInGroup(
+                            currentNetwork.id,
+                            groupId,
+                            personId,
+                            doAdd,
+                          ),
+                        )
+                      } catch (error) {
+                        console.error(error)
+                      }
+                    }
 
                     return (
                       <AccordionPanel
@@ -307,10 +327,29 @@ const PersonMenu: React.FC<IProps> = (props) => {
                           </React.Fragment>
                         }
                       >
-                        <List
-                          data={peopleInGroup}
-                          children={renderItem(false)}
-                        />
+                        <Box pad="medium">
+                          <Tabs>
+                            <Tab title="View">
+                              <List
+                                data={peopleInGroup}
+                                children={renderItem(false)}
+                              />
+                            </Tab>
+                            <Tab title="Manage">
+                              <Box background="light-1">
+                                <SearchAndCheckMenu
+                                  defaultOptions={personListData}
+                                  idField="id"
+                                  nameField="name"
+                                  isCheckedFunction={(arg: IPerson) =>
+                                    group.personIds.includes(arg.id)
+                                  }
+                                  toggleOption={createTogglePersonInGroupFunc}
+                                />
+                              </Box>
+                            </Tab>
+                          </Tabs>
+                        </Box>
                       </AccordionPanel>
                     )
                   })}

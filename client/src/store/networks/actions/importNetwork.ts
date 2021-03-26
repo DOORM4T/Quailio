@@ -11,7 +11,8 @@ import {
   ICurrentNetwork,
   IImportNetworkAction,
   INetwork,
-  IRelationship,
+  IPerson,
+  IRelationshipGroups,
   NetworkActionTypes,
 } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
@@ -29,8 +30,26 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
     // Give the network a new ID
     const newNetworkId = uuidv4()
 
+    // Will update groups and people with new IDs
+    const groupsCopy: IRelationshipGroups = {
+      ...networkJSON.relationshipGroups,
+    }
+    const peopleCopy: IPerson[] = [...networkJSON.people]
+
+    // Update all group IDs
+    Object.keys(groupsCopy).forEach((groupId) => {
+      // Copy the group data before deleting the old key-value pair
+      const groupData = { ...groupsCopy[groupId] }
+
+      // Delete the old key-value pair
+      const newGroupId = uuidv4()
+      delete groupsCopy[groupId]
+
+      // Create the new key-value pair with the updated ID as the key
+      groupsCopy[newGroupId] = groupData
+    })
+
     // Give each person a new ID
-    const peopleCopy = [...networkJSON.people]
     peopleCopy.forEach((p) => {
       // Remember the old ID
       const oldId = p.id
@@ -52,10 +71,24 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
         // Re-create the relationship with the new ID
         otherPerson.relationships[p.id] = relationshipCopy
       })
+
+      // Update all groups
+      Object.keys(groupsCopy).forEach((groupId) => {
+        const group = groupsCopy[groupId]
+
+        // Replace the current person's old ID with their new one
+        const personIdIndex = group.personIds.findIndex((pid) => pid === oldId)
+        if (personIdIndex === -1) return // Stop if the current person's ID wasn't found
+
+        group.personIds[personIdIndex] = p.id
+      })
     })
 
     // Get all the updated person IDs
     const updatedPersonIds = peopleCopy.map((p) => p.id)
+
+    // Get all the updated group IDs
+    const updatedGroupIds = Object.keys(groupsCopy)
 
     // Format as a CurrentNetwork
     const asCurrentNetwork: ICurrentNetwork = {
@@ -63,7 +96,8 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
       id: newNetworkId,
       people: peopleCopy,
       personIds: updatedPersonIds,
-      groupIds: [], // TODO: Update group IDs
+      groupIds: updatedGroupIds,
+      relationshipGroups: groupsCopy,
     }
 
     try {
@@ -96,7 +130,7 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
           id: asCurrentNetwork.id,
           name: asCurrentNetwork.name,
           personIds: asCurrentNetwork.personIds,
-          groupIds: [], // TODO: Update group IDs
+          groupIds: asCurrentNetwork.groupIds, // TODO: Update group IDs
         }
         await networkDoc.ref.set(network)
 
@@ -118,6 +152,8 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
         })
 
         await Promise.all(uploadPersonPromises)
+
+        // TODO: Create group docs in Firestore
       }
 
       // Action to import the network to global state

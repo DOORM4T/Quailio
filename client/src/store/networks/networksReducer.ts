@@ -1,4 +1,3 @@
-import { produce } from "immer"
 import { Reducer } from "redux"
 import { restructureLegacyCurrentNetwork } from "./helpers/restructureLegacyCurrentNetwork"
 import {
@@ -15,6 +14,8 @@ import {
   INetwork,
   INetworksState,
   IPerson,
+  IRelationshipGroup,
+  IRelationshipGroups,
   IRelationships,
   IRenameNetworkAction,
   ISetNetworkAction,
@@ -27,13 +28,14 @@ import {
   NetworksActions,
 } from "./networkTypes"
 
+// TODO: Refactor all reducer logic to use Immer
+
 const initialState: INetworksState = {
   isLoading: false,
   networks: [],
   currentNetwork: null,
 }
 
-// TODO: Refactor reducer logic with Immer
 export const networksReducer: Reducer<INetworksState, NetworksActions> = (
   state = initialState,
   action,
@@ -118,24 +120,44 @@ function getTogglePersonInGroupState(
   state: INetworksState,
   action: ITogglePersonInGroupAction,
 ): INetworksState {
-  // First time using Immer -- creates the next immutable state from mutations
-  return produce(state, (draft) => {
-    // Stop if there's no current network or if the network ID doesn't match the current network
-    if (!draft.currentNetwork || action.networkId !== draft.currentNetwork.id)
-      return draft
+  if (!state.currentNetwork || action.networkId !== state.currentNetwork.id)
+    return state
 
-    // Add or remove the person ID from the group
-    const pidSet =
-      draft.currentNetwork.relationshipGroups[action.groupId].personIds
+  const group = state.currentNetwork.relationshipGroups[action.groupId]
+  if (!group) return state
 
-    if (action.toggleOn) {
-      pidSet.add(action.personId)
-    } else {
-      pidSet.delete(action.personId)
-    }
+  let updatedPersonIds = [...group.personIds]
 
-    return draft
-  })
+  console.log(action.toggleOn)
+
+  if (action.toggleOn) {
+    updatedPersonIds.push(action.personId)
+  } else {
+    updatedPersonIds = updatedPersonIds.filter((pid) => pid !== action.personId)
+
+    console.log(updatedPersonIds)
+  }
+
+  const updatedGroup: IRelationshipGroup = {
+    ...group,
+    personIds: updatedPersonIds,
+  }
+
+  const updatedGroups: IRelationshipGroups = {
+    ...state.currentNetwork.relationshipGroups,
+  }
+  updatedGroups[action.groupId] = updatedGroup
+
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    relationshipGroups: updatedGroups,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
+  }
 }
 
 function getCreateGroupState(

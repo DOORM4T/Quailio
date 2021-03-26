@@ -29,7 +29,7 @@ export const createGroup = (
   const uuid = uuidv4()
   const groupData: IRelationshipGroup = {
     name,
-    personIds: new Set(),
+    personIds: [],
     backgroundColor: randomRGBColor(),
     textColor: "rgb(0,0,0)",
   }

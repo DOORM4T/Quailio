@@ -45,13 +45,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
   const currentNetworkGroups = useSelector(getCurrentNetworkGroups)
 
-  // Connection drop-button search state
-  const [search, setSearch] = React.useState<string>("")
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.currentTarget.value)
-  }
-
   // Connection drop-button ref -- used to trigger a click to close the menu
   const connectPeopleDropButtonRef = React.useRef<any>()
 
@@ -205,13 +198,11 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
             />
           </Box>
           <SearchAndCheckMenu
-            search={search}
-            handleSearchChange={handleSearchChange}
             defaultOptions={relationshipOptions}
             idField="id"
             nameField="name"
-            checkedField="isConnected"
-            toggleConnection={toggleConnection}
+            isCheckedFunction={(arg: IRelationshipOption) => arg.isConnected}
+            toggleOption={toggleConnection}
           />
         </React.Fragment>
       }

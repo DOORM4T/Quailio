@@ -47,7 +47,7 @@ export type IRelationshipGroups = { [groupId: string]: IRelationshipGroup }
 // A Relationship Group has a name and associated color (used for the group and its link colors)
 export type IRelationshipGroup = {
   name: string
-  personIds: Set<string> // Set of Person IDs associated with the group
+  personIds: string[]
   backgroundColor: string
   textColor: string
 }
