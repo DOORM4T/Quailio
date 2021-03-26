@@ -39,7 +39,6 @@ export type IRelationships = { [otherPersonId: string]: IRelationship }
 // A Relationship consists of a reason and a map of groups the relationship covers
 export type IRelationship = {
   reason: string
-  groups: { [groupId: string]: boolean }
 }
 
 // Map of Relationship Groups using their IDs as keys
@@ -48,6 +47,7 @@ export type IRelationshipGroups = { [groupId: string]: IRelationshipGroup }
 // A Relationship Group has a name and associated color (used for the group and its link colors)
 export type IRelationshipGroup = {
   name: string
+  personIds: Set<string> // Set of Person IDs associated with the group
   backgroundColor: string
   textColor: string
 }
@@ -74,7 +74,7 @@ export enum NetworkActionTypes {
   RENAME_NETWORK = "NETWORK/RENAME_NETWORK",
 
   CREATE_GROUP = "GROUP/CREATE",
-  TOGGLE_GROUP_IN_RELATIONSHIP = "GROUP/TOGGLE",
+  TOGGLE_PERSON_IN_GROUP = "GROUP/TOGGLE_PERSON",
 }
 
 export interface INetworkLoadingAction {
@@ -172,12 +172,12 @@ export interface ICreateGroupAction {
   groupData: IRelationshipGroup
 }
 
-export interface IToggleGroupAction {
-  type: NetworkActionTypes.TOGGLE_GROUP_IN_RELATIONSHIP
+export interface ITogglePersonInGroupAction {
+  type: NetworkActionTypes.TOGGLE_PERSON_IN_GROUP
+  networkId: string
   groupId: string
-  p1Id: string
-  p2Id: string
-  toggleTo: boolean
+  personId: string
+  toggleOn: boolean
 }
 
 /* Action types used by the networks reducer */
@@ -199,4 +199,4 @@ export type NetworksActions =
   | IImportNetworkAction
   | IRenameNetworkAction
   | ICreateGroupAction
-  | IToggleGroupAction
+  | ITogglePersonInGroupAction

@@ -265,6 +265,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
               </AccordionPanel>
 
               {/* Render user-created groups */}
+              {/* TODO: Render group lists */}
               {currentNetwork.relationshipGroups &&
                 Object.entries(currentNetwork.relationshipGroups)
                   // Sort each group by name in alphanumeric order
@@ -275,15 +276,12 @@ const PersonMenu: React.FC<IProps> = (props) => {
                   )
 
                   // Get each key
-                  .map((entry) => entry[0])
+                  .map((entry) => entry[1])
 
                   // For each key, render the group
-                  .map((groupId, index) => {
-                    const group = currentNetwork.relationshipGroups[groupId]
+                  .map((group, index) => {
                     const peopleInGroup = personListData.filter((person) =>
-                      Object.values(person.relationships).some(
-                        (rel) => rel.groups[groupId],
-                      ),
+                      group.personIds.has(person.id),
                     )
                     const isEmpty = peopleInGroup.length === 0
 

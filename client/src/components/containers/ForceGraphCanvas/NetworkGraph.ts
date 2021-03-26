@@ -289,18 +289,7 @@ function getLinkColor(link: LinkObject | null) {
 
   // Get the group color
   // TODO: Filter colors based on filtered colors
-  const groupIds = Object.keys(srcNode.relationships[targetNode.id].groups)
-  const relGroupObjects = store.getState().networks.currentNetwork
-    ?.relationshipGroups
-  if (!relGroupObjects) return DEFAULT_LINK_COLOR
-
-  const groupColors = groupIds.map(
-    (groupId) => relGroupObjects[groupId].backgroundColor,
-  )
-
-  const linkColor = groupColors.length > 0 ? groupColors[0] : DEFAULT_LINK_COLOR
-
-  return highlightLinks.has(link) ? "yellow" : linkColor
+  return highlightLinks.has(link) ? "yellow" : DEFAULT_LINK_COLOR
 }
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {

@@ -21,7 +21,6 @@ export function restructureLegacyCurrentNetwork(network: ICurrentNetwork) {
           // Update the relationship to the most recent relationship format (see IRelationship)
           const reformattedRelationship: IRelationship = {
             reason: isArrayFormat ? relationship.join(" - ") : relationship,
-            groups: {},
           }
 
           person.relationships[id] = reformattedRelationship

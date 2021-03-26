@@ -72,11 +72,11 @@ export const connectPeople = (
       /* Copy existing relationships and add the new relationship for each person */
       const updatedP1Rels: IRelationships = {
         ...p1Data.relationships,
-        [p2Id]: { reason: sharedReason, groups: {} },
+        [p2Id]: { reason: sharedReason },
       }
       const updatedP2Rels: IRelationships = {
         ...p2Data.relationships,
-        [p1Id]: { reason: sharedReason, groups: {} },
+        [p1Id]: { reason: sharedReason },
       }
 
       /* Updated person data fetched from the database? Then update the database with the new data. */

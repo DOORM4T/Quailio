@@ -1,3 +1,4 @@
+import { produce } from "immer"
 import { Reducer } from "redux"
 import { restructureLegacyCurrentNetwork } from "./helpers/restructureLegacyCurrentNetwork"
 import {
@@ -14,12 +15,11 @@ import {
   INetwork,
   INetworksState,
   IPerson,
-  IRelationship,
   IRelationships,
   IRenameNetworkAction,
   ISetNetworkAction,
   ISetPersonThumbnailAction,
-  IToggleGroupAction,
+  ITogglePersonInGroupAction,
   IUpdatePersonContentAction,
   IUpdatePersonNameAction,
   IUpdateRelationshipReasonAction,
@@ -33,6 +33,7 @@ const initialState: INetworksState = {
   currentNetwork: null,
 }
 
+// TODO: Refactor reducer logic with Immer
 export const networksReducer: Reducer<INetworksState, NetworksActions> = (
   state = initialState,
   action,
@@ -104,69 +105,37 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     //
     case NetworkActionTypes.CREATE_GROUP:
       return getCreateGroupState(state, action)
-    case NetworkActionTypes.TOGGLE_GROUP_IN_RELATIONSHIP:
-      return getToggleGroupState(state, action)
+
+    case NetworkActionTypes.TOGGLE_PERSON_IN_GROUP:
+      return getTogglePersonInGroupState(state, action)
 
     default:
       return state
   }
 }
 
-function getToggleGroupState(
+function getTogglePersonInGroupState(
   state: INetworksState,
-  action: IToggleGroupAction,
+  action: ITogglePersonInGroupAction,
 ): INetworksState {
-  // Stop if there's no network currently selected
-  if (!state.currentNetwork) return state
+  // First time using Immer -- creates the next immutable state from mutations
+  return produce(state, (draft) => {
+    // Stop if there's no current network or if the network ID doesn't match the current network
+    if (!draft.currentNetwork || action.networkId !== draft.currentNetwork.id)
+      return draft
 
-  // Get each person's index. Stop if either doesn't exist.
-  const p1Index = state.currentNetwork.people.findIndex(
-    (p) => p.id === action.p1Id,
-  )
-  const p2Index = state.currentNetwork.people.findIndex(
-    (p) => p.id === action.p2Id,
-  )
-  if (p1Index === -1 || p2Index === -1) return state
+    // Add or remove the person ID from the group
+    const pidSet =
+      draft.currentNetwork.relationshipGroups[action.groupId].personIds
 
-  // Create updated person objects
-  const p1 = state.currentNetwork.people[p1Index]
-  const p2 = state.currentNetwork.people[p2Index]
+    if (action.toggleOn) {
+      pidSet.add(action.personId)
+    } else {
+      pidSet.delete(action.personId)
+    }
 
-  // P1 and P2 share a relationship -- just grab it from p1
-  const relationship = p1.relationships[action.p2Id]
-
-  // Create an updated relationship with the group toggled on/off
-  const updatedRelationship: IRelationship = {
-    ...relationship,
-    groups: { ...relationship.groups, [action.groupId]: action.toggleTo }, // Toggle
-  }
-
-  // Update each person with the updated relationship
-  const updatedP1: IPerson = {
-    ...p1,
-    relationships: { ...p1.relationships, [action.p2Id]: updatedRelationship },
-  }
-  const updatedP2: IPerson = {
-    ...p2,
-    relationships: { ...p2.relationships, [action.p1Id]: updatedRelationship },
-  }
-
-  // Update the list of people
-  const updatedPeople = [...state.currentNetwork.people]
-  updatedPeople[p1Index] = updatedP1
-  updatedPeople[p2Index] = updatedP2
-
-  // Update the current network
-  const updatedCurrentNetwork: ICurrentNetwork = {
-    ...state.currentNetwork,
-    people: updatedPeople,
-  }
-
-  return {
-    ...state,
-    currentNetwork: updatedCurrentNetwork,
-    isLoading: false,
-  }
+    return draft
+  })
 }
 
 function getCreateGroupState(
