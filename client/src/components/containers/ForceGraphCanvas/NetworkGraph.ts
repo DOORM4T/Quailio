@@ -346,7 +346,9 @@ function getLinkColors(link: LinkObject): string[] {
   )
 
   const commonColors = commonGroups.map((group) => group[1].backgroundColor)
-  return commonColors
+  const colors = commonColors.length > 0 ? commonColors : DEFAULT_LINK_COLOR
+
+  return colors
 }
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {
