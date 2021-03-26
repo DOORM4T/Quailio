@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  DropButton,
-  Heading,
-  List,
-  Text,
-  TextInput,
-} from "grommet"
+import { Box, Button, DropButton, Heading } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -15,7 +7,6 @@ import {
   connectPeople,
   deletePerson as deletePersonById,
   disconnectPeople,
-  toggleGroupInRelationship,
 } from "../../../store/networks/actions"
 import { IRelationships } from "../../../store/networks/networkTypes"
 import {
@@ -29,6 +20,7 @@ import {
   getPersonInFocusRelationships,
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import { togglePersonEditMenu } from "../../../store/ui/uiActions"
+import SearchAndCheckMenu from "../../SearchAndCheckMenu"
 
 //                 //
 // -== BUTTONS ==- //
@@ -189,25 +181,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
-  const handleToggleGroup = (
-    groupId: string,
-    otherPersonId: string,
-    toggleTo: boolean,
-  ) => async () => {
-    try {
-      await dispatch(
-        toggleGroupInRelationship(
-          groupId,
-          currentPersonId,
-          otherPersonId,
-          toggleTo,
-        ),
-      )
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
   // Button that opens a menu for connecting to/disconnecting from other people
   const ConnectPeopleDropButton: React.ReactNode = (
     <DropButton
@@ -219,7 +192,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       ref={connectPeopleDropButtonRef}
       dropContent={
         <React.Fragment>
-          <Box direction="row" justify="center" pad="xsmall">
+          <Box direction="row" justify="center">
             <Heading level={4} margin={{ left: "auto" }} textAlign="center">
               Manage Connections
             </Heading>
@@ -231,77 +204,15 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
               hoverIndicator
             />
           </Box>
-
-          <TextInput
-            placeholder="Search by name"
-            value={search}
-            onChange={handleSearchChange}
+          <SearchAndCheckMenu
+            search={search}
+            handleSearchChange={handleSearchChange}
+            defaultOptions={relationshipOptions}
+            idField="id"
+            nameField="name"
+            checkedField="isConnected"
+            toggleConnection={toggleConnection}
           />
-          <List
-            id="add-relationship-buttons"
-            primaryKey="name"
-            data={relationshipOptions.filter((r) =>
-              r.name.toLowerCase().includes(search.toLowerCase()),
-            )}
-            style={{ maxHeight: "350px", overflowY: "auto" }}
-          >
-            {(otherPerson: IRelationshipOption) => (
-              <Box
-                direction="row"
-                key={otherPerson.id}
-                gap="small"
-                width={{ min: "medium" }}
-                // onClick={toggleConnection(data.id, data.isConnected)}
-              >
-                <Text>{otherPerson.name}</Text>
-                <Box direction="row" margin={{ left: "auto" }}>
-                  {/* <CheckBox checked={data.isConnected} /> */}
-
-                  {/* Toggleable Group Badges */}
-                  {Object.keys(currentNetworkGroups).map((groupId) => {
-                    const {
-                      name,
-                      backgroundColor,
-                      textColor,
-                    } = currentNetworkGroups[groupId]
-
-                    // Whether to highlight this badge or not
-                    let isInGroup = false
-                    const relationship =
-                      currentPersonRelationships[otherPerson.id]
-                    const isOptionRelatedToCurrentPerson = Boolean(relationship)
-                    if (isOptionRelatedToCurrentPerson) {
-                      // If undefined or false, toggle state is false. Otherwise, it is true.
-                      isInGroup = Boolean(relationship.groups[groupId])
-                    }
-
-                    return (
-                      <Button
-                        onClick={handleToggleGroup(
-                          groupId,
-                          otherPerson.id,
-                          !isInGroup,
-                        )}
-                        aria-label={`Toggle connection over group ${name}`}
-                        key={`group-badge-${groupId}`}
-                        style={{
-                          backgroundColor: isInGroup ? backgroundColor : "#AAA",
-                          color: textColor,
-                          borderRadius: "4px",
-                          margin: "0 4px",
-                          padding: "2px 4px",
-                          cursor: "pointer",
-                        }}
-                        hoverIndicator
-                      >
-                        {name}
-                      </Button>
-                    )
-                  })}
-                </Box>
-              </Box>
-            )}
-          </List>
         </React.Fragment>
       }
     />
