@@ -82,8 +82,51 @@ export function createNetworkGraph(
     .linkDirectionalParticleWidth(1.4)
     .onLinkHover(handleLinkHover())
     .linkLabel(getLinkLabel)
-    .linkWidth((link) => (highlightLinks.has(link) ? 5 : 2))
-    .linkColor(getLinkColor)
+    .linkCanvasObject(
+      (link: LinkObject | null, ctx: CanvasRenderingContext2D) => {
+        if (!link) return null
+
+        const srcNode = link.source as NodeObject
+        const targetNode = link.target as NodeObject
+        const { x: x1, y: y1 } = srcNode
+        const { x: x2, y: y2 } = targetNode
+        if (!x1 || !y1 || !x2 || !y2) return null
+
+        const centerX = (x1 + x2) / 2
+        const centerY = (y1 + y2) / 2
+        const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
+
+        const linkColors = getLinkColors(link)
+        const doHighlight = highlightLinks.has(link)
+        const gradient =
+          linkColors.length > 1
+            ? ctx.createRadialGradient(
+                centerX,
+                centerY,
+                0,
+                centerX,
+                centerY,
+                distance / 3,
+              )
+            : null
+        if (gradient) {
+          linkColors.forEach((color, index) =>
+            gradient.addColorStop(index / linkColors.length, color),
+          )
+        }
+
+        const strokeColor = gradient ? gradient : linkColors[0]
+
+        ctx.strokeStyle = doHighlight ? "yellow" : strokeColor
+        ctx.lineWidth = doHighlight ? 1 : 0.25
+
+        ctx.beginPath()
+        ctx.moveTo(x1, y1)
+        ctx.lineTo(x2, y2)
+        ctx.stroke()
+        return null
+      },
+    )
     .onNodeHover(
       handleNodeHover({
         container,
@@ -273,11 +316,12 @@ function getLinkLabel(link: LinkObject | null) {
   return reason
 }
 
-const DEFAULT_LINK_COLOR = "black"
-function getLinkColor(link: LinkObject | null) {
-  if (!link) return DEFAULT_LINK_COLOR
-
-  // Ensure each node in the link exists
+const DEFAULT_LINK_COLOR = ["black"]
+/**
+ * @param link
+ * @returns Array of common group colors between the linked nodes
+ */
+function getLinkColors(link: LinkObject): string[] {
   const srcNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
   if (
@@ -289,7 +333,20 @@ function getLinkColor(link: LinkObject | null) {
 
   // Get the group color
   // TODO: Filter colors based on filtered colors
-  return highlightLinks.has(link) ? "yellow" : DEFAULT_LINK_COLOR
+  const currentNetwork = store.getState().networks.currentNetwork
+  if (!currentNetwork) return DEFAULT_LINK_COLOR
+
+  const commonGroups = Object.entries(currentNetwork.relationshipGroups).filter(
+    (entry) => {
+      const group = entry[1]
+      const hasSrcNode = group.personIds.includes(srcNode.id)
+      const hasTargetNode = group.personIds.includes(targetNode.id)
+      return hasSrcNode && hasTargetNode
+    },
+  )
+
+  const commonColors = commonGroups.map((group) => group[1].backgroundColor)
+  return commonColors
 }
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {
