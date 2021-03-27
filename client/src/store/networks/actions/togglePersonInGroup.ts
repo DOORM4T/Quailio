@@ -1,5 +1,11 @@
+import firebase from "firebase"
+import { groupsCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
-import { ITogglePersonInGroupAction, NetworkActionTypes } from "../networkTypes"
+import {
+  IRelationshipGroup,
+  ITogglePersonInGroupAction,
+  NetworkActionTypes,
+} from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
@@ -15,11 +21,36 @@ export const togglePersonInGroup = (
   groupId: string,
   personId: string,
   toggleOn: boolean,
-): AppThunk => (dispatch, getState) => {
-  setNetworkLoading(true)
+): AppThunk => async (dispatch, getState) => {
+  dispatch(setNetworkLoading(true))
 
   try {
     // TODO: Firestore operations
+    // Ensure
+    const isAuthenticated = Boolean(getState().auth.userId)
+    if (isAuthenticated) {
+      const groupDoc = await groupsCollection.doc(groupId).get()
+      if (!groupDoc.exists) throw new Error("That group doesn't exist")
+
+      const groupData = groupDoc.data() as IRelationshipGroup
+
+      // If the personId is already in the group, remove them
+      const hasPerson = groupData.personIds.includes(personId)
+      if (hasPerson) {
+        const removeFromGroupIds: { personIds: any } = {
+          personIds: firebase.firestore.FieldValue.arrayRemove(personId),
+        }
+        groupDoc.ref.update(removeFromGroupIds)
+      }
+
+      // Otherwise, add them to the group
+      else {
+        const addToGroupIds: { personIds: any } = {
+          personIds: firebase.firestore.FieldValue.arrayUnion(personId),
+        }
+        groupDoc.ref.update(addToGroupIds)
+      }
+    }
 
     const action: ITogglePersonInGroupAction = {
       type: NetworkActionTypes.TOGGLE_PERSON_IN_GROUP,
@@ -31,7 +62,7 @@ export const togglePersonInGroup = (
 
     return dispatch(action)
   } catch (error) {
-    setNetworkLoading(false)
+    dispatch(setNetworkLoading(false))
     throw error
   }
 }

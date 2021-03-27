@@ -1,6 +1,7 @@
 import firebase from "firebase"
 import { v4 as uuidv4 } from "uuid"
 import {
+  groupsCollection,
   networksCollection,
   peopleCollection,
   usersCollection,
@@ -154,6 +155,24 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
         await Promise.all(uploadPersonPromises)
 
         // TODO: Create group docs in Firestore
+        const uploadGroupsPromises = Object.entries(
+          asCurrentNetwork.relationshipGroups,
+        ).map(async (groupEntry) => {
+          const [groupId, group] = groupEntry
+          const groupDoc = await groupsCollection.doc(groupId).get()
+
+          // Stop importing if the group already exists (ID clash. This should very rarely happen.)
+          if (groupDoc.exists)
+            throw new Error(
+              "Group ID clashed with an existing group. Stopping import.",
+            )
+
+          // Return a promise to set the person document
+          const setGroupPromise = groupDoc.ref.set(group)
+          return setGroupPromise
+        })
+
+        await Promise.all(uploadGroupsPromises)
       }
 
       // Action to import the network to global state

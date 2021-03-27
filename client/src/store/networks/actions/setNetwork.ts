@@ -1,4 +1,5 @@
 import {
+  groupsCollection,
   networksCollection,
   peopleCollection,
 } from "../../../firebase/services"
@@ -7,6 +8,7 @@ import {
   ICurrentNetwork,
   INetwork,
   IPerson,
+  IRelationshipGroup,
   IRelationshipGroups,
   ISetNetworkAction,
   NetworkActionTypes,
@@ -36,16 +38,20 @@ export const setNetwork = (networkId: string): AppThunk => {
       if (!networkData) throw new Error("Network not found.")
 
       /* Get all Person documents related to the Person IDs in the Network */
-      const peopleData: IPerson[] = await getAllPersonDataFromDB(networkId)
+      const people: IPerson[] = await getAllPersonDataFromDB(networkId)
 
       // Get all Relationship Group documents related to the Group IDs in the network
-      const groupsData: IRelationshipGroups = {} // TODO: get all groups from Firestore
+      let relationshipGroups: IRelationshipGroups = {}
+      if (networkData.groupIds) {
+        // The network might not have a groupIds field -- this is for backwards compatibility with legacy networks
+        relationshipGroups = await getAllGroupsDataFromDB(networkData.groupIds)
+      }
 
       /* Create a current network object from Network and People state  */
       const currentNetwork: ICurrentNetwork = {
         ...networkData,
-        people: peopleData,
-        relationshipGroups: groupsData,
+        people,
+        relationshipGroups,
       }
 
       /* Update state with the currentNetwork */
@@ -60,6 +66,35 @@ export const setNetwork = (networkId: string): AppThunk => {
       throw error
     }
   }
+}
+
+async function getAllGroupsDataFromDB(groupIds: string[]) {
+  // Create an array of Firestore operations to get each group by ID
+  const getGroupsData = groupIds.map(async (groupId: string) => {
+    const groupDoc = await groupsCollection.doc(groupId).get()
+    if (groupDoc.exists) {
+      const value = groupDoc.data() as IRelationshipGroup
+      const keyValuePair = [groupId, value]
+      return keyValuePair
+    } else {
+      return null
+    }
+  })
+
+  // Run all the Promises to get the groups. Filter out any missing/empty groups.
+  // Format: [string -- this is the groupId/key, IRelationshipGroup -- this is the value]
+  const groupsData = (await Promise.all(getGroupsData)).filter((data) =>
+    Boolean(data),
+  ) as [string, IRelationshipGroup][]
+
+  // Create the relationships group object
+  const relationshipGroups: IRelationshipGroups = {}
+  groupsData.forEach((groupData) => {
+    const [groupId, group] = groupData
+    relationshipGroups[groupId] = group
+  })
+
+  return relationshipGroups
 }
 
 /**
