@@ -23,7 +23,7 @@ export const createGroup = (
   networkId: string,
   name: string,
 ): AppThunk => async (dispatch, getState) => {
-  setNetworkLoading(true)
+  dispatch(setNetworkLoading(true))
 
   // Initialize the group's data
   const uuid = uuidv4()
@@ -69,7 +69,7 @@ export const createGroup = (
 
     return dispatch(action)
   } catch (error) {
-    setNetworkLoading(false)
+    dispatch(setNetworkLoading(false))
     throw error
   }
 }

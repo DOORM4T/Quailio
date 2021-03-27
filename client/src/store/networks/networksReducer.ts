@@ -6,6 +6,7 @@ import {
   ICreateGroupAction,
   ICreateNetworkAction,
   ICurrentNetwork,
+  IDeleteGroupAction,
   IDeleteNetworkByIdAction,
   IDeletePersonByIdAction,
   IDisconnectPeopleAction,
@@ -111,8 +112,47 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.TOGGLE_PERSON_IN_GROUP:
       return getTogglePersonInGroupState(state, action)
 
+    case NetworkActionTypes.DELETE_GROUP:
+      return getDeleteGroupState(state, action)
+
     default:
       return state
+  }
+}
+
+function getDeleteGroupState(
+  state: INetworksState,
+  action: IDeleteGroupAction,
+): INetworksState {
+  // Stop if there's no current network or if the current network isn't in view
+  if (!state.currentNetwork || state.currentNetwork.id !== action.networkId)
+    return state
+
+  // Create a copy of the groups without the deleted group
+  const groups = state.currentNetwork.relationshipGroups
+  const groupsWithoutDeleted: IRelationshipGroups = {}
+  Object.keys(groups).forEach((groupId) => {
+    if (groupId !== action.groupId) {
+      groupsWithoutDeleted[groupId] = { ...groups[groupId] }
+    }
+  })
+
+  // Create a copy of the group IDs without the deleted group
+  const groupIdsWithoutDeleted = state.currentNetwork.groupIds.filter(
+    (groupId) => groupId !== action.groupId,
+  )
+
+  // Update the current network
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    relationshipGroups: groupsWithoutDeleted,
+    groupIds: groupIdsWithoutDeleted,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 

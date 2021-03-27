@@ -3,7 +3,6 @@ import {
   AccordionPanel,
   Box,
   Button,
-  Heading,
   Image,
   List,
   Tab,
@@ -16,7 +15,8 @@ import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
-import { addPerson } from "../../store/networks/actions"
+import ToolTipButton from "../../components/ToolTipButton"
+import { addPerson, deleteGroup } from "../../store/networks/actions"
 import { togglePersonInGroup } from "../../store/networks/actions/togglePersonInGroup"
 import { IPerson } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
@@ -305,6 +305,23 @@ const PersonMenu: React.FC<IProps> = (props) => {
                       }
                     }
 
+                    // Function to delete the group
+                    const handleDeleteGroup = async () => {
+                      try {
+                        const doDelete = window.confirm(
+                          `Delete group: [${group.name}]? This action cannot be reversed.`,
+                        )
+
+                        // Stop if the user canceled the confirm prompt
+                        if (!doDelete) return
+
+                        // Delete the group
+                        await dispatch(deleteGroup(currentNetwork.id, groupId))
+                      } catch (error) {
+                        console.error(error)
+                      }
+                    }
+
                     return (
                       <AccordionPanel
                         key={`group-${group.name}-${index}`}
@@ -336,16 +353,27 @@ const PersonMenu: React.FC<IProps> = (props) => {
                               />
                             </Tab>
                             <Tab title="Manage">
-                              <Box background="light-1">
-                                <SearchAndCheckMenu
-                                  defaultOptions={personListData}
-                                  idField="id"
-                                  nameField="name"
-                                  isCheckedFunction={(arg: IPerson) =>
-                                    group.personIds.includes(arg.id)
-                                  }
-                                  toggleOption={createTogglePersonInGroupFunc}
-                                />
+                              <Box gap="xsmall">
+                                <Box direction="row" justify="end">
+                                  <ToolTipButton
+                                    tooltip="Delete group"
+                                    onClick={handleDeleteGroup}
+                                    icon={
+                                      <Icons.Trash color="status-critical" />
+                                    }
+                                  />
+                                </Box>
+                                <Box background="light-1">
+                                  <SearchAndCheckMenu
+                                    defaultOptions={personListData}
+                                    idField="id"
+                                    nameField="name"
+                                    isCheckedFunction={(arg: IPerson) =>
+                                      group.personIds.includes(arg.id)
+                                    }
+                                    toggleOption={createTogglePersonInGroupFunc}
+                                  />
+                                </Box>
                               </Box>
                             </Tab>
                           </Tabs>

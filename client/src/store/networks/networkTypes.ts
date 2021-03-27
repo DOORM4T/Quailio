@@ -75,6 +75,7 @@ export enum NetworkActionTypes {
 
   CREATE_GROUP = "GROUP/CREATE",
   TOGGLE_PERSON_IN_GROUP = "GROUP/TOGGLE_PERSON",
+  DELETE_GROUP = "GROUP/DELETE",
 }
 
 export interface INetworkLoadingAction {
@@ -180,6 +181,12 @@ export interface ITogglePersonInGroupAction {
   toggleOn: boolean
 }
 
+export interface IDeleteGroupAction {
+  type: NetworkActionTypes.DELETE_GROUP
+  networkId: string
+  groupId: string
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -200,3 +207,4 @@ export type NetworksActions =
   | IRenameNetworkAction
   | ICreateGroupAction
   | ITogglePersonInGroupAction
+  | IDeleteGroupAction

@@ -2,7 +2,7 @@ import { Button, DropProps, Tip } from "grommet"
 import React, { CSSProperties } from "react"
 
 interface IProps {
-  id: string
+  id?: string
   tooltip: string
   icon: JSX.Element
   onClick?: () => void
