@@ -64,8 +64,10 @@ export const disconnectPeople = (
 
         p1Data = people.find((p) => p.id === p1Id)
         p2Data = people.find((p) => p.id === p2Id)
-        if (!p1Data || !p2Data) throw new Error("One or more persons not found")
       }
+
+      // Ensure p1 and p2 exist
+      if (!p1Data || !p2Data) throw new Error("One or more persons not found")
 
       /* Create the disconnected relationship data */
       /* Copy existing relationships */

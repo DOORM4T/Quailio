@@ -97,6 +97,7 @@ export function createNetworkGraph(
         const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
 
         const linkColors = getLinkColors(link)
+
         const doHighlight = highlightLinks.has(link)
         const gradient =
           linkColors.length > 1
@@ -324,11 +325,7 @@ const DEFAULT_LINK_COLOR = ["black"]
 function getLinkColors(link: LinkObject): string[] {
   const srcNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
-  if (
-    !srcNode.relationships ||
-    !targetNode.relationships ||
-    !srcNode.relationships[targetNode.id]
-  )
+  if (!srcNode.relationships || !targetNode.relationships)
     return DEFAULT_LINK_COLOR
 
   // Get the group color

@@ -226,13 +226,14 @@ function getCreateGroupState(
 
   // Add the RelationshipGroup to current the current network
   const currentNetworkCopy: ICurrentNetwork = { ...state.currentNetwork }
-  currentNetworkCopy.groupIds = currentNetworkCopy.groupIds.concat(action.uuid)
+  currentNetworkCopy.groupIds = updatedNetwork.groupIds // Copy the group IDs from updatedNetwork
 
   // No relationship groups object? Set it. This might be because the currentNetwork was a legacy network before relationshipGroups were implemented
   if (!currentNetworkCopy.relationshipGroups) {
     currentNetworkCopy.relationshipGroups = {}
   }
 
+  // Set the group in the relationship groups object
   currentNetworkCopy.relationshipGroups[action.uuid] = action.groupData
 
   return {
@@ -530,12 +531,9 @@ function getUpdatedConnectionState(
 ) {
   /* Stop if there is no network selected */
   if (!state.currentNetwork) return state
-  const peopleWithoutUpdatedPeople: IPerson[] = [
-    ...state.currentNetwork.people.filter(
-      (p) =>
-        p.id !== action.updatedP1Data.id && p.id !== action.updatedP2Data.id,
-    ),
-  ]
+  const peopleWithoutUpdatedPeople: IPerson[] = state.currentNetwork.people.filter(
+    (p) => p.id !== action.updatedP1Data.id && p.id !== action.updatedP2Data.id,
+  )
 
   /* Append the updated people to the list */
   const updatedPeople = peopleWithoutUpdatedPeople
