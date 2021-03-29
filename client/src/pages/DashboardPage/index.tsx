@@ -7,8 +7,11 @@ import useAuth from "../../hooks/auth/useAuth"
 import useGetNetworks from "../../hooks/networks/useGetNetworks"
 import usePageExitConfirmation from "../../hooks/usePageExitConfirmation"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
+import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
+import { getGroupIdsByPersonId } from "../../store/selectors/ui/getGroupIdsByPersonId"
+import { getShowNodesWithoutGroups } from "../../store/selectors/ui/getShowNodesWithoutGroups"
 import HeaderMenu from "./MenuHeader"
 import PersonMenu from "./PersonMenu"
 
@@ -34,6 +37,28 @@ const DashboardPage: React.FC = () => {
 
   // List of people selected in the PersonMenu -- this list is used to perform operations on multiple people by their ID
   const [selected, setSelected] = React.useState<{ [key: string]: boolean }>({})
+
+  // Map of nodes and their groups
+  const groupIdsByPersonId = useSelector(getGroupIdsByPersonId)
+
+  // Global state to show/hide nodes without groups
+  const doShowNodesWithoutGroups = useSelector(getShowNodesWithoutGroups)
+
+  // Only show nodes that have at least one active group
+  const networkWithActiveNodes: ICurrentNetwork | null = currentNetwork
+    ? {
+        ...currentNetwork,
+        people: doShowNodesWithoutGroups
+          ? currentNetwork.people // Show all people if showing nodes without groups
+          : currentNetwork.people.filter((person) => {
+              // Show just people with groups if NOT showing nodes without groups
+              // Hide the node if none of its groups are active
+              const groupIds = groupIdsByPersonId[person.id]
+              const doHideNode = groupIds && groupIds.length === 0
+              return !doHideNode
+            }),
+      }
+    : null
 
   return (
     <React.Fragment>
@@ -73,7 +98,7 @@ const DashboardPage: React.FC = () => {
             </Box>
             <ForceGraphCanvas
               id="network-sketch"
-              currentNetwork={currentNetwork}
+              currentNetwork={networkWithActiveNodes}
               style={{ overflow: "hidden", backgroundColor: "#DDD" }}
             />
           </React.Fragment>

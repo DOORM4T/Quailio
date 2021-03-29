@@ -5,7 +5,9 @@ interface IProps {
   id?: string
   tooltip: string
   icon: JSX.Element
-  onClick?: () => void
+  onClick?:
+    | (() => void)
+    | ((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void)
   isDisabled?: boolean
   ariaLabel?: string
   buttonStyle?: CSSProperties

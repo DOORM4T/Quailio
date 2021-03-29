@@ -2,8 +2,12 @@ import { ActionCreator } from "redux"
 import { AppThunk } from "../store"
 import {
   IFocusOnPersonAction,
+  IInitializePersonGroupList,
+  IPersonIDWithActiveGroups,
   ISetUILoadingAction,
+  IToggleGroupFilterAction,
   ITogglePersonEditMenuAction,
+  IToggleShowNodesWithoutGroupsAction,
   IZoomToPersonAction,
   UserInterfaceActionTypes,
 } from "./uiTypes"
@@ -58,3 +62,29 @@ export const togglePersonEditMenu: ActionCreator<ITogglePersonEditMenuAction> = 
 export const zoomToPerson: ActionCreator<IZoomToPersonAction> = (
   personId: string | null,
 ) => ({ type: UserInterfaceActionTypes.ZOOM_TO_PERSON, personId })
+
+// Initialize a map of person IDs with an associated list of group IDs that are showing. In global state. This acts as a cache to see which nodes are showing
+export const initializePersonGroupList: ActionCreator<IInitializePersonGroupList> = (
+  groupIdsbyPersonId: IPersonIDWithActiveGroups[],
+) => ({
+  type: UserInterfaceActionTypes.INIT_PERSON_ACTIVE_GROUPS,
+  groupIdsbyPersonId,
+})
+
+// Toggle a group's "showing" state
+export const toggleGroupFilter: ActionCreator<IToggleGroupFilterAction> = (
+  groupId: string,
+  doShow: boolean,
+) => ({
+  type: UserInterfaceActionTypes.TOGGLE_GROUP_FILTER,
+  groupId,
+  doShow,
+})
+
+// Set the state determining whether the force-graph shows nodes without groups or not
+export const toggleShowNodesWithoutGroups: ActionCreator<IToggleShowNodesWithoutGroupsAction> = (
+  doShow: boolean,
+) => ({
+  type: UserInterfaceActionTypes.TOGGLE_SHOW_NODES_WITHOUT_GROUPS,
+  doShow,
+})

@@ -86,8 +86,9 @@ export function createNetworkGraph(
       (link: LinkObject | null, ctx: CanvasRenderingContext2D) => {
         if (!link) return null
 
-        const srcNode = link.source as NodeObject
-        const targetNode = link.target as NodeObject
+        const srcNode = link.source as NodeObject & IPersonNode
+        const targetNode = link.target as NodeObject & IPersonNode
+
         const { x: x1, y: y1 } = srcNode
         const { x: x2, y: y2 } = targetNode
         if (!x1 || !y1 || !x2 || !y2) return null
@@ -224,7 +225,8 @@ interface IGraphClosureData {
 
 function drawPersonNode() {
   return (node: NodeObject, ctx: CanvasRenderingContext2D) => {
-    const { thumbnail, x = 0, y = 0, name } = node as NodeObject & IPersonNode
+    const { thumbnail, x = 0, y = 0, name, id } = node as NodeObject &
+      IPersonNode
 
     // Highlight highlight nodes, if they exist
     if (hoverNode && highlightNodes && highlightNodes.has(node)) {
@@ -329,13 +331,19 @@ function getLinkColors(link: LinkObject): string[] {
     return DEFAULT_LINK_COLOR
 
   // Get the group color
-  // TODO: Filter colors based on filtered colors
   const currentNetwork = store.getState().networks.currentNetwork
   if (!currentNetwork) return DEFAULT_LINK_COLOR
 
+  const { filteredGroups } = store.getState().ui
   const commonGroups = Object.entries(currentNetwork.relationshipGroups).filter(
     (entry) => {
-      const group = entry[1]
+      const [groupId, group] = entry
+
+      // Ensure that this group is active
+      //  explicitly check if the "showing" state is false since we treat "undefined" as true
+      if (filteredGroups[groupId] === false) return false
+
+      // Ensure the source and target nodes are both in the group
       const hasSrcNode = group.personIds.includes(srcNode.id)
       const hasTargetNode = group.personIds.includes(targetNode.id)
       return hasSrcNode && hasTargetNode

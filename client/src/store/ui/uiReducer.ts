@@ -1,5 +1,6 @@
 import { Reducer } from "redux"
 import {
+  IActiveGroupsByPersonId,
   IUserInterfaceState,
   UserInterfaceActions,
   UserInterfaceActionTypes,
@@ -10,6 +11,9 @@ const initialState: IUserInterfaceState = {
   isPersonEditMenuOpen: false,
   personInFocus: null,
   personInZoom: null,
+  filteredGroups: {},
+  activeGroupsByPersonId: {},
+  doShowNodesWithoutGroups: true,
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -40,6 +44,41 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         personInZoom: action.personId,
+      }
+    }
+
+    // State for caching person nodes whose groups are showing
+    case UserInterfaceActionTypes.INIT_PERSON_ACTIVE_GROUPS: {
+      // Map of active groups by person ID
+      const activeGroupsByPersonId: IActiveGroupsByPersonId = {}
+
+      // Place each personId-activeGroupIds object into the map
+      action.groupIdsbyPersonId.forEach((obj) => {
+        activeGroupsByPersonId[obj.personId] = obj.activeGroupIds
+      })
+
+      return {
+        ...state,
+        activeGroupsByPersonId,
+      }
+    }
+
+    // State for filtering shown groups
+    case UserInterfaceActionTypes.TOGGLE_GROUP_FILTER: {
+      const filteredGroupsCopy = { ...state.filteredGroups }
+      filteredGroupsCopy[action.groupId] = action.doShow
+
+      return {
+        ...state,
+        filteredGroups: filteredGroupsCopy,
+      }
+    }
+
+    // State for determining whether to show nodes without groups or not
+    case UserInterfaceActionTypes.TOGGLE_SHOW_NODES_WITHOUT_GROUPS: {
+      return {
+        ...state,
+        doShowNodesWithoutGroups: action.doShow,
       }
     }
 
