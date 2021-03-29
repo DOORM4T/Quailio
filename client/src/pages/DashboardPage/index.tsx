@@ -35,9 +35,6 @@ const DashboardPage: React.FC = () => {
   // Variable for checking whether we're in zero-login mode or not
   const isZeroLoginMode = !isAuthenticated
 
-  // List of people selected in the PersonMenu -- this list is used to perform operations on multiple people by their ID
-  const [selected, setSelected] = React.useState<{ [key: string]: boolean }>({})
-
   // Map of nodes and their groups
   const groupIdsByPersonId = useSelector(getGroupIdsByPersonId)
 
@@ -84,10 +81,7 @@ const DashboardPage: React.FC = () => {
               height={isSmall ? "50%" : "100%"}
             >
               <PersonMenu
-                id="person-menu"
-                selected={selected}
-                setSelected={setSelected}
-                data={
+                people={
                   currentNetwork
                     ? currentNetwork.people.sort((p1, p2) =>
                         p1.name.localeCompare(p2.name),

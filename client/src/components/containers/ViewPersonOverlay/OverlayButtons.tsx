@@ -19,7 +19,7 @@ import {
   getPersonInFocusName,
   getPersonInFocusRelationships,
 } from "../../../store/selectors/ui/getPersonInFocusData"
-import { togglePersonEditMenu } from "../../../store/ui/uiActions"
+import { togglePersonOverlay } from "../../../store/ui/uiActions"
 import SearchAndCheckMenu from "../../SearchAndCheckMenu"
 
 //                 //
@@ -125,7 +125,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     if (!doDelete) return
 
     /* Close the Person overlay */
-    dispatch(togglePersonEditMenu(false))
+    dispatch(togglePersonOverlay(false))
 
     /* Delete the person */
     try {

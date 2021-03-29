@@ -23,86 +23,116 @@ import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetw
 import { getFilterGroups } from "../../store/selectors/ui/getFilterGroups"
 import { getShowNodesWithoutGroups } from "../../store/selectors/ui/getShowNodesWithoutGroups"
 import {
-  initializePersonGroupList,
+  cachePersonGroupList,
   setPersonInFocus,
   toggleGroupFilter,
-  togglePersonEditMenu,
+  togglePersonOverlay,
   toggleShowNodesWithoutGroups,
   zoomToPerson,
 } from "../../store/ui/uiActions"
 import { IPersonIDWithActiveGroups } from "../../store/ui/uiTypes"
 
+// PROPS |
 interface IProps {
-  id: string
-  data: IPerson[]
-  selected: {
-    [key: string]: boolean
-  }
-  setSelected: React.Dispatch<
-    React.SetStateAction<{
-      [key: string]: boolean
-    }>
-  >
+  people: IPerson[]
 }
 
+// CONSTANT | Character limit for displayed person names
 const NAME_CHAR_LIMIT = 30
 const PersonMenu: React.FC<IProps> = (props) => {
-  // -== STATE ==- //
-
+  // REDUX DISPATCH | Dispatch function for managing global state
   const dispatch: Dispatch<any> = useDispatch()
-  const currentNetwork = useSelector(getCurrentNetwork)
-  const filterGroups = useSelector(getFilterGroups) // Global state for filtering groups
-  const showNodesWithoutGroups = useSelector(getShowNodesWithoutGroups) // Global state for showing nodes without groups
 
-  // Variables tracking if there are groups or not
+  // REDUX SELECTOR | Current network state
+  const currentNetwork = useSelector(getCurrentNetwork)
+
+  // REDUX SELECTOR | Map of groups to show/hide
+  const filterGroups = useSelector(getFilterGroups)
+
+  // REDUX SELECTOR | Map of visible groups IDs by person ID
+  const showNodesWithoutGroups = useSelector(getShowNodesWithoutGroups)
+
+  // VARS | Icon and ToolTip text to show based on "showNodesWithoutGroups" global state
+  const showNodesWithoutGroupsIcon = (
+    <Icons.AppsRounded
+      color={showNodesWithoutGroups ? "status-ok" : "status-critical"}
+    />
+  )
+  const showNodesWithoutGroupsToolTip = showNodesWithoutGroups
+    ? "Click to hide nodes without groups"
+    : "Click to show nodes without groups"
+
+  // VARS | Derived from current network; Track whether there are groups or not
   const groups = currentNetwork?.relationshipGroups
   const hasGroups = groups && Object.keys(groups).length > 0
 
-  // List of people to display in the list
-  const [personListData, setPersonListData] = React.useState(props.data)
+  // STATE | An array of filtered people -- The default list comes from the "people" prop
+  const [filterablePeople, setFilterablePeople] = React.useState(props.people)
 
-  // Add/Search input
-  const [topInput, setTopInput] = React.useState("")
+  // STATE | For the Add/Search controlled-input
+  const [searchAddInput, setSearchAddInput] = React.useState("")
 
-  // State to navigate through the found persons list
-  const [foundIndex, setFoundIndex] = React.useState(0)
+  // STATE | For navigating highlighting an item at an index in the list UI
+  const [searchIndex, setSearchIndex] = React.useState(0)
 
-  // List ref for managing the list DOM  (e.g. to focus on an item)
+  // STATE | Indicates whether all groups are showing or not. Used to toggle all groups on/off.
+  const [isShowingAllGroups, setShowingAllGroups] = React.useState<boolean>(
+    true,
+  )
+
+  // VARS | Icon and ToolTip text to show based on "isShowingAllGroups" state
+  const showHideAllIcon = isShowingAllGroups ? (
+    <Icons.FormView color="status-ok" size="medium" />
+  ) : (
+    <Icons.Hide color="status-critical" size="medium" />
+  )
+  const showHideAllToolTip = isShowingAllGroups
+    ? "Click to hide all groups"
+    : "Click to show all groups"
+
+  // REF | For managing the list DOM  (e.g. to focus on an item)
   const listRef = React.useRef<HTMLUListElement>()
 
-  // Update the person list whenever it changes or when the topInput search changes
+  // EFFECT | Update the filterablePeople list
   React.useEffect(() => {
-    // Filter the person list
-    const search = topInput.toLowerCase().trim()
-    const filtered = props.data.filter((person) =>
+    // Filter the original person list using the search/add input
+    const search = searchAddInput.toLowerCase().trim()
+    const filtered = props.people.filter((person) =>
       person.name.toLowerCase().includes(search),
     )
-    setPersonListData(filtered)
-    setFoundIndex(-1)
-  }, [props.data, topInput])
+    setFilterablePeople(filtered)
 
-  // Focus on the person at a corresponding foundIndex
+    // Reset the search index (stop highlighting)
+    setSearchIndex(-1)
+  }, [props.people, searchAddInput]) // ACTIVATES | When the people prop or search/add input state change
+
+  // EFFECT | Make the force-graph zoom-in on the person corresponding to the searchIndex state
   React.useEffect(() => {
-    // Stop if there's no list ref
+    // Ensure the list ref exists -- stop if there's no list ref
     if (!listRef.current) return
 
-    // Ensure the foundIndex exists
-    if (foundIndex >= 0 && foundIndex < personListData.length) {
+    // Ensure the foundIndex corresponds to a list item
+    if (searchIndex >= 0 && searchIndex < filterablePeople.length) {
       // Scroll the person node into view
-      listRef.current.children[foundIndex].scrollIntoView({
+      listRef.current.children[searchIndex].scrollIntoView({
         behavior: "smooth",
       })
 
       // Zoom in on the selected person in the force-graph
-      dispatch(zoomToPerson(personListData[foundIndex].id))
+      dispatch(zoomToPerson(filterablePeople[searchIndex].id))
     }
-  }, [foundIndex])
+  }, [searchIndex]) // ACTIVATES | When searchIndex state changes
 
+  /* EFFECT | Cache global "groupsByPersonIds" state for people and the active/visible groups they're in 
+            |    The "groupsByPersonIds" global state is used by the force-graph 
+            |    -- setting/caching the state from this PersonMenu component saves a lot of
+            |    processing that would otherwise be inefficiently calculated during each tick of the force-graph  */
   React.useEffect(() => {
+    // Stop if there aren't any groups in the current network -- this means there's no person-group data to cache
     if (!groups || !hasGroups) return
 
-    // Initialize active groups global state for each person (caches person state & groups for showing/hiding people by group)
-    const groupsByPersonIds = personListData.map((person) => {
+    // Get an array of objects containing a personId and active groups containing that person
+    const groupsByPersonIds = filterablePeople.map((person) => {
       const groupsWithThisPerson = Object.keys(groups).filter((groupId) =>
         groups[groupId].personIds.includes(person.id),
       )
@@ -120,68 +150,98 @@ const PersonMenu: React.FC<IProps> = (props) => {
       return data
     })
 
-    dispatch(initializePersonGroupList(groupsByPersonIds))
-  }, [currentNetwork?.people, groups, filterGroups]) // Re-initialize if any of these states change
+    // Pass the array to a custom Redux action that will result in this information being cached in global state
+    dispatch(cachePersonGroupList(groupsByPersonIds))
+  }, [currentNetwork?.people, groups, filterGroups]) // ACTIVATES | When the people list, groups, or filterGroups change
 
-  //
-  // FUNCTIONS
-  //
-
+  // FUNCTION | Set search/add input state when an input value changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTopInput(e.currentTarget.value)
-  }
+    setSearchAddInput(e.currentTarget.value)
+  } // END | handleInputChange
 
-  // Add a person to the network
+  // FUNCTION | Add a person to the current network
   const handleAddPerson = async () => {
     // Stop if the current network doesn't exist or if the user didn't type anything in the top input
-    if (!currentNetwork || topInput === "") return
+    if (!currentNetwork || searchAddInput === "") return
 
     try {
-      await dispatch(addPerson(currentNetwork.id, topInput)) // Add the person in global state
-      setTopInput("") // Clear the search/add input
+      await dispatch(addPerson(currentNetwork.id, searchAddInput)) // Add the person in global state
+      setSearchAddInput("") // Clear the search/add input
     } catch (error) {
       console.error(error)
     }
-  }
+  } // END | handleAddPerson
 
-  /* Open a Person's content menu */
+  // FUNCTION | Open a Person's content menu
   const viewPerson = (id: string) => async () => {
     if (!currentNetwork) return
     const person = currentNetwork.people.find((p) => p.id === id)
     if (!person) return
 
-    /* focus on the person */
+    // Focus on the person's info and open the content overlay
     try {
       await dispatch(setPersonInFocus(person.id))
-      /* open edit menu */
-      dispatch(togglePersonEditMenu(true))
+      dispatch(togglePersonOverlay(true))
     } catch (error) {
       console.error(error)
     }
-  }
+  } // END | viewPerson
 
-  /* Add/remove a person from list of selected people 
-      This list is for performing batch operations on multiple people */
-  const toggleSelected = (id: string) => () => {
-    const newSelected = { ...props.selected }
-    if (props.selected[id]) {
-      newSelected[id] = false
-    } else {
-      newSelected[id] = true
-    }
-    props.setSelected(newSelected)
-  }
-
-  // Function to un-zoom on a person
-  const resetZoomedPerson = () => dispatch(zoomToPerson(null))
+  // FUNCTION | Un-zoom on a person in the force-graph
+  const resetZoomedPerson = () => dispatch(zoomToPerson(null)) // END | resetZoomedPerson
 
   /**
-   * How the lists render items
-   * @param canSearch whether the search item can be highlighted or not (this will only be enabled for the "ALL" list)
+   * Creates a function for how a list renders items
+   * @param canSearch whether the search item can be highlighted or not (this will only be enabled for the "ALL" list). Closure data for the created function.
+   * @returns UI for the item
    */
   const renderItem = (canSearch: boolean) => (item: IPerson, index: number) => {
-    // TODO: Batch select -- const isSelected = props.selected[item.id]
-    const isSelected = canSearch && foundIndex === index
+    const isSelected = canSearch && searchIndex === index
+
+    const PersonIconBox: React.ReactNode = (
+      <Box
+        onClick={viewPerson(item.id)} // Open the person overlay when clicked
+        // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
+        onMouseEnter={() => {
+          dispatch(zoomToPerson(item.id))
+          setSearchIndex(-1) // Clear the foundPerson highlight
+        }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
+        onMouseLeave={resetZoomedPerson}
+        aria-label="Select person"
+        width="64px"
+        height="64px"
+        align="start"
+        justify="center"
+        style={{
+          cursor: "pointer",
+          filter: isSelected ? "brightness(200%)" : undefined,
+        }}
+      >
+        <Box background="brand" fill align="center" justify="center">
+          {item.thumbnailUrl ? (
+            <Image src={item.thumbnailUrl} height="64px" width="64px" />
+          ) : (
+            <Icons.User width="100%" />
+          )}
+        </Box>
+      </Box>
+    )
+
+    const PersonNameBox: React.ReactNode = (
+      <Box>
+        <Text
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "20ch",
+          }}
+        >
+          {item.name.length > NAME_CHAR_LIMIT
+            ? `${item.name.slice(0, NAME_CHAR_LIMIT)}...`
+            : item.name}
+        </Text>
+      </Box>
+    )
 
     return (
       <Box
@@ -191,79 +251,40 @@ const PersonMenu: React.FC<IProps> = (props) => {
         justify="start"
         gap="small"
       >
-        <Box
-          onClick={viewPerson(item.id)} // Open the person overlay when clicked
-          // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
-          onMouseEnter={() => {
-            dispatch(zoomToPerson(item.id))
-            setFoundIndex(-1) // Clear the foundPerson highlight
-          }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
-          onMouseLeave={resetZoomedPerson}
-          aria-label="Select person"
-          width="64px"
-          height="64px"
-          align="start"
-          justify="center"
-          style={{
-            cursor: "pointer",
-            filter: isSelected ? "brightness(200%)" : undefined,
-          }}
-        >
-          <Box background="brand" fill align="center" justify="center">
-            {item.thumbnailUrl ? (
-              <Image src={item.thumbnailUrl} height="64px" width="64px" />
-            ) : (
-              <Icons.User width="100%" />
-            )}
-          </Box>
-        </Box>
-        <Box>
-          <Text
-            style={{
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              maxWidth: "20ch",
-            }}
-          >
-            {item.name.length > NAME_CHAR_LIMIT
-              ? `${item.name.slice(0, NAME_CHAR_LIMIT)}...`
-              : item.name}
-          </Text>
-        </Box>
+        {/* Icon Box on left */}
+        {PersonIconBox}
+
+        {/* Name to the right of the Icon Box */}
+        {PersonNameBox}
       </Box>
     )
-  }
+  } // END renderItem
 
-  const handleShortkeys = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // FUNCTION | Handles certain shortkey inputs from the add/search input
+  const handleAddSearchInputShortkeys = async (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === "Enter") {
       if (e.ctrlKey) {
         // Add the person in the search box if CTRL+ENTER
         await handleAddPerson()
       } else if (e.shiftKey) {
         // Select previous if SHIFT+ENTER
-        let prevIndex = foundIndex - 1
-        if (prevIndex < 0) prevIndex = personListData.length - 1
-        setFoundIndex(prevIndex)
+        let prevIndex = searchIndex - 1
+        if (prevIndex < 0) prevIndex = filterablePeople.length - 1
+        setSearchIndex(prevIndex)
       } else {
         // Select next if ENTER
-        setFoundIndex((foundIndex + 1) % personListData.length)
+        setSearchIndex((searchIndex + 1) % filterablePeople.length)
       }
     } else if (e.key === "Escape") {
+      // Blur from the add/search input on ESC
       e.currentTarget.blur()
     }
-  }
+  } // END | handleAddSearchInputShortKeys
 
-  // Function to Show/hide all groups
-  const [isShowingAll, setShowingAll] = React.useState<boolean>(true)
-  const showHideAllIcon = isShowingAll ? (
-    <Icons.FormView color="status-ok" size="medium" />
-  ) : (
-    <Icons.Hide color="status-critical" size="medium" />
-  )
-  const showHideAllToolTip = isShowingAll
-    ? "Click to hide all groups"
-    : "Click to show all groups"
-  const toggleHideShowAll = (
+  // FUNCTION | Function to show/hide all groups
+  const toggleHideShowAllGroups = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
     e.stopPropagation() // Prevent the button click from propagating to the accordion (to avoid unintentional closing/opening of the accordion)
@@ -272,288 +293,293 @@ const PersonMenu: React.FC<IProps> = (props) => {
     const groupIds = Object.keys(groups)
 
     // If currently showing all, hide all
-    if (isShowingAll) {
+    if (isShowingAllGroups) {
       groupIds.forEach((groupId) => {
         dispatch(toggleGroupFilter(groupId, false))
       })
-      setShowingAll(false)
+      setShowingAllGroups(false)
     } else {
       // Otherwise, show all
       groupIds.forEach((groupId) => {
         dispatch(toggleGroupFilter(groupId, true))
       })
-      setShowingAll(true)
+      setShowingAllGroups(true)
     }
-  }
+  } // END | toggleHideShowAllGroups
 
-  // Function to toggle showing of nodes without groups -- true means the force-graph will show nodes without groups
-  const showNodesWithoutGroupsIcon = (
-    <Icons.AppsRounded
-      color={showNodesWithoutGroups ? "status-ok" : "status-critical"}
-    />
-  )
-  const showNodesWithoutGroupsToolTip = showNodesWithoutGroups
-    ? "Click to hide nodes without groups"
-    : "Click to show nodes without groups"
+  // FUNCTION | Toggle showing/hiding of nodes without groups -- true means the force-graph will show nodes without groups
   const toggleShowNodesWithoutGroupsFunc = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
     e.stopPropagation() // Prevent the button click from propagating to the accordion (to avoid unintentional closing/opening of the accordion)
     dispatch(toggleShowNodesWithoutGroups(!showNodesWithoutGroups)) // Toggle the global UI state
-  }
+  } // END | toggleShowNodesWithoutGroupsFunc
+
+  // UI | Input for searching/adding people
+  const SearchAddInput: React.ReactNode = (
+    <Box direction="row" align="center" pad="small" gap="none">
+      <TextInput
+        width="75%"
+        placeholder="Search for (ENTER, SHIFT+ENTER) or add a person (CTRL+ENTER)"
+        onChange={handleInputChange}
+        onClick={(e) => e.currentTarget.select()}
+        onBlur={() => setSearchIndex(-1)}
+        value={searchAddInput}
+        onKeyUp={handleAddSearchInputShortkeys}
+        style={{ fontSize: "12px" }}
+      />
+      <Box direction="row" width="25%" justify="center">
+        <Button
+          onClick={handleAddPerson}
+          type="submit"
+          icon={<Icons.Add />}
+          aria-label="Add person (Click or CTRL+ENTER)"
+          hoverIndicator
+        />
+      </Box>
+    </Box>
+  ) // END | SearchAddInput
+
+  // UI | Accordion Panel for the "All" people list
+  const AllPeopleGroup: React.ReactNode = (
+    <AccordionPanel
+      key="group-all"
+      style={{
+        height: "48px",
+        backgroundColor: "#AAA",
+        color: "#222",
+      }}
+      label={
+        <Box
+          direction="row"
+          justify="start"
+          align="center"
+          style={{ fontWeight: "bold" }}
+          fill
+        >
+          <span style={{ marginLeft: "1rem" }}>
+            [{filterablePeople.length}]
+          </span>
+          <span style={{ marginLeft: "1rem", marginRight: "auto" }}>All</span>
+          {hasGroups && (
+            // Show these option buttons if there are groups in the network
+            <React.Fragment>
+              <ToolTipButton
+                onClick={toggleShowNodesWithoutGroupsFunc}
+                icon={showNodesWithoutGroupsIcon}
+                tooltip={showNodesWithoutGroupsToolTip}
+              />
+              <ToolTipButton
+                onClick={toggleHideShowAllGroups}
+                icon={showHideAllIcon}
+                tooltip={showHideAllToolTip}
+              />
+            </React.Fragment>
+          )}
+        </Box>
+      }
+    >
+      {filterablePeople.length > 0 ? (
+        <List
+          data={filterablePeople}
+          children={renderItem(true)}
+          ref={(el: any) => (listRef.current = el)}
+        />
+      ) : (
+        <Box pad="medium">
+          <Text textAlign="center">Nothing here... yet!</Text>
+        </Box>
+      )}
+    </AccordionPanel>
+  ) // END | AllPeopleGroup
+
+  // UI | Person lists by group
+  const PersonListsByGroup: React.ReactNode = currentNetwork && (
+    <Box fill style={{ overflowY: "auto" }}>
+      {AllPeopleGroup}
+
+      <Accordion animate={false} multiple={true}>
+        {/* Render user-created groups */}
+        {/* TODO: Render group lists */}
+        {currentNetwork.relationshipGroups &&
+          Object.entries(currentNetwork.relationshipGroups)
+            // Sort each group by name in alphanumeric order
+            .sort((e1, e2) =>
+              e1[1].name.toLowerCase().localeCompare(e2[1].name.toLowerCase()),
+            )
+
+            // Render Accordion Panels for each group
+            .map((entry, index) => {
+              // Destructure the key (groupId) and value (group content) from the entry
+              const [groupId, group] = entry
+
+              // VARS | Filter in people in the group
+              const peopleInGroup = filterablePeople.filter((person) =>
+                group.personIds.includes(person.id),
+              )
+              const isEmpty = peopleInGroup.length === 0
+
+              // VARS | Check in global filter groups state to see if this group is showing
+              let isGroupShowing = filterGroups[groupId]
+
+              // VARS | If the group isn't set in global state yet, show it by default
+              if (isGroupShowing === undefined) isGroupShowing = true
+
+              // VARS | Icons to show if this group is showing or hiding
+              const toggleFilterIcon = isGroupShowing ? (
+                <Icons.FormView color="accent-1" />
+              ) : (
+                <Icons.FormViewHide color="accent-1" />
+              )
+
+              // DO NOT render this accordion if the user this group doesn't contain the search value
+              const noSearchResults = isEmpty && searchAddInput !== ""
+              if (noSearchResults) return null
+
+              // FUNCTION | Creates a closure function to toggle a person in the group
+              const togglePersonInGroupClosure = (
+                personId: string,
+                isInGroup: boolean,
+              ) => async () => {
+                // Toggle the boolean
+                const doAdd = !isInGroup
+
+                // Toggle the person in the group's global state through a custom Redux action
+                try {
+                  await dispatch(
+                    togglePersonInGroup(
+                      currentNetwork.id,
+                      groupId,
+                      personId,
+                      doAdd,
+                    ),
+                  )
+                } catch (error) {
+                  console.error(error)
+                }
+              } // END | togglePersonInGroupCLosure
+
+              // FUNCTION | Function to delete this group
+              const handleDeleteGroup = async () => {
+                try {
+                  const doDelete = window.confirm(
+                    `Delete group: [${group.name}]? This action cannot be reversed.`,
+                  )
+
+                  // Stop if the user canceled the confirm prompt
+                  if (!doDelete) return
+
+                  // Delete the group from global state through a custom Redux function
+                  await dispatch(deleteGroup(currentNetwork.id, groupId))
+                } catch (error) {
+                  console.error(error)
+                }
+              } // END | handleDeleteGroup
+
+              // FUNCTION | Toggle show/hide for this group
+              const handleToggleGroupFilter = async (
+                e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+              ) => {
+                // Stop event propagation -- this prevents the accordion from being clicked when the user clicks on the toggle button
+                e.stopPropagation()
+
+                try {
+                  // Toggle the groups "showing" state
+                  await dispatch(toggleGroupFilter(groupId, !isGroupShowing))
+                } catch (error) {
+                  console.error(error)
+                }
+              } // END | handleToggleGroupFilter
+
+              // VARS | Group accordion key; derived from the group and it's loop index
+              const groupAccordionKey = `group-${group.name}-${index}`
+
+              // STYLE | Styles for the group Accordion
+              const groupAccordionStyles: React.CSSProperties = {
+                height: "48px",
+                width: "100%",
+                backgroundColor: group.backgroundColor,
+                color: group.textColor,
+                filter:
+                  isEmpty || !isGroupShowing // Dim the group accordion if it's empty or if it's hiding its nodes
+                    ? "brightness(50%) saturate(50%)"
+                    : undefined,
+              } // END | groupAccordionStyles
+
+              // UI | Label component for this group's Accordion
+              const GroupAccordionLabel: React.ReactNode = (
+                <Box direction="row" align="center" justify="start" fill>
+                  <span style={{ marginLeft: "1rem" }}>
+                    [{peopleInGroup.length}]
+                  </span>
+                  <span style={{ marginLeft: "1rem" }}>{group.name}</span>
+                  {
+                    // Show the "show/hide" button IFF there are members in the group
+                    !isEmpty && (
+                      <Button
+                        onClick={handleToggleGroupFilter}
+                        icon={toggleFilterIcon}
+                        color="dark-1"
+                        margin={{ left: "auto" }}
+                        hoverIndicator
+                      />
+                    )
+                  }
+                </Box>
+              ) // END | GroupAccordionLabel
+
+              // UI | Component with UI for managing this group
+              const ManageGroupBox: React.ReactNode = (
+                <Box gap="xsmall">
+                  <Box direction="row" justify="end">
+                    <ToolTipButton
+                      tooltip="Delete group"
+                      onClick={handleDeleteGroup}
+                      icon={<Icons.Trash color="status-critical" />}
+                    />
+                  </Box>
+                  <Box background="light-1">
+                    <SearchAndCheckMenu
+                      defaultOptions={filterablePeople}
+                      idField="id"
+                      nameField="name"
+                      isCheckedFunction={(arg: IPerson) =>
+                        group.personIds.includes(arg.id)
+                      }
+                      toggleOption={togglePersonInGroupClosure}
+                    />
+                  </Box>
+                </Box>
+              ) // END | ManageGroupBox
+
+              return (
+                <AccordionPanel
+                  key={groupAccordionKey}
+                  style={groupAccordionStyles}
+                  label={GroupAccordionLabel}
+                >
+                  <Box pad="medium">
+                    <Tabs>
+                      <Tab title="View">
+                        <List
+                          data={peopleInGroup}
+                          children={renderItem(false)}
+                        />
+                      </Tab>
+                      <Tab title="Manage">{ManageGroupBox}</Tab>
+                    </Tabs>
+                  </Box>
+                </AccordionPanel>
+              )
+            })}
+      </Accordion>
+    </Box>
+  )
 
   return (
     <React.Fragment>
-      {/* Top input for searching/adding people */}
-      <Box direction="row" align="center" pad="small" gap="none">
-        <TextInput
-          width="75%"
-          placeholder="Search for (ENTER, SHIFT+ENTER) or add a person (CTRL+ENTER)"
-          onChange={handleInputChange}
-          onClick={(e) => e.currentTarget.select()}
-          onBlur={() => setFoundIndex(-1)}
-          value={topInput}
-          onKeyUp={handleShortkeys}
-          style={{ fontSize: "12px" }}
-        />
-        <Box direction="row" width="25%" justify="center">
-          <Button
-            onClick={handleAddPerson}
-            type="submit"
-            icon={<Icons.Add />}
-            aria-label="Add person (Click or CTRL+ENTER)"
-            hoverIndicator
-          />
-        </Box>
-      </Box>
-
-      {/* -== PERSON LISTS ==- */}
-      {currentNetwork && (
-        <Box fill style={{ overflowY: "auto" }}>
-          <Accordion animate={false} multiple={true}>
-            {/* Group for ALL people in the network */}
-            <AccordionPanel
-              key="group-all"
-              style={{
-                height: "48px",
-                backgroundColor: "#AAA",
-                color: "#222",
-              }}
-              label={
-                <Box
-                  direction="row"
-                  justify="start"
-                  align="center"
-                  style={{ fontWeight: "bold" }}
-                  fill
-                >
-                  <span style={{ marginLeft: "1rem" }}>
-                    [{personListData.length}]
-                  </span>
-                  <span style={{ marginLeft: "1rem", marginRight: "auto" }}>
-                    All
-                  </span>
-                  {hasGroups && (
-                    // Show these option buttons if there are groups in the network
-                    <React.Fragment>
-                      <ToolTipButton
-                        onClick={toggleShowNodesWithoutGroupsFunc}
-                        icon={showNodesWithoutGroupsIcon}
-                        tooltip={showNodesWithoutGroupsToolTip}
-                      />
-                      <ToolTipButton
-                        onClick={toggleHideShowAll}
-                        icon={showHideAllIcon}
-                        tooltip={showHideAllToolTip}
-                      />
-                    </React.Fragment>
-                  )}
-                </Box>
-              }
-            >
-              {personListData.length > 0 ? (
-                <List
-                  id={props.id}
-                  data={personListData}
-                  children={renderItem(true)}
-                  ref={(el: any) => (listRef.current = el)}
-                />
-              ) : (
-                <Box pad="medium">
-                  <Text textAlign="center">Nothing here... yet!</Text>
-                </Box>
-              )}
-            </AccordionPanel>
-
-            {/* Render user-created groups */}
-            {/* TODO: Render group lists */}
-            {currentNetwork.relationshipGroups &&
-              Object.entries(currentNetwork.relationshipGroups)
-                // Sort each group by name in alphanumeric order
-                .sort((e1, e2) =>
-                  e1[1].name
-                    .toLowerCase()
-                    .localeCompare(e2[1].name.toLowerCase()),
-                )
-
-                .map((entry, index) => {
-                  const [groupId, group] = entry
-                  const peopleInGroup = personListData.filter((person) =>
-                    group.personIds.includes(person.id),
-                  )
-                  const isEmpty = peopleInGroup.length === 0
-
-                  // DO NOT render this accordion if the user this group doesn't contain the search value
-                  const noSearchResults = isEmpty && topInput !== ""
-                  if (noSearchResults) return null
-
-                  // Function to toggle this person in group
-                  const createTogglePersonInGroupFunc = (
-                    personId: string,
-                    isInGroup: boolean,
-                  ) => async () => {
-                    const doAdd = !isInGroup
-
-                    try {
-                      await dispatch(
-                        togglePersonInGroup(
-                          currentNetwork.id,
-                          groupId,
-                          personId,
-                          doAdd,
-                        ),
-                      )
-                    } catch (error) {
-                      console.error(error)
-                    }
-                  }
-
-                  // Function to delete the group
-                  const handleDeleteGroup = async () => {
-                    try {
-                      const doDelete = window.confirm(
-                        `Delete group: [${group.name}]? This action cannot be reversed.`,
-                      )
-
-                      // Stop if the user canceled the confirm prompt
-                      if (!doDelete) return
-
-                      // Delete the group
-                      await dispatch(deleteGroup(currentNetwork.id, groupId))
-                    } catch (error) {
-                      console.error(error)
-                    }
-                  }
-
-                  // Check in global filter groups state to see if this group is showing
-                  let isGroupShowing = filterGroups[groupId]
-
-                  // If the group isn't set in global state yet, show it by default
-                  if (isGroupShowing === undefined) isGroupShowing = true
-
-                  // Icons to show for showing states
-                  const toggleFilterIcon = isGroupShowing ? (
-                    <Icons.FormView color="accent-1" />
-                  ) : (
-                    <Icons.FormViewHide color="accent-1" />
-                  )
-
-                  // Toggle show/hide for this group
-                  const handleToggleGroupFilter = async (
-                    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-                  ) => {
-                    // Stop event propagation -- this prevents the accordion from being clicked when the user clicks on the toggle button
-                    e.stopPropagation()
-
-                    try {
-                      // Toggle the groups "showing" state
-                      await dispatch(
-                        toggleGroupFilter(groupId, !isGroupShowing),
-                      )
-                    } catch (error) {
-                      console.error(error)
-                    }
-                  }
-
-                  return (
-                    <AccordionPanel
-                      key={`group-${group.name}-${index}`}
-                      style={{
-                        height: "48px",
-                        width: "100%",
-                        backgroundColor: group.backgroundColor,
-                        color: group.textColor,
-                        filter:
-                          isEmpty || !isGroupShowing // Dim the group accordion if it's empty or if it's hiding its nodes
-                            ? "brightness(50%) saturate(50%)"
-                            : undefined,
-                      }}
-                      label={
-                        <Box
-                          direction="row"
-                          align="center"
-                          justify="start"
-                          fill
-                        >
-                          <span style={{ marginLeft: "1rem" }}>
-                            [{peopleInGroup.length}]
-                          </span>
-                          <span style={{ marginLeft: "1rem" }}>
-                            {group.name}
-                          </span>
-                          {
-                            // Show the "show/hide" button IFF there are members in the group
-                            !isEmpty && (
-                              <Button
-                                onClick={handleToggleGroupFilter}
-                                icon={toggleFilterIcon}
-                                color="dark-1"
-                                margin={{ left: "auto" }}
-                                hoverIndicator
-                              />
-                            )
-                          }
-                        </Box>
-                      }
-                    >
-                      <Box pad="medium">
-                        <Tabs>
-                          <Tab title="View">
-                            <List
-                              data={peopleInGroup}
-                              children={renderItem(false)}
-                            />
-                          </Tab>
-                          <Tab title="Manage">
-                            <Box gap="xsmall">
-                              <Box direction="row" justify="end">
-                                <ToolTipButton
-                                  tooltip="Delete group"
-                                  onClick={handleDeleteGroup}
-                                  icon={<Icons.Trash color="status-critical" />}
-                                />
-                              </Box>
-                              <Box background="light-1">
-                                <SearchAndCheckMenu
-                                  defaultOptions={personListData}
-                                  idField="id"
-                                  nameField="name"
-                                  isCheckedFunction={(arg: IPerson) =>
-                                    group.personIds.includes(arg.id)
-                                  }
-                                  toggleOption={createTogglePersonInGroupFunc}
-                                />
-                              </Box>
-                            </Box>
-                          </Tab>
-                        </Tabs>
-                      </Box>
-                    </AccordionPanel>
-                  )
-                })}
-          </Accordion>
-        </Box>
-      )}
+      {SearchAddInput}
+      {PersonListsByGroup}
     </React.Fragment>
   )
 }

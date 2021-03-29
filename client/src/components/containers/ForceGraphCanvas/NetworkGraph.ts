@@ -13,7 +13,7 @@ import {
 import { store } from "../../../store/store"
 import {
   setPersonInFocus,
-  togglePersonEditMenu,
+  togglePersonOverlay,
 } from "../../../store/ui/uiActions"
 
 export interface IForceGraphData {
@@ -411,7 +411,7 @@ async function handleNodeClick(n: NodeObject | null) {
   try {
     // Focus on the clicked person & show their details
     await store.dispatch<any>(setPersonInFocus(node.id))
-    store.dispatch<any>(togglePersonEditMenu(true))
+    store.dispatch<any>(togglePersonOverlay(true))
   } catch (error) {
     console.error(error)
   }

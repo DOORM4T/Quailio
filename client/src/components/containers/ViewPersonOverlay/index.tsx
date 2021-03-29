@@ -5,7 +5,7 @@ import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
 import { getIsOverlayOpen } from "../../../store/selectors/ui/getIsOverlayOpen"
-import { togglePersonEditMenu } from "../../../store/ui/uiActions"
+import { togglePersonOverlay } from "../../../store/ui/uiActions"
 import Overlay from "../../Overlay"
 import ContentPanel from "./ContentPanel"
 import PersonHeader from "./PersonHeader"
@@ -34,7 +34,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
     if (!doContinue) return
 
     /* Close overlay */
-    dispatch(togglePersonEditMenu(false))
+    dispatch(togglePersonOverlay(false))
   }
 
   // -== REUSABLE COMPONENTS (Reused for different layouts) ==- //

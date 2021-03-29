@@ -6,7 +6,7 @@ import {
   IPersonIDWithActiveGroups,
   ISetUILoadingAction,
   IToggleGroupFilterAction,
-  ITogglePersonEditMenuAction,
+  ITogglePersonOverlay,
   IToggleShowNodesWithoutGroupsAction,
   IZoomToPersonAction,
   UserInterfaceActionTypes,
@@ -52,10 +52,10 @@ export const setPersonInFocus = (personId: string | null): AppThunk => {
   }
 }
 
-export const togglePersonEditMenu: ActionCreator<ITogglePersonEditMenuAction> = (
+export const togglePersonOverlay: ActionCreator<ITogglePersonOverlay> = (
   isOpen: boolean,
 ) => ({
-  type: UserInterfaceActionTypes.TOGGLE_PERSON_EDIT_MENU,
+  type: UserInterfaceActionTypes.TOGGLE_PERSON_OVERLAY,
   isOpen,
 })
 
@@ -63,8 +63,9 @@ export const zoomToPerson: ActionCreator<IZoomToPersonAction> = (
   personId: string | null,
 ) => ({ type: UserInterfaceActionTypes.ZOOM_TO_PERSON, personId })
 
-// Initialize a map of person IDs with an associated list of group IDs that are showing. In global state. This acts as a cache to see which nodes are showing
-export const initializePersonGroupList: ActionCreator<IInitializePersonGroupList> = (
+/* "Caches" a map of person IDs with an associated list of group IDs that are showing. 
+      In global state. */
+export const cachePersonGroupList: ActionCreator<IInitializePersonGroupList> = (
   groupIdsbyPersonId: IPersonIDWithActiveGroups[],
 ) => ({
   type: UserInterfaceActionTypes.INIT_PERSON_ACTIVE_GROUPS,

@@ -17,7 +17,7 @@ export interface IActiveGroupsByPersonId {
 export enum UserInterfaceActionTypes {
   LOADING = "UI/LOADING",
   FOCUS_ON_PERSON_BY_ID = "UI/FOCUS_ON_PERSON_BY_ID",
-  TOGGLE_PERSON_EDIT_MENU = "UI/TOGGLE_PERSON_EDIT_MENU",
+  TOGGLE_PERSON_OVERLAY = "UI/TOGGLE_PERSON_OVERLAY",
   ZOOM_TO_PERSON = "UI/ZOOM_TO_PERSON",
   INIT_PERSON_ACTIVE_GROUPS = "UI/INIT_PERSON_ACTIVE_GROUPS",
   TOGGLE_GROUP_FILTER = "UI/TOGGLE_GROUP_FILTER",
@@ -34,8 +34,8 @@ export interface IFocusOnPersonAction {
   personId: string | null
 }
 
-export interface ITogglePersonEditMenuAction {
-  type: UserInterfaceActionTypes.TOGGLE_PERSON_EDIT_MENU
+export interface ITogglePersonOverlay {
+  type: UserInterfaceActionTypes.TOGGLE_PERSON_OVERLAY
   isOpen: boolean
 }
 
@@ -69,7 +69,7 @@ export interface IToggleShowNodesWithoutGroupsAction {
 export type UserInterfaceActions =
   | ISetUILoadingAction
   | IFocusOnPersonAction
-  | ITogglePersonEditMenuAction
+  | ITogglePersonOverlay
   | IZoomToPersonAction
   | IInitializePersonGroupList
   | IToggleGroupFilterAction

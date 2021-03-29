@@ -1,8 +1,4 @@
-import {
-  auth,
-  networksCollection,
-  usersCollection,
-} from "../../../firebase/services"
+import { networksCollection, usersCollection } from "../../../firebase/services"
 import { IUserDocument } from "../../auth/authTypes"
 import { AppThunk } from "../../store"
 import {

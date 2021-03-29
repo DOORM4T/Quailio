@@ -33,7 +33,7 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       }
     }
 
-    case UserInterfaceActionTypes.TOGGLE_PERSON_EDIT_MENU: {
+    case UserInterfaceActionTypes.TOGGLE_PERSON_OVERLAY: {
       return {
         ...state,
         isPersonEditMenuOpen: action.isOpen,
