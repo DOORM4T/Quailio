@@ -126,8 +126,9 @@ const HomePage: React.FC = () => {
       >
         Coming Soon:
         <ul>
+          <li>Group renaming and custom group colors</li>
+          <li>A shiny UI redesign</li>
           <li>GIF demos</li>
-          <li>Batch Actions</li>
         </ul>
       </Box>
     </Box>
