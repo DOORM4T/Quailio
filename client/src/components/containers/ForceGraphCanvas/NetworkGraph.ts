@@ -34,6 +34,8 @@ export interface IPersonNode {
 //
 const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 12
+const HIGHLIGHT_SIZE = NODE_SIZE * 1.2
+const INITIAL_DISTANCE = NODE_SIZE * 2
 
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
@@ -42,6 +44,9 @@ const hoverNode: { node: IPersonNode | null } = { node: null }
 
 // For adding connections
 const nodeToConnect: { node: IPersonNode | null } = { node: null }
+
+// Default color if a node/its links aren't part of a group
+const DEFAULT_COLOR = "black"
 
 //
 // Force Graph
@@ -143,6 +148,8 @@ export function createNetworkGraph(
     )
     .onNodeRightClick(handleNodeRightClick({ nodeToConnect, state }))
     .backgroundColor("#444")
+    .dagMode("radialin")
+    .dagLevelDistance(INITIAL_DISTANCE)
 
   return Graph
 }
@@ -227,21 +234,44 @@ function drawPersonNode() {
   return (node: NodeObject, ctx: CanvasRenderingContext2D) => {
     const { thumbnail, x = 0, y = 0, name, id } = node as NodeObject &
       IPersonNode
+    const centerX = x / 2
+    const centerY = y / 2
 
-    // Highlight highlight nodes, if they exist
-    if (hoverNode && highlightNodes && highlightNodes.has(node)) {
-      ctx.beginPath()
-      const highlightSize = NODE_SIZE * 1.2
+    // Rectangle for displaying the node's border color
+    ctx.beginPath()
 
-      ctx.rect(
-        x - highlightSize / 2,
-        y - highlightSize / 2,
-        highlightSize,
-        highlightSize,
+    // Draw a larger rectangle first that acts as a group color outline for this node
+    let colors = getNodeGroupColors(node as IPersonNode)
+    if (colors.length === 0)
+      colors = [{ backgroundColor: DEFAULT_COLOR, textColor: DEFAULT_COLOR }]
+
+    // Node border gradient (for the larger rectangle that will form the border by going behind the node's actual image)
+    const gradient =
+      colors.length > 1
+        ? ctx.createLinearGradient(centerX, y, centerX, y + NODE_SIZE)
+        : null
+    if (gradient) {
+      colors.forEach((color, index) =>
+        gradient.addColorStop(index / colors.length, color.backgroundColor),
       )
-      ctx.fillStyle = node === hoverNode.node ? "red" : "orange"
-      ctx.fill()
     }
+
+    const defaultNodeBorderColor = colors[0].backgroundColor
+    const fillColor = gradient ? gradient : defaultNodeBorderColor
+
+    // TODO: special effect if highlighted If this node is highlighted, make the border red
+    const doHighlight = hoverNode && highlightNodes && highlightNodes.has(node)
+    const isHoveredNode = node === hoverNode.node
+    const hoverColor = isHoveredNode ? "red" : "orange"
+
+    ctx.fillStyle = doHighlight ? hoverColor : fillColor
+    ctx.rect(
+      x - HIGHLIGHT_SIZE / 2,
+      y - HIGHLIGHT_SIZE / 2,
+      HIGHLIGHT_SIZE,
+      HIGHLIGHT_SIZE,
+    )
+    ctx.fill()
 
     if (thumbnail) {
       try {
@@ -270,6 +300,7 @@ function drawPersonNode() {
       ctx.stroke()
     }
 
+    // Node Name Text
     ctx.textAlign = "center"
     ctx.textBaseline = "top"
     ctx.fillStyle = "yellow"
@@ -286,6 +317,40 @@ function drawPersonNode() {
     ctx.fillText(text, x, y + NODE_SIZE / 2)
     ctx.strokeText(text, x, y + NODE_SIZE / 2)
   }
+}
+
+/**
+ * @param node Person Node to get the group colors for
+ * @returns array of group colors for bg and text -- [bgColor, textColor][]
+ */
+type GroupColors = { backgroundColor: string; textColor: string }
+function getNodeGroupColors(node: IPersonNode): GroupColors[] {
+  // Get the group color
+  const currentNetwork = store.getState().networks.currentNetwork
+  if (!currentNetwork) return []
+
+  // Get the groups this node is part of
+  const { filteredGroups } = store.getState().ui
+  const groupsWithThisNode = Object.entries(
+    currentNetwork.relationshipGroups,
+  ).filter((entry) => {
+    const [groupId, group] = entry
+
+    // Ensure that this group is active
+    //  explicitly check if the "showing" state is false since we treat "undefined" as true
+    if (filteredGroups[groupId] === false) return false
+
+    // Ensure the node is in the group
+    const hasNode = group.personIds.includes(node.id)
+    return hasNode
+  })
+
+  // Get the colors associated with the groups
+  const colors = groupsWithThisNode.map((group) => {
+    const { backgroundColor, textColor } = group[1]
+    return { backgroundColor, textColor }
+  })
+  return colors
 }
 
 function handleLinkHover() {
@@ -319,7 +384,6 @@ function getLinkLabel(link: LinkObject | null) {
   return reason
 }
 
-const DEFAULT_LINK_COLOR = ["black"]
 /**
  * @param link
  * @returns Array of common group colors between the linked nodes
@@ -328,11 +392,11 @@ function getLinkColors(link: LinkObject): string[] {
   const srcNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
   if (!srcNode.relationships || !targetNode.relationships)
-    return DEFAULT_LINK_COLOR
+    return [DEFAULT_COLOR]
 
   // Get the group color
   const currentNetwork = store.getState().networks.currentNetwork
-  if (!currentNetwork) return DEFAULT_LINK_COLOR
+  if (!currentNetwork) return [DEFAULT_COLOR]
 
   const { filteredGroups } = store.getState().ui
   const commonGroups = Object.entries(currentNetwork.relationshipGroups).filter(
@@ -351,7 +415,7 @@ function getLinkColors(link: LinkObject): string[] {
   )
 
   const commonColors = commonGroups.map((group) => group[1].backgroundColor)
-  const colors = commonColors.length > 0 ? commonColors : DEFAULT_LINK_COLOR
+  const colors = commonColors.length > 0 ? commonColors : [DEFAULT_COLOR]
 
   return colors
 }
