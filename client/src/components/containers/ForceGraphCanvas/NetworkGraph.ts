@@ -264,6 +264,7 @@ function drawPersonNode() {
     const isHoveredNode = node === hoverNode.node
     const hoverColor = isHoveredNode ? "red" : "orange"
 
+    // Draw border-color rectangle
     ctx.fillStyle = doHighlight ? hoverColor : fillColor
     ctx.rect(
       x - HIGHLIGHT_SIZE / 2,
@@ -273,9 +274,17 @@ function drawPersonNode() {
     )
     ctx.fill()
 
+    // Draw white background (this will be overlapped by the thumbnail, if there is one)
+    ctx.beginPath()
+    ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+    ctx.fillStyle = "white"
+    ctx.fill()
+    ctx.strokeStyle = "black"
+    ctx.stroke()
+
+    // Draw the thumbnail, if there is one
     if (thumbnail) {
       try {
-        /* show profile pictures */
         ctx.drawImage(
           thumbnail,
           x - NODE_SIZE / 2,
@@ -284,6 +293,7 @@ function drawPersonNode() {
           NODE_SIZE,
         )
       } catch (error) {
+        // Missing image
         ctx.beginPath()
         ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
         ctx.fillStyle = "red"
@@ -291,13 +301,6 @@ function drawPersonNode() {
         ctx.strokeStyle = "black"
         ctx.stroke()
       }
-    } else {
-      ctx.beginPath()
-      ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
-      ctx.fillStyle = "white"
-      ctx.fill()
-      ctx.strokeStyle = "black"
-      ctx.stroke()
     }
 
     // Node Name Text
