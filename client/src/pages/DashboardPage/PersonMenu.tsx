@@ -397,9 +397,10 @@ const PersonMenu: React.FC<IProps> = (props) => {
   // UI | Person lists by group
   const PersonListsByGroup: React.ReactNode = currentNetwork && (
     <Box fill style={{ overflowY: "auto" }}>
-      {AllPeopleGroup}
-
       <Accordion animate={false} multiple={true}>
+        {/* Render the "All" group first */}
+        {AllPeopleGroup}
+
         {/* Render user-created groups */}
         {/* TODO: Render group lists */}
         {currentNetwork.relationshipGroups &&
