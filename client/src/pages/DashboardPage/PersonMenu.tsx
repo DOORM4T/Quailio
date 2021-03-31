@@ -17,6 +17,7 @@ import { Dispatch } from "redux"
 import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
 import ToolTipButton from "../../components/ToolTipButton"
 import { addPerson, deleteGroup } from "../../store/networks/actions"
+import { renameGroup } from "../../store/networks/actions/renameGroup"
 import { togglePersonInGroup } from "../../store/networks/actions/togglePersonInGroup"
 import { IPerson } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
@@ -459,6 +460,23 @@ const PersonMenu: React.FC<IProps> = (props) => {
                 }
               } // END | togglePersonInGroupCLosure
 
+              // FUNCTION | Function to rename this group
+              const handleRenameGroup = async () => {
+                try {
+                  const newName = window.prompt(`Rename [${group.name}] to:`)
+
+                  // Stop if the user didn't enter anything
+                  if (!newName) return
+
+                  // Rename the group in global state through a custom Redux function
+                  await dispatch(
+                    renameGroup(currentNetwork.id, groupId, newName),
+                  )
+                } catch (error) {
+                  console.error(error)
+                }
+              } // END | handleDeleteGroup
+
               // FUNCTION | Function to delete this group
               const handleDeleteGroup = async () => {
                 try {
@@ -531,13 +549,20 @@ const PersonMenu: React.FC<IProps> = (props) => {
               // UI | Component with UI for managing this group
               const ManageGroupBox: React.ReactNode = (
                 <Box gap="xsmall">
+                  {/* Buttons */}
                   <Box direction="row" justify="end">
+                    <ToolTipButton
+                      tooltip="Rename group"
+                      onClick={handleRenameGroup}
+                      icon={<Icons.Tag color="brand" />}
+                    />
                     <ToolTipButton
                       tooltip="Delete group"
                       onClick={handleDeleteGroup}
                       icon={<Icons.Trash color="status-critical" />}
                     />
                   </Box>
+                  {/* Search-Checkbox Menu */}
                   <Box background="light-1">
                     <SearchAndCheckMenu
                       defaultOptions={filterablePeople}

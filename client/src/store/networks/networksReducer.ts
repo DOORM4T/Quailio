@@ -18,6 +18,7 @@ import {
   IRelationshipGroup,
   IRelationshipGroups,
   IRelationships,
+  IRenameGroupAction,
   IRenameNetworkAction,
   ISetNetworkAction,
   ISetPersonThumbnailAction,
@@ -115,8 +116,43 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.DELETE_GROUP:
       return getDeleteGroupState(state, action)
 
+    case NetworkActionTypes.RENAME_GROUP:
+      return getRenameGroupState(state, action)
+
     default:
       return state
+  }
+}
+
+function getRenameGroupState(
+  state: INetworksState,
+  action: IRenameGroupAction,
+): INetworksState {
+  // Stop if the network doesn't match the current network (no need to reflect changes immediately)
+  const currentNetwork = state.currentNetwork
+  if (!currentNetwork || action.networkId !== currentNetwork.id) return state
+
+  // Get the group -- stop if the group doesn't exist
+  const group = currentNetwork.relationshipGroups[action.groupId]
+  if (!group) return state
+
+  // Create an updated copy of the group
+  const renamedGroup: IRelationshipGroup = { ...group, name: action.newName }
+
+  // Update the current network
+  const updatedRelationshipGroups: IRelationshipGroups = {
+    ...currentNetwork.relationshipGroups,
+    [action.groupId]: renamedGroup,
+  }
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...currentNetwork,
+    relationshipGroups: updatedRelationshipGroups,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 
