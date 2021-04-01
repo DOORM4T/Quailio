@@ -1,4 +1,8 @@
-import ForceGraph, { LinkObject, NodeObject } from "force-graph"
+import ForceGraph, {
+  ForceGraphInstance,
+  LinkObject,
+  NodeObject,
+} from "force-graph"
 import {
   addPerson,
   connectPeople,
@@ -62,13 +66,13 @@ export function createNetworkGraph(
   container: HTMLDivElement,
   state: ICurrentNetwork,
 ) {
-  /* Create nodes from the People in the current Network */
+  // Create nodes from the People in the current Network
   const gData: IForceGraphData = {
     nodes: state.people.map(createPersonNode),
     links: [],
   }
 
-  /* Link people by their relationship fields */
+  // Link people by their relationship fields
   state.people.forEach(createLinksByRelationships(gData))
 
   // Set neighbors
@@ -134,23 +138,27 @@ export function createNetworkGraph(
         return null
       },
     )
-    .onNodeHover(
-      handleNodeHover({
-        container,
-        gData,
-      }),
-    )
+
+    .backgroundColor("#444")
+    .dagMode("radialin")
+    .dagLevelDistance(INITIAL_DISTANCE)
+
+  // Events
+  Graph.onNodeHover(
+    handleNodeHover({
+      container,
+      gData,
+    }),
+  )
     .onNodeDrag(handleNodeDrag({ container }))
     .onNodeDragEnd(handleNodeDragEnd({ container }))
     .onNodeClick(handleNodeClick)
     .onBackgroundRightClick(
       handleBackgroundRightClick({ nodeToConnect, state }),
     )
-    .onNodeRightClick(handleNodeRightClick({ nodeToConnect, state }))
-    .backgroundColor("#444")
-    .dagMode("radialin")
-    .dagLevelDistance(INITIAL_DISTANCE)
-
+    .onNodeRightClick(
+      handleNodeRightClick({ nodeToConnect, state, forceGraph: Graph }),
+    )
   return Graph
 }
 
@@ -225,6 +233,7 @@ export function setNeighbors(gData: IForceGraphData) {
 //
 interface IGraphClosureData {
   container?: HTMLDivElement
+  forceGraph?: ForceGraphInstance
   gData?: IForceGraphData
   nodeToConnect?: { node: IPersonNode | null }
   state?: ICurrentNetwork
@@ -259,7 +268,7 @@ function drawPersonNode() {
     const defaultNodeBorderColor = colors[0].backgroundColor
     const fillColor = gradient ? gradient : defaultNodeBorderColor
 
-    // TODO: special effect if highlighted If this node is highlighted, make the border red
+    // Orange border if this node is highlighted; Red if hovered
     const doHighlight = hoverNode && highlightNodes && highlightNodes.has(node)
     const isHoveredNode = node === hoverNode.node
     const hoverColor = isHoveredNode ? "red" : "orange"
@@ -513,7 +522,7 @@ function handleBackgroundRightClick({ state }: IGraphClosureData) {
   }
 }
 
-function handleNodeRightClick({ state }: IGraphClosureData) {
+function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
   return async (n: NodeObject | null) => {
     if (!n || !nodeToConnect || !state) return
     const node = n as NodeObject & IPersonNode
@@ -548,6 +557,7 @@ function handleNodeRightClick({ state }: IGraphClosureData) {
             }),
           )
         }
+        forceGraph?.zoomToFit(500)
       } catch (error) {
         console.error(error)
       }
