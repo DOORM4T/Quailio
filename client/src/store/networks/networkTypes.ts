@@ -77,6 +77,7 @@ export enum NetworkActionTypes {
   TOGGLE_PERSON_IN_GROUP = "GROUP/TOGGLE_PERSON",
   DELETE_GROUP = "GROUP/DELETE",
   RENAME_GROUP = "GROUP/RENAME",
+  CHANGE_GROUP_BACKGROUND_COLOR = "GROUP/CHANGE_BACKGROUND_COLOR",
 }
 
 export interface INetworkLoadingAction {
@@ -195,6 +196,13 @@ export interface IRenameGroupAction {
   newName: string
 }
 
+export interface IChangeGroupBackgroundColorAction {
+  type: NetworkActionTypes.CHANGE_GROUP_BACKGROUND_COLOR
+  networkId: string
+  groupId: string
+  newColor: string
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -217,3 +225,4 @@ export type NetworksActions =
   | ITogglePersonInGroupAction
   | IDeleteGroupAction
   | IRenameGroupAction
+  | IChangeGroupBackgroundColorAction

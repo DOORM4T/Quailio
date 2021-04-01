@@ -17,6 +17,7 @@ import { Dispatch } from "redux"
 import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
 import ToolTipButton from "../../components/ToolTipButton"
 import { addPerson, deleteGroup } from "../../store/networks/actions"
+import { changeGroupBackgroundColor } from "../../store/networks/actions/changeGroupBackgroundColor"
 import { renameGroup } from "../../store/networks/actions/renameGroup"
 import { togglePersonInGroup } from "../../store/networks/actions/togglePersonInGroup"
 import { IPerson } from "../../store/networks/networkTypes"
@@ -556,6 +557,37 @@ const PersonMenu: React.FC<IProps> = (props) => {
                       tooltip="Rename group"
                       onClick={handleRenameGroup}
                       icon={<Icons.Tag color="brand" />}
+                    />
+                    <ToolTipButton
+                      tooltip="Change group color"
+                      onClick={async () => {
+                        const colorInput = document.createElement("input")
+                        colorInput.type = "color"
+                        colorInput.click()
+
+                        const changeColor = () =>
+                          new Promise((resolve) => {
+                            colorInput.onchange = () => {
+                              resolve(colorInput.value)
+                            }
+                          })
+
+                        const newColor = await changeColor()
+                        colorInput.remove()
+
+                        try {
+                          await dispatch(
+                            changeGroupBackgroundColor(
+                              groupId,
+                              currentNetwork.id,
+                              newColor as string,
+                            ),
+                          )
+                        } catch (error) {
+                          console.error(error)
+                        }
+                      }}
+                      icon={<Icons.Paint color={group.backgroundColor} />}
                     />
                     <ToolTipButton
                       tooltip="Delete group"
