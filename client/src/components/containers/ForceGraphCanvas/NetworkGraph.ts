@@ -272,15 +272,11 @@ function drawPersonNode() {
     const doHighlight = hoverNode && highlightNodes && highlightNodes.has(node)
     const isHoveredNode = node === hoverNode.node
     const hoverColor = isHoveredNode ? "red" : "orange"
+    const nodeSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.5 : HIGHLIGHT_SIZE
 
     // Draw border-color rectangle
     ctx.fillStyle = doHighlight ? hoverColor : fillColor
-    ctx.rect(
-      x - HIGHLIGHT_SIZE / 2,
-      y - HIGHLIGHT_SIZE / 2,
-      HIGHLIGHT_SIZE,
-      HIGHLIGHT_SIZE,
-    )
+    ctx.rect(x - nodeSize / 2, y - nodeSize / 2, nodeSize, nodeSize)
     ctx.fill()
 
     // Draw white background (this will be overlapped by the thumbnail, if there is one)
@@ -435,6 +431,7 @@ function getLinkColors(link: LinkObject): string[] {
 function handleNodeHover({ container, gData }: IGraphClosureData) {
   return (n: NodeObject | null) => {
     clearHighlights()
+    hoverNode.node = null
 
     if (container) container.style.cursor = n ? "help" : "grab"
     if (!n || !gData) return

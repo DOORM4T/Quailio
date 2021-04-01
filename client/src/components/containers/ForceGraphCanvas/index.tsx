@@ -132,12 +132,21 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
       // Links shouldn't change when a new person is added
       ////
+      updateGraph()
+
+      // If a node was added, highlight it
+      if (newPersonNodes.length === 1) {
+        clearHighlights()
+        highlightNode(
+          newPersonNodes[0],
+          forceGraph.graphData() as IForceGraphData,
+        )
+      }
 
       // Zoom the entire graph into view
-      forceGraph.zoomToFit(500)
-
-      // Then update graph data
-      setTimeout(updateGraph, 500)
+      setTimeout(() => {
+        forceGraph.zoomToFit(500)
+      }, 500)
     } else if (peopleLen < existingLen) {
       // Handle deleting people
       // Get the IDs of people in the set who no longer exist in the "people" state
