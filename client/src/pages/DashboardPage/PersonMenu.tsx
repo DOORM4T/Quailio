@@ -17,7 +17,10 @@ import { Dispatch } from "redux"
 import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
 import ToolTipButton from "../../components/ToolTipButton"
 import { addPerson, deleteGroup } from "../../store/networks/actions"
-import { changeGroupBackgroundColor } from "../../store/networks/actions/changeGroupBackgroundColor"
+import {
+  changeGroupColor,
+  GroupColorField,
+} from "../../store/networks/actions/changeGroupBackgroundColor"
 import { renameGroup } from "../../store/networks/actions/renameGroup"
 import { togglePersonInGroup } from "../../store/networks/actions/togglePersonInGroup"
 import { IPerson } from "../../store/networks/networkTypes"
@@ -479,6 +482,43 @@ const PersonMenu: React.FC<IProps> = (props) => {
                 }
               } // END | handleDeleteGroup
 
+              // FUNCTION | Change the group's background or text color
+              const changeGroupColorClosure = (
+                field: GroupColorField,
+              ) => async () => {
+                // Create a color picker input
+                const colorInput = document.createElement("input")
+                colorInput.type = "color"
+
+                // Open the color picker
+                colorInput.click()
+
+                // Wait for the user to change the color
+                const changeColor = () =>
+                  new Promise((resolve) => {
+                    colorInput.onchange = () => {
+                      resolve(colorInput.value)
+                    }
+                  })
+
+                const newColor = await changeColor()
+                colorInput.remove()
+
+                // Update the color in global state using a custom Redux action
+                try {
+                  await dispatch(
+                    changeGroupColor(
+                      groupId,
+                      currentNetwork.id,
+                      field, // Change backgroundColor or textColor
+                      newColor as string,
+                    ),
+                  )
+                } catch (error) {
+                  console.error(error)
+                }
+              }
+
               // FUNCTION | Function to delete this group
               const handleDeleteGroup = async () => {
                 try {
@@ -559,35 +599,14 @@ const PersonMenu: React.FC<IProps> = (props) => {
                       icon={<Icons.Tag color="brand" />}
                     />
                     <ToolTipButton
-                      tooltip="Change group color"
-                      onClick={async () => {
-                        const colorInput = document.createElement("input")
-                        colorInput.type = "color"
-                        colorInput.click()
-
-                        const changeColor = () =>
-                          new Promise((resolve) => {
-                            colorInput.onchange = () => {
-                              resolve(colorInput.value)
-                            }
-                          })
-
-                        const newColor = await changeColor()
-                        colorInput.remove()
-
-                        try {
-                          await dispatch(
-                            changeGroupBackgroundColor(
-                              groupId,
-                              currentNetwork.id,
-                              newColor as string,
-                            ),
-                          )
-                        } catch (error) {
-                          console.error(error)
-                        }
-                      }}
+                      tooltip="Change group background color"
+                      onClick={changeGroupColorClosure("backgroundColor")}
                       icon={<Icons.Paint color={group.backgroundColor} />}
+                    />
+                    <ToolTipButton
+                      tooltip="Change group text color"
+                      onClick={changeGroupColorClosure("textColor")}
+                      icon={<Icons.TextAlignFull color={group.textColor} />}
                     />
                     <ToolTipButton
                       tooltip="Delete group"

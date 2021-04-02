@@ -1,3 +1,5 @@
+import { GroupColorField } from "./actions/changeGroupBackgroundColor"
+
 // -== STATE TYPES ==- //
 export interface INetworksState {
   readonly isLoading: boolean
@@ -77,7 +79,7 @@ export enum NetworkActionTypes {
   TOGGLE_PERSON_IN_GROUP = "GROUP/TOGGLE_PERSON",
   DELETE_GROUP = "GROUP/DELETE",
   RENAME_GROUP = "GROUP/RENAME",
-  CHANGE_GROUP_BACKGROUND_COLOR = "GROUP/CHANGE_BACKGROUND_COLOR",
+  CHANGE_GROUP_COLOR = "GROUP/CHANGE_COLOR",
 }
 
 export interface INetworkLoadingAction {
@@ -196,10 +198,11 @@ export interface IRenameGroupAction {
   newName: string
 }
 
-export interface IChangeGroupBackgroundColorAction {
-  type: NetworkActionTypes.CHANGE_GROUP_BACKGROUND_COLOR
+export interface IChangeGroupColorAction {
+  type: NetworkActionTypes.CHANGE_GROUP_COLOR
   networkId: string
   groupId: string
+  field: GroupColorField
   newColor: string
 }
 
@@ -225,4 +228,4 @@ export type NetworksActions =
   | ITogglePersonInGroupAction
   | IDeleteGroupAction
   | IRenameGroupAction
-  | IChangeGroupBackgroundColorAction
+  | IChangeGroupColorAction

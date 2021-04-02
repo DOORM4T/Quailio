@@ -1,14 +1,14 @@
 import { groupsCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
-import {
-  IChangeGroupBackgroundColorAction,
-  NetworkActionTypes,
-} from "../networkTypes"
+import { IChangeGroupColorAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
 
-export const changeGroupBackgroundColor = (
+export type GroupColorField = "backgroundColor" | "textColor"
+
+export const changeGroupColor = (
   groupId: string,
   networkId: string,
+  field: GroupColorField,
   newColor: string,
 ): AppThunk => async (dispatch, getState) => {
   dispatch(setNetworkLoading(true))
@@ -21,14 +21,15 @@ export const changeGroupBackgroundColor = (
       const groupDoc = await groupsCollection.doc(groupId).get()
       if (!groupDoc.exists) throw new Error("That group doesn't exist")
 
-      // Update the group's backgroundColor field
-      groupDoc.ref.update({ backgroundColor: newColor })
+      // Update the group's backgroundColor or textColor field
+      groupDoc.ref.update({ [field]: newColor })
     }
 
-    const action: IChangeGroupBackgroundColorAction = {
-      type: NetworkActionTypes.CHANGE_GROUP_BACKGROUND_COLOR,
+    const action: IChangeGroupColorAction = {
+      type: NetworkActionTypes.CHANGE_GROUP_COLOR,
       groupId,
       networkId,
+      field,
       newColor,
     }
     return dispatch(action)

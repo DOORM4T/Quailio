@@ -2,7 +2,7 @@ import { Reducer } from "redux"
 import { restructureLegacyCurrentNetwork } from "./helpers/restructureLegacyCurrentNetwork"
 import {
   IAddPersonAction,
-  IChangeGroupBackgroundColorAction,
+  IChangeGroupColorAction,
   IConnectPeopleAction,
   ICreateGroupAction,
   ICreateNetworkAction,
@@ -120,17 +120,17 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.RENAME_GROUP:
       return getRenameGroupState(state, action)
 
-    case NetworkActionTypes.CHANGE_GROUP_BACKGROUND_COLOR:
-      return getChangeGroupBackgroundColorState(state, action)
+    case NetworkActionTypes.CHANGE_GROUP_COLOR:
+      return getChangeGroupColorState(state, action)
 
     default:
       return state
   }
 }
 
-function getChangeGroupBackgroundColorState(
+function getChangeGroupColorState(
   state: INetworksState,
-  action: IChangeGroupBackgroundColorAction,
+  action: IChangeGroupColorAction,
 ): INetworksState {
   // Stop if there's no current network or if the changed network isn't in view
   const currentNetwork = state.currentNetwork
@@ -139,7 +139,8 @@ function getChangeGroupBackgroundColorState(
   // Update group color
   const updatedGroup: IRelationshipGroup = {
     ...currentNetwork.relationshipGroups[action.groupId],
-    backgroundColor: action.newColor,
+    // Update the backgroundColor or textColor -- depends on the passed field
+    [action.field]: action.newColor,
   }
 
   // Update the current network
@@ -150,8 +151,6 @@ function getChangeGroupBackgroundColorState(
       [action.groupId]: updatedGroup,
     },
   }
-
-  console.log("change")
 
   return {
     ...state,
