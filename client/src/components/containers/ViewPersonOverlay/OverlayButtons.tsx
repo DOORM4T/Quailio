@@ -1,4 +1,4 @@
-import { Box, Button, DropButton, Heading } from "grommet"
+import { Box, Button, DropButton, Heading, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -22,6 +22,7 @@ import {
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import { togglePersonOverlay } from "../../../store/ui/uiActions"
 import SearchAndCheckMenu from "../../SearchAndCheckMenu"
+import ToolTipButton from "../../ToolTipButton"
 
 //                 //
 // -== BUTTONS ==- //
@@ -56,6 +57,9 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     if (!connectPeopleDropButtonRef) return
     const btn = connectPeopleDropButtonRef.current as HTMLButtonElement
     btn.click()
+    setTimeout(() => {
+      btn.blur()
+    }, 10)
   }
 
   // Groups drop-button ref -- used to trigger a click to close the menu
@@ -64,6 +68,9 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     if (!manageGroupsDropButtonRef) return
     const btn = manageGroupsDropButtonRef.current as HTMLButtonElement
     btn.click()
+    setTimeout(() => {
+      btn.blur()
+    }, 10)
   }
 
   /* Do not render if no network or person is selected */
@@ -93,10 +100,10 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
 
   // Button for entering view mode
   const viewModeButton: React.ReactNode = (
-    <Button
+    <ToolTipButton
+      tooltip="View mode"
       icon={<Icons.View color="status-ok" />}
       aria-label="Viewer mode"
-      hoverIndicator
       onClick={() => {
         /* If there are unsaved changes, ask the user to confirm before switching modes */
         const doContinue = fireUnsavedChangeEvent()
@@ -110,22 +117,22 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
 
   // Button for entering edit mode
   const editModeButton: React.ReactNode = (
-    <Button
+    <ToolTipButton
+      tooltip="Edit mode"
       id="edit-button"
       icon={<Icons.Edit color="neutral-3" />}
       aria-label="Edit information"
-      hoverIndicator
       onClick={() => props.setIsEditing(true)}
     />
   )
 
   // Button for deleting the current person
   const deleteCurrentPersonButton: React.ReactNode = (
-    <Button
+    <ToolTipButton
+      tooltip="Delete"
       id="delete-person-button"
       icon={<Icons.Trash color="status-critical" />}
       aria-label="Delete person"
-      hoverIndicator
       onClick={deletePerson(currentPersonId)}
     />
   )
@@ -188,37 +195,40 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
 
   // Button that opens a menu for connecting to/disconnecting from other people
   const ConnectPeopleDropButton: React.ReactNode = (
-    <DropButton
-      id="manage-relationships-drop-button"
-      icon={<Icons.Connect color="neutral-3" />}
-      aria-label="Create connection"
-      hoverIndicator
-      dropAlign={{ left: "right" }}
-      ref={connectPeopleDropButtonRef}
-      dropContent={
-        <React.Fragment>
-          <Box direction="row" justify="center">
-            <Heading level={4} margin={{ left: "auto" }} textAlign="center">
-              Manage Connections
-            </Heading>
-            <Button
-              onClick={handleCloseConnectionMenu}
-              icon={<Icons.Close />}
-              aria-label="Close connection management menu"
-              margin={{ left: "auto" }}
-              hoverIndicator
+    <Tip content="Manage connections">
+      <DropButton
+        id="manage-relationships-drop-button"
+        icon={<Icons.Connect color="neutral-3" />}
+        aria-label="Create connection"
+        hoverIndicator
+        dropAlign={{ left: "right" }}
+        ref={connectPeopleDropButtonRef}
+        dropContent={
+          <React.Fragment>
+            <Box direction="row" justify="center">
+              <Heading level={4} margin={{ left: "auto" }} textAlign="center">
+                Manage Connections
+              </Heading>
+              <Button
+                onClick={handleCloseConnectionMenu}
+                icon={<Icons.Close />}
+                aria-label="Close connection management menu"
+                margin={{ left: "auto" }}
+                hoverIndicator
+              />
+            </Box>
+            <SearchAndCheckMenu
+              defaultOptions={relationshipOptions}
+              idField="id"
+              nameField="name"
+              isCheckedFunction={(arg: IRelationshipOption) => arg.isConnected}
+              toggleOption={toggleConnection}
+              maxHeight="350px"
             />
-          </Box>
-          <SearchAndCheckMenu
-            defaultOptions={relationshipOptions}
-            idField="id"
-            nameField="name"
-            isCheckedFunction={(arg: IRelationshipOption) => arg.isConnected}
-            toggleOption={toggleConnection}
-          />
-        </React.Fragment>
-      }
-    />
+          </React.Fragment>
+        }
+      />
+    </Tip>
   )
 
   const isPersonInGroup = (groupWithId: typeof groupsWithId[0]) =>
@@ -240,37 +250,43 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
 
   // Button that opens a menu for managing the current person's groups
   const ManageGroupsDropButton: React.ReactNode = (
-    <DropButton
-      id="manage-groups-drop-button"
-      icon={<Icons.Group color="accent-1" />}
-      aria-label="Manage groups"
-      hoverIndicator
-      dropAlign={{ left: "right" }}
-      ref={manageGroupsDropButtonRef}
-      dropContent={
-        <React.Fragment>
-          <Box direction="row" justify="center">
-            <Heading level={4} margin={{ left: "auto" }} textAlign="center">
-              Manage Groups
-            </Heading>
-            <Button
-              onClick={handleCloseGroupsMenu}
-              icon={<Icons.Close />}
-              aria-label="Close group management menu"
-              margin={{ left: "auto" }}
-              hoverIndicator
+    <Tip content="Manage groups">
+      <DropButton
+        id="manage-groups-drop-button"
+        icon={<Icons.Group color="accent-1" />}
+        aria-label="Manage groups"
+        hoverIndicator
+        dropAlign={{ left: "right" }}
+        ref={manageGroupsDropButtonRef}
+        dropContent={
+          <React.Fragment>
+            <Box direction="row" justify="center">
+              <Heading level={4} margin={{ left: "auto" }} textAlign="center">
+                Manage Groups
+              </Heading>
+              <Button
+                onClick={handleCloseGroupsMenu}
+                icon={<Icons.Close />}
+                aria-label="Close group management menu"
+                margin={{ left: "auto" }}
+                hoverIndicator
+              />
+            </Box>
+            <SearchAndCheckMenu
+              defaultOptions={groupsWithId}
+              idField="id"
+              nameField="name"
+              isCheckedFunction={isPersonInGroup}
+              toggleOption={toggleGroup}
+              itemBgColorField="backgroundColor"
+              itemTextColorField="textColor"
+              pad="small"
+              maxHeight="350px"
             />
-          </Box>
-          <SearchAndCheckMenu
-            defaultOptions={groupsWithId}
-            idField="id"
-            nameField="name"
-            isCheckedFunction={isPersonInGroup}
-            toggleOption={toggleGroup}
-          />
-        </React.Fragment>
-      }
-    />
+          </React.Fragment>
+        }
+      />
+    </Tip>
   )
 
   return (

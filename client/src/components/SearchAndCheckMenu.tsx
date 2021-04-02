@@ -8,6 +8,10 @@ interface IProps {
   isCheckedFunction: (arg: any) => boolean // Function to check if an option should be checked or not
   toggleOption: (id: string, isChecked: boolean) => () => void // Function for creating a function to toggle the individual state of an option
   maxHeight?: string
+
+  itemBgColorField?: string // Optional background color field for an item
+  itemTextColorField?: string // Optional text color field for an item
+  pad?: string // Optional item padding
 }
 
 function SearchAndCheckMenu({
@@ -17,6 +21,9 @@ function SearchAndCheckMenu({
   isCheckedFunction: checkedCondition,
   toggleOption,
   maxHeight = "small",
+  itemBgColorField,
+  itemTextColorField,
+  pad,
 }: IProps) {
   // Search state
   const [search, setSearch] = React.useState<string>("")
@@ -32,14 +39,14 @@ function SearchAndCheckMenu({
         value={search}
         onChange={handleSearchChange}
       />
-      <Box overflow="auto" height={{ max: maxHeight }}>
+      <Box overflow="auto" height={{ max: "large" }}>
         <List
           id="add-relationship-buttons"
           primaryKey="name"
           data={defaultOptions.filter((opt) =>
             opt.name.toLowerCase().includes(search.toLowerCase()),
           )}
-          style={{ maxHeight: "350px", overflowY: "auto" }}
+          style={{ maxHeight, overflowY: "auto" }}
         >
           {/* Render the list items */}
           {(option: any) => {
@@ -47,13 +54,28 @@ function SearchAndCheckMenu({
 
             return (
               <Box
-                direction="row"
                 key={option[idField]}
-                gap="small"
+                direction="row"
                 onClick={toggleOption(option[idField], isChecked)}
+                gap="small"
+                pad={pad}
+                style={{
+                  // Color (if the color field props are valid)
+                  backgroundColor: itemBgColorField
+                    ? option[itemBgColorField]
+                    : undefined,
+                  color: itemTextColorField
+                    ? option[itemTextColorField]
+                    : undefined,
+                }}
+                fill
               >
                 <Text>{option[nameField]}</Text>
-                <Box direction="row" margin={{ left: "auto" }}>
+                <Box
+                  direction="row"
+                  margin={{ left: "auto" }}
+                  style={{ backgroundColor: "#222" }}
+                >
                   <CheckBox checked={isChecked} />
                 </Box>
               </Box>
