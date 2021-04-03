@@ -14,6 +14,8 @@ const initialState: IUserInterfaceState = {
   filteredGroups: {},
   activeGroupsByPersonId: {},
   doShowNodesWithoutGroups: true,
+
+  isShareMenuOpen: false,
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -79,6 +81,13 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         doShowNodesWithoutGroups: action.doShow,
+      }
+    }
+
+    case UserInterfaceActionTypes.TOGGLE_SHARE_OVERLAY: {
+      return {
+        ...state,
+        isShareMenuOpen: action.isOpen,
       }
     }
 

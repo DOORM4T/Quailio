@@ -16,6 +16,7 @@ export interface INetwork {
   name: string
   personIds: string[] // IDs of people in the network
   groupIds: string[] // IDs of relationship groups in the network
+  sharedProperties?: ISharedNetworkProperties // Properties used when this network is shared to the public/to certain users
 }
 
 /* 
@@ -80,6 +81,9 @@ export enum NetworkActionTypes {
   DELETE_GROUP = "GROUP/DELETE",
   RENAME_GROUP = "GROUP/RENAME",
   CHANGE_GROUP_COLOR = "GROUP/CHANGE_COLOR",
+
+  SHARE_NETWORK = "NETWORK/SHARE",
+  UNSHARE_NETWORK = "NETWORK/UNSHARE",
 }
 
 export interface INetworkLoadingAction {
@@ -206,6 +210,25 @@ export interface IChangeGroupColorAction {
   newColor: string
 }
 
+export interface IAllowListUser {
+  email: string
+  canEdit: boolean
+}
+export interface ISharedNetworkProperties {
+  sharedId: string | null // A null sharedId means that the network is not shared
+  allowList: IAllowListUser[]
+}
+export interface IShareNetworkAction {
+  type: NetworkActionTypes.SHARE_NETWORK
+  networkId: string
+  sharedProperties: ISharedNetworkProperties
+}
+
+export interface IUnshareNetworkAction {
+  type: NetworkActionTypes.UNSHARE_NETWORK
+  networkId: string
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -229,3 +252,5 @@ export type NetworksActions =
   | IDeleteGroupAction
   | IRenameGroupAction
   | IChangeGroupColorAction
+  | IShareNetworkAction
+  | IUnshareNetworkAction

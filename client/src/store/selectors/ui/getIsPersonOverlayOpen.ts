@@ -1,4 +1,4 @@
 import { IApplicationState } from "../../store"
 
-export const getIsOverlayOpen = (state: IApplicationState): boolean =>
+export const getIsPersonOverlayOpen = (state: IApplicationState): boolean =>
   state.ui.isPersonEditMenuOpen

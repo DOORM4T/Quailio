@@ -7,6 +7,7 @@ export interface IUserInterfaceState {
   readonly activeGroupsByPersonId: IActiveGroupsByPersonId // Map tracking the active/showing groups a person is part of
   readonly filteredGroups: { [groupId: string]: boolean } // "Showing" state for each group
   readonly doShowNodesWithoutGroups: boolean
+  readonly isShareMenuOpen: boolean // State for showing the share menu
 }
 
 export interface IActiveGroupsByPersonId {
@@ -22,6 +23,8 @@ export enum UserInterfaceActionTypes {
   INIT_PERSON_ACTIVE_GROUPS = "UI/INIT_PERSON_ACTIVE_GROUPS",
   TOGGLE_GROUP_FILTER = "UI/TOGGLE_GROUP_FILTER",
   TOGGLE_SHOW_NODES_WITHOUT_GROUPS = "UI/TOGGLE_SHOW_NODES_WITHOUT_GROUPS",
+
+  TOGGLE_SHARE_OVERLAY = "UI/TOGGLE_SHARE_OVERLAY",
 }
 
 export interface ISetUILoadingAction {
@@ -65,6 +68,11 @@ export interface IToggleShowNodesWithoutGroupsAction {
   doShow: boolean
 }
 
+export interface IToggleShareOverlayAction {
+  type: UserInterfaceActionTypes.TOGGLE_SHARE_OVERLAY
+  isOpen: boolean
+}
+
 /* action types used by the networks reducer */
 export type UserInterfaceActions =
   | ISetUILoadingAction
@@ -74,3 +82,4 @@ export type UserInterfaceActions =
   | IInitializePersonGroupList
   | IToggleGroupFilterAction
   | IToggleShowNodesWithoutGroupsAction
+  | IToggleShareOverlayAction

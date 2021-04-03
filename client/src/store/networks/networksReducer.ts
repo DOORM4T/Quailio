@@ -23,7 +23,10 @@ import {
   IRenameNetworkAction,
   ISetNetworkAction,
   ISetPersonThumbnailAction,
+  ISharedNetworkProperties,
+  IShareNetworkAction,
   ITogglePersonInGroupAction,
+  IUnshareNetworkAction,
   IUpdatePersonContentAction,
   IUpdatePersonNameAction,
   IUpdateRelationshipReasonAction,
@@ -123,8 +126,94 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.CHANGE_GROUP_COLOR:
       return getChangeGroupColorState(state, action)
 
+    // SHARING
+    case NetworkActionTypes.SHARE_NETWORK:
+      return getShareNetworkState(state, action)
+    case NetworkActionTypes.UNSHARE_NETWORK:
+      return getUnshareNetworkState(state, action)
+
     default:
       return state
+  }
+}
+
+function getUnshareNetworkState(
+  state: INetworksState,
+  action: IUnshareNetworkAction,
+): INetworksState {
+  // Ensure there's a current network
+  if (!state.currentNetwork || state.currentNetwork.id !== action.networkId)
+    return state
+
+  // Update networks state
+  const networkToUnshareIndex = state.networks.findIndex(
+    (network) => network.id === action.networkId,
+  )
+  if (networkToUnshareIndex === -1) return state
+
+  const networkToUnshare = state.networks[networkToUnshareIndex]
+  const allowListCopy = networkToUnshare.sharedProperties?.allowList
+    ? [...networkToUnshare.sharedProperties.allowList]
+    : []
+  const updatedSharedProperties: ISharedNetworkProperties = {
+    sharedId: null,
+    allowList: allowListCopy,
+  }
+  const updatedNetwork: INetwork = {
+    ...networkToUnshare,
+    sharedProperties: updatedSharedProperties,
+  }
+
+  const updatedNetworks = [...state.networks]
+  updatedNetworks[networkToUnshareIndex] = updatedNetwork
+
+  // Update the current network
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    sharedProperties: updatedSharedProperties,
+  }
+
+  return {
+    ...state,
+    networks: updatedNetworks,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
+  }
+}
+
+function getShareNetworkState(
+  state: INetworksState,
+  action: IShareNetworkAction,
+): INetworksState {
+  // Ensure there's a current network
+  if (!state.currentNetwork || state.currentNetwork.id !== action.networkId)
+    return state
+
+  // Update networks state
+  const networkToShareIndex = state.networks.findIndex(
+    (network) => network.id === action.networkId,
+  )
+  if (networkToShareIndex === -1) return state
+
+  const updatedNetwork: INetwork = {
+    ...state.networks[networkToShareIndex],
+    sharedProperties: action.sharedProperties,
+  }
+
+  const updatedNetworks = [...state.networks]
+  updatedNetworks[networkToShareIndex] = updatedNetwork
+
+  // Update the current network
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    sharedProperties: action.sharedProperties,
+  }
+
+  return {
+    ...state,
+    networks: updatedNetworks,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
-import { getIsOverlayOpen } from "../../../store/selectors/ui/getIsOverlayOpen"
+import { getIsPersonOverlayOpen } from "../../../store/selectors/ui/getIsPersonOverlayOpen"
 import { togglePersonOverlay } from "../../../store/ui/uiActions"
 import Overlay from "../../Overlay"
 import ContentPanel from "./ContentPanel"
@@ -17,7 +17,7 @@ interface IProps {
 
 const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
-  const isOverlayOpen = useSelector(getIsOverlayOpen)
+  const isOverlayOpen = useSelector(getIsPersonOverlayOpen)
   const isSmall = useSmallBreakpoint()
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
 

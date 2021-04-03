@@ -7,6 +7,7 @@ import {
   ISetUILoadingAction,
   IToggleGroupFilterAction,
   ITogglePersonOverlay,
+  IToggleShareOverlayAction,
   IToggleShowNodesWithoutGroupsAction,
   IZoomToPersonAction,
   UserInterfaceActionTypes,
@@ -88,4 +89,12 @@ export const toggleShowNodesWithoutGroups: ActionCreator<IToggleShowNodesWithout
 ) => ({
   type: UserInterfaceActionTypes.TOGGLE_SHOW_NODES_WITHOUT_GROUPS,
   doShow,
+})
+
+// Open/close the network sharing overlay
+export const toggleShareOverlay: ActionCreator<IToggleShareOverlayAction> = (
+  isOpen: boolean,
+) => ({
+  type: UserInterfaceActionTypes.TOGGLE_SHARE_OVERLAY,
+  isOpen,
 })

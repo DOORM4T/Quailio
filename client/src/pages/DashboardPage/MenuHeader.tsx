@@ -6,6 +6,7 @@ import { ActionCreator, AnyAction } from "redux"
 import AppHeader, { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ToolTipButton from "../../components/ToolTipButton"
 import { getCurrentNetworkJSON } from "../../helpers/getNetworkJSON"
+import useAuth from "../../hooks/auth/useAuth"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
   addPerson,
@@ -19,6 +20,7 @@ import {
 } from "../../store/networks/actions"
 import { INetwork } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
+import { toggleShareOverlay } from "../../store/ui/uiActions"
 
 interface INetworkSelectOption {
   id: string
@@ -39,6 +41,7 @@ export const HeaderMenu: React.FC<IProps> = ({
   const isSmall = useSmallBreakpoint()
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const selectedNetwork = useSelector(getCurrentNetwork)
+  const isAuthenticated = useAuth()
 
   const defaultNetworkOptions = networks.map((n) => ({
     id: n.id,
@@ -265,6 +268,17 @@ export const HeaderMenu: React.FC<IProps> = ({
     }
   }
 
+  // FUNCTION | Open the sharing overlay menu
+  const openSharingMenu = async () => {
+    if (!currentNetwork) return
+
+    try {
+      await dispatch(toggleShareOverlay(true))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const actionButtons = [
     <ToolTipButton
       key="add-person-button"
@@ -299,18 +313,31 @@ export const HeaderMenu: React.FC<IProps> = ({
     <ToolTipButton
       key="rename-network-button"
       id="rename-network-button"
-      tooltip="Rename current network"
-      ariaLabel="Rename the current network"
+      tooltip="Rename network"
+      ariaLabel="Rename this network"
       icon={<Icons.Tag color="light-1" />}
       onClick={handleRenameNetwork}
       isDisabled={!currentNetwork}
     />,
 
+    // Share Button -- Shows only if the user is authenticated
+    isAuthenticated ? (
+      <ToolTipButton
+        key="share-network-button"
+        id="share-network-button"
+        tooltip="Share network"
+        ariaLabel="Share this network"
+        icon={<Icons.ShareOption color="accent-1" />}
+        onClick={openSharingMenu}
+        isDisabled={!currentNetwork}
+      />
+    ) : null,
+
     <ToolTipButton
       key="delete-network-button"
       id="delete-network-button"
-      tooltip="Delete current network"
-      ariaLabel="Delete current network"
+      tooltip="Delete network"
+      ariaLabel="Delete this network"
       icon={<Icons.Threats color="status-critical" />}
       onClick={handleDeleteNetwork}
       isDisabled={!currentNetwork}
