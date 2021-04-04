@@ -26,6 +26,7 @@ import { togglePersonInGroup } from "../../store/networks/actions/togglePersonIn
 import { IPerson } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { getFilterGroups } from "../../store/selectors/ui/getFilterGroups"
+import { getIsViewingShared } from "../../store/selectors/ui/getIsViewingShared"
 import { getShowNodesWithoutGroups } from "../../store/selectors/ui/getShowNodesWithoutGroups"
 import {
   cachePersonGroupList,
@@ -70,6 +71,9 @@ const PersonMenu: React.FC<IProps> = (props) => {
   // VARS | Derived from current network; Track whether there are groups or not
   const groups = currentNetwork?.relationshipGroups
   const hasGroups = groups && Object.keys(groups).length > 0
+
+  // REDUX SELECTOR | Viewing a shared network?
+  const isViewingShared = useSelector(getIsViewingShared)
 
   // STATE | An array of filtered people -- The default list comes from the "people" prop
   const [filterablePeople, setFilterablePeople] = React.useState(props.people)
@@ -168,6 +172,9 @@ const PersonMenu: React.FC<IProps> = (props) => {
   const handleAddPerson = async () => {
     // Stop if the current network doesn't exist or if the user didn't type anything in the top input
     if (!currentNetwork || searchAddInput === "") return
+
+    // Stop if viewing a shared network
+    if (isViewingShared) return
 
     try {
       await dispatch(addPerson(currentNetwork.id, searchAddInput)) // Add the person in global state
@@ -324,8 +331,10 @@ const PersonMenu: React.FC<IProps> = (props) => {
   const SearchAddInput: React.ReactNode = (
     <Box direction="row" align="center" pad="small" gap="none">
       <TextInput
-        width="75%"
-        placeholder="Search for (ENTER, SHIFT+ENTER) or add a person (CTRL+ENTER)"
+        width={`${isViewingShared ? "100%" : "75%"}`}
+        placeholder={`Search for (ENTER, SHIFT+ENTER) ${
+          !isViewingShared ? "or add" : ""
+        } a person`}
         onChange={handleInputChange}
         onClick={(e) => e.currentTarget.select()}
         onBlur={() => setSearchIndex(-1)}
@@ -333,15 +342,17 @@ const PersonMenu: React.FC<IProps> = (props) => {
         onKeyUp={handleAddSearchInputShortkeys}
         style={{ fontSize: "12px" }}
       />
-      <Box direction="row" width="25%" justify="center">
-        <Button
-          onClick={handleAddPerson}
-          type="submit"
-          icon={<Icons.Add />}
-          aria-label="Add person (Click or CTRL+ENTER)"
-          hoverIndicator
-        />
-      </Box>
+      {!isViewingShared && (
+        <Box direction="row" width="25%" justify="center">
+          <Button
+            onClick={handleAddPerson}
+            type="submit"
+            icon={<Icons.Add />}
+            aria-label="Add person (Click or CTRL+ENTER)"
+            hoverIndicator
+          />
+        </Box>
+      )}
     </Box>
   ) // END | SearchAddInput
 
@@ -643,7 +654,10 @@ const PersonMenu: React.FC<IProps> = (props) => {
                           children={renderItem(false)}
                         />
                       </Tab>
-                      <Tab title="Manage">{ManageGroupBox}</Tab>
+
+                      {!isViewingShared && (
+                        <Tab title="Manage">{ManageGroupBox}</Tab>
+                      )}
                     </Tabs>
                   </Box>
                 </AccordionPanel>

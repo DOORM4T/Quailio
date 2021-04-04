@@ -1,21 +1,32 @@
 import { Box } from "grommet"
 import React from "react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
+import { useHistory } from "react-router"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
 import useAuth from "../../hooks/auth/useAuth"
 import useGetNetworks from "../../hooks/networks/useGetNetworks"
 import usePageExitConfirmation from "../../hooks/usePageExitConfirmation"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
+import {
+  getAllNetworks,
+  resetLocalNetworks,
+  setNetwork,
+} from "../../store/networks/actions"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { getGroupIdsByPersonId } from "../../store/selectors/ui/getGroupIdsByPersonId"
+import { getIsViewingShared } from "../../store/selectors/ui/getIsViewingShared"
 import { getShowNodesWithoutGroups } from "../../store/selectors/ui/getShowNodesWithoutGroups"
+import { setViewingShared } from "../../store/ui/uiActions"
 import HeaderMenu from "./MenuHeader"
 import PersonMenu from "./PersonMenu"
 
 const DashboardPage: React.FC = () => {
+  const dispatch = useDispatch()
+  const history = useHistory()
+
   // Fetch network data (network IDs, network names, person IDs)
   useGetNetworks()
 
@@ -40,6 +51,42 @@ const DashboardPage: React.FC = () => {
 
   // Global state to show/hide nodes without groups
   const doShowNodesWithoutGroups = useSelector(getShowNodesWithoutGroups)
+
+  // REDUX SELECTOR | Viewing a shared network?
+  const isViewingShared = useSelector(getIsViewingShared)
+
+  React.useEffect(() => {
+    async function viewSharedNetwork() {
+      dispatch(setViewingShared(false))
+
+      // Check if the page points to a shared network
+      try {
+        const sharedNetworkId = new URLSearchParams(window.location.search).get(
+          "sharing",
+        )
+
+        if (sharedNetworkId) {
+          await dispatch(setNetwork(sharedNetworkId, true))
+          dispatch(setViewingShared(true))
+        }
+      } catch (error) {
+        // Return to the plain dashboard if the shared network wasn't found
+        console.error(error)
+        history.push("/dashboard")
+      }
+    }
+
+    viewSharedNetwork()
+  }, [])
+
+  React.useEffect(() => {
+    return () => {
+      // If viewing a shared network, clear it networks when the user navigates away from the dashboard
+      if (isViewingShared) {
+        dispatch(resetLocalNetworks())
+      }
+    }
+  }, [])
 
   // Only show nodes that have at least one active group
   const networkWithActiveNodes: ICurrentNetwork | null = currentNetwork

@@ -8,6 +8,7 @@ export interface IUserInterfaceState {
   readonly filteredGroups: { [groupId: string]: boolean } // "Showing" state for each group
   readonly doShowNodesWithoutGroups: boolean
   readonly isShareMenuOpen: boolean // State for showing the share menu
+  readonly isViewingShared: boolean // Whether the user is viewing a shared network or not
 }
 
 export interface IActiveGroupsByPersonId {
@@ -25,6 +26,8 @@ export enum UserInterfaceActionTypes {
   TOGGLE_SHOW_NODES_WITHOUT_GROUPS = "UI/TOGGLE_SHOW_NODES_WITHOUT_GROUPS",
 
   TOGGLE_SHARE_OVERLAY = "UI/TOGGLE_SHARE_OVERLAY",
+
+  SET_VIEWING_SHARED = "UI/SET_VIEWING_SHARED",
 }
 
 export interface ISetUILoadingAction {
@@ -73,6 +76,11 @@ export interface IToggleShareOverlayAction {
   isOpen: boolean
 }
 
+export interface ISetViewingSharedAction {
+  type: UserInterfaceActionTypes.SET_VIEWING_SHARED
+  isViewingShared: boolean
+}
+
 /* action types used by the networks reducer */
 export type UserInterfaceActions =
   | ISetUILoadingAction
@@ -83,3 +91,4 @@ export type UserInterfaceActions =
   | IToggleGroupFilterAction
   | IToggleShowNodesWithoutGroupsAction
   | IToggleShareOverlayAction
+  | ISetViewingSharedAction

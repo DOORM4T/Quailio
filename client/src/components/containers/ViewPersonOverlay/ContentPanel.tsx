@@ -17,7 +17,7 @@ import {
 import * as Icons from "grommet-icons"
 
 /* Content on the view panel when the user has no content */
-const DEFAULT_VIEW_CONTENT = "<p>Write anything!</p>"
+const DEFAULT_VIEW_CONTENT = ""
 
 interface IProps {
   id: string

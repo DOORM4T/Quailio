@@ -5,6 +5,7 @@ import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
 import { getIsPersonOverlayOpen } from "../../../store/selectors/ui/getIsPersonOverlayOpen"
+import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import { togglePersonOverlay } from "../../../store/ui/uiActions"
 import Overlay from "../../Overlay"
 import ContentPanel from "./ContentPanel"
@@ -20,6 +21,9 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const isOverlayOpen = useSelector(getIsPersonOverlayOpen)
   const isSmall = useSmallBreakpoint()
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
+
+  // REDUX SELECTOR | Viewing a shared network?
+  const isViewingShared = useSelector(getIsViewingShared) // True? Disabled editing.
 
   // Do not render if the overlay shouldn't be open
   if (!isOverlayOpen) return null
@@ -39,15 +43,24 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
 
   // -== REUSABLE COMPONENTS (Reused for different layouts) ==- //
   const PersonHeaderContainer: React.ReactNode = (
-    <PersonHeader isEditing={isEditing} setIsEditing={setIsEditing} />
+    <PersonHeader
+      isEditing={isViewingShared ? false : isEditing}
+      setIsEditing={setIsEditing}
+    />
   )
 
   const RelationshipsContainer: React.ReactNode = (
-    <Relationships isEditing={isEditing} setIsEditing={setIsEditing} />
+    <Relationships
+      isEditing={isViewingShared ? false : isEditing}
+      setIsEditing={setIsEditing}
+    />
   )
 
   const ContentContainer: React.ReactNode = (
-    <ContentPanel id="person-content-editor" isEditing={isEditing} />
+    <ContentPanel
+      id="person-content-editor"
+      isEditing={isViewingShared ? false : isEditing}
+    />
   )
 
   // -== LAYOUTS ==- //

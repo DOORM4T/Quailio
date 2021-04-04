@@ -15,6 +15,7 @@ import {
   getCurrentNetworkId,
   getCurrentNetworkPeople,
 } from "../../../store/selectors/networks/getCurrentNetwork"
+import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import {
   getPersonInFocusId,
   getPersonInFocusName,
@@ -73,8 +74,11 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }, 10)
   }
 
-  /* Do not render if no network or person is selected */
-  if (!currentNetworkId || !currentPersonId) return null
+  // REDUX SELECTOR | Viewing a shared network?
+  const isViewingShared = useSelector(getIsViewingShared) // Used to hide the edit mode buttin if true
+
+  /* Do not render if no network or person is selected, or if in sharing mode */
+  if (!currentNetworkId || !currentPersonId || isViewingShared) return null
 
   /**
    * Delete a person by their ID

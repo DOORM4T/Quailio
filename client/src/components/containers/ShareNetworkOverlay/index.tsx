@@ -23,8 +23,25 @@ const SHARING_OPTIONS = ["Private", "Public"]
 const ShareNetworkOverlay: React.FC<IProps> = ({ id }) => {
   const dispatch = useDispatch()
   const isOpen = useSelector(getIsShareOverlayOpen)
-  const [sharingOption, setSharingOption] = React.useState(SHARING_OPTIONS[0])
   const currentNetwork = useSelector(getCurrentNetwork)
+
+  const [sharingOption, setSharingOption] = React.useState(
+    currentNetwork?.sharedProperties?.sharedId
+      ? SHARING_OPTIONS[1]
+      : SHARING_OPTIONS[0],
+  )
+  const sharedURL = currentNetwork?.sharedProperties?.sharedId
+    ? `${window.location.origin}${window.location.pathname}?sharing=${currentNetwork.sharedProperties.sharedId}`
+    : null
+
+  // EFFECT | Update the sharing option whenever the current network's sharedId changes
+  React.useEffect(() => {
+    const option = currentNetwork?.sharedProperties?.sharedId
+      ? SHARING_OPTIONS[1]
+      : SHARING_OPTIONS[0]
+
+    setSharingOption(option)
+  }, [currentNetwork?.sharedProperties?.sharedId])
 
   // Don't render if there's no network selected
   if (!currentNetwork) return null
@@ -79,11 +96,11 @@ const ShareNetworkOverlay: React.FC<IProps> = ({ id }) => {
         />
 
         {/* Show the sharing URL if public  */}
-        {currentNetwork.sharedProperties?.sharedId && (
+        {sharedURL && (
           <Box margin={{ top: "large" }} align="center" width="large">
             <span>Click to copy URL</span>
             <TextInput
-              value={`${window.location.href}?sharing=${currentNetwork.sharedProperties.sharedId}`}
+              value={sharedURL}
               onClick={
                 // Copy URL to clipboard
                 (e) => {

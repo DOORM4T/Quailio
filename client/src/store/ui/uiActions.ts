@@ -5,6 +5,7 @@ import {
   IInitializePersonGroupList,
   IPersonIDWithActiveGroups,
   ISetUILoadingAction,
+  ISetViewingSharedAction,
   IToggleGroupFilterAction,
   ITogglePersonOverlay,
   IToggleShareOverlayAction,
@@ -97,4 +98,12 @@ export const toggleShareOverlay: ActionCreator<IToggleShareOverlayAction> = (
 ) => ({
   type: UserInterfaceActionTypes.TOGGLE_SHARE_OVERLAY,
   isOpen,
+})
+
+// Set viewing shared state -- whether the user is viewing a shared network or not
+export const setViewingShared: ActionCreator<ISetViewingSharedAction> = (
+  isViewingShared: boolean,
+) => ({
+  type: UserInterfaceActionTypes.SET_VIEWING_SHARED,
+  isViewingShared,
 })

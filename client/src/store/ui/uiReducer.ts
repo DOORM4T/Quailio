@@ -16,6 +16,8 @@ const initialState: IUserInterfaceState = {
   doShowNodesWithoutGroups: true,
 
   isShareMenuOpen: false,
+
+  isViewingShared: false,
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -88,6 +90,13 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         isShareMenuOpen: action.isOpen,
+      }
+    }
+
+    case UserInterfaceActionTypes.SET_VIEWING_SHARED: {
+      return {
+        ...state,
+        isViewingShared: action.isViewingShared,
       }
     }
 

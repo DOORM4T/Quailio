@@ -521,6 +521,9 @@ function handleBackgroundRightClick({ state }: IGraphClosureData) {
 
 function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
   return async (n: NodeObject | null) => {
+    // DO NOT allow right click events if in sharing mode
+    if (store.getState().ui.isViewingShared) return
+
     if (!n || !nodeToConnect || !state) return
     const node = n as NodeObject & IPersonNode
 

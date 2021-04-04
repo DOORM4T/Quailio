@@ -1,4 +1,4 @@
-import { Box, Menu, Select, Text, Tip } from "grommet"
+import { Box, Heading, Menu, Select, Text, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -20,6 +20,7 @@ import {
 } from "../../store/networks/actions"
 import { INetwork } from "../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
+import { getIsViewingShared } from "../../store/selectors/ui/getIsViewingShared"
 import { toggleShareOverlay } from "../../store/ui/uiActions"
 
 interface INetworkSelectOption {
@@ -42,6 +43,9 @@ export const HeaderMenu: React.FC<IProps> = ({
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const selectedNetwork = useSelector(getCurrentNetwork)
   const isAuthenticated = useAuth()
+
+  // REDUX SELECTOR | Viewing a shared network?
+  const isViewingShared = useSelector(getIsViewingShared)
 
   const defaultNetworkOptions = networks.map((n) => ({
     id: n.id,
@@ -383,7 +387,11 @@ export const HeaderMenu: React.FC<IProps> = ({
       dropHeight="350px"
       id="select-network-dropbutton"
       aria-label="Select a network"
-      placeholder="Select a network (CTRL + /)"
+      placeholder={
+        networks.length === 0
+          ? `No networks found`
+          : `Select a network (CTRL + /)`
+      }
       searchPlaceholder="Search by name"
       options={isSearching ? networkOptions : defaultNetworkOptions}
       onChange={handleNetworkSelect}
@@ -491,9 +499,12 @@ export const HeaderMenu: React.FC<IProps> = ({
         width="100%"
         overflow="hidden"
       >
-        {leftHeaderItems}
-        {currentNetwork && rightHeaderItems}
-        {isZeroLoginMode && (
+        {currentNetwork && isViewingShared && (
+          <Heading level={3}>[Shared] {currentNetwork.name}</Heading>
+        )}
+        {!isViewingShared && leftHeaderItems}
+        {!isViewingShared && currentNetwork && rightHeaderItems}
+        {!isViewingShared && isZeroLoginMode && (
           <Tip content="The full Quailio experience minus the account. Though you won't be storing anything in our database, you can export and import your networks to save your progress.">
             <Text style={{ marginLeft: "auto" }} color="accent-4">
               Zero-login Mode

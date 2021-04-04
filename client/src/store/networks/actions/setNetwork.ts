@@ -17,31 +17,45 @@ import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
  * Select a network by its ID, setting the "currentNetwork" field in global state
+ *
+ * Also used to view shared networks
+ *
+ * (IMPORTANT: Offline users DO NOT use this action -- they instead rely on importing/exporting)
  * @param networkId
  */
 
-export const setNetwork = (networkId: string): AppThunk => {
+export const setNetwork = (networkId: string, isShared?: boolean): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     try {
-      // Stop if the user is not authenticated (Offline mode doesn't need to use this action)
+      /* Get network data from Firestore  */
+      let networkDoc
+      if (isShared) {
+        // Network has a shared field? Any user can view the network.
+        networkDoc = (
+          await networksCollection
+            .where("sharedProperties.sharedId", "==", networkId)
+            .get()
+        ).docs[0]
 
-      // TODO: network has a shared field?
+        if (!networkDoc) throw new Error("Shared network not found")
+      } else {
+        // Otherwise, this network should belong to the user
+        // Stop if the user is not authenticated
+        const uid = getState().auth.userId
+        if (!uid) throw new Error("There is no currently authenticated user.")
 
-      const uid = getState().auth.userId
-      if (!uid) throw new Error("There is no currently authenticated user.")
+        networkDoc = await networksCollection.doc(networkId).get()
+      }
 
-      /* Get data from Firestore  */
-      /* Get the Network by its ID from the Networks collection */
-      const networkData: INetwork = (
-        await networksCollection.doc(networkId).get()
-      ).data() as INetwork
-
-      if (!networkData) throw new Error("Network not found.")
+      if (!networkDoc.exists) throw new Error("Network not found.")
+      const networkData = networkDoc.data() as INetwork
 
       /* Get all Person documents related to the Person IDs in the Network */
-      const people: IPerson[] = await getAllPersonDataFromDB(networkId)
+      const people: IPerson[] = await getAllPersonDataFromDB(
+        networkData.personIds,
+      )
 
       // Get all Relationship Group documents related to the Group IDs in the network
       let relationshipGroups: IRelationshipGroups = {}
@@ -104,16 +118,9 @@ async function getAllGroupsDataFromDB(groupIds: string[]) {
  * Gets all person data from Firestore
  * @param networkId
  */
-export async function getAllPersonDataFromDB(networkId: string) {
-  /* Get the Network by its ID from the Networks collection */
-  const networkData: INetwork = (
-    await networksCollection.doc(networkId).get()
-  ).data() as INetwork
-
-  if (!networkData) throw new Error("Network not found.")
-
+export async function getAllPersonDataFromDB(personIds: string[]) {
   /* Get all Person documents related to the Person IDs in the Network */
-  const getPeopleData = networkData.personIds.map(
+  const getPeopleData = personIds.map(
     async (id) => (await peopleCollection.doc(id).get()).data() as IPerson,
   )
   const peopleData: IPerson[] = await Promise.all(getPeopleData)
