@@ -5,7 +5,6 @@ import { useHistory } from "react-router"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
 import useAuth from "../../hooks/auth/useAuth"
-import useGetNetworks from "../../hooks/networks/useGetNetworks"
 import usePageExitConfirmation from "../../hooks/usePageExitConfirmation"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import {
@@ -14,6 +13,7 @@ import {
   setNetwork,
 } from "../../store/networks/actions"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
+import getIsLoading from "../../store/selectors/getIsLoading"
 import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { getGroupIdsByPersonId } from "../../store/selectors/ui/getGroupIdsByPersonId"
@@ -26,9 +26,6 @@ import PersonMenu from "./PersonMenu"
 const DashboardPage: React.FC = () => {
   const dispatch = useDispatch()
   const history = useHistory()
-
-  // Fetch network data (network IDs, network names, person IDs)
-  useGetNetworks()
 
   // Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes
   usePageExitConfirmation()
@@ -55,20 +52,27 @@ const DashboardPage: React.FC = () => {
   // REDUX SELECTOR | Viewing a shared network?
   const isViewingShared = useSelector(getIsViewingShared)
 
+  // EFFECT | On mount, check if viewing a shared network
   React.useEffect(() => {
-    async function viewSharedNetwork() {
+    // Get query params from the URL
+    const sharedNetworkId = new URLSearchParams(window.location.search).get(
+      "sharing",
+    )
+
+    // Don't set the network to a shared network if there's no query param
+    if (!sharedNetworkId) {
+      dispatch(setViewingShared(false))
+      return
+    }
+
+    // Set the shared network as the current network
+    async function viewSharedNetwork(sharedId: string) {
       dispatch(setViewingShared(false))
 
       // Check if the page points to a shared network
       try {
-        const sharedNetworkId = new URLSearchParams(window.location.search).get(
-          "sharing",
-        )
-
-        if (sharedNetworkId) {
-          await dispatch(setNetwork(sharedNetworkId, true))
-          dispatch(setViewingShared(true))
-        }
+        await dispatch(setNetwork(sharedId, true))
+        dispatch(setViewingShared(true))
       } catch (error) {
         // Return to the plain dashboard if the shared network wasn't found
         console.error(error)
@@ -76,17 +80,36 @@ const DashboardPage: React.FC = () => {
       }
     }
 
-    viewSharedNetwork()
-  }, [])
+    viewSharedNetwork(sharedNetworkId)
+  }, []) // END | Shared network effect
 
+  // EFFECT | Get the logged-in user's networks
   React.useEffect(() => {
+    // Clear previous networks
+    dispatch(resetLocalNetworks())
+
+    // Get networks when at /dashboard and when the user is authenticated
+    if (history.location.pathname !== "/dashboard" || !isAuthenticated) return
+
+    async function getNetworks() {
+      try {
+        await dispatch(getAllNetworks())
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    getNetworks()
+
+    // UNMOUNT | Clean up the shared network, if the user was viewing one
     return () => {
       // If viewing a shared network, clear it networks when the user navigates away from the dashboard
       if (isViewingShared) {
         dispatch(resetLocalNetworks())
+        dispatch(setViewingShared(false))
       }
     }
-  }, [])
+  }, [isAuthenticated]) // END | Get logged-in networks
 
   // Only show nodes that have at least one active group
   const networkWithActiveNodes: ICurrentNetwork | null = currentNetwork

@@ -42,7 +42,7 @@ export const HeaderMenu: React.FC<IProps> = ({
   const isSmall = useSmallBreakpoint()
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const selectedNetwork = useSelector(getCurrentNetwork)
-  const isAuthenticated = useAuth()
+  const { isAuthenticated } = useAuth()
 
   // REDUX SELECTOR | Viewing a shared network?
   const isViewingShared = useSelector(getIsViewingShared)
@@ -500,7 +500,7 @@ export const HeaderMenu: React.FC<IProps> = ({
         overflow="hidden"
       >
         {currentNetwork && isViewingShared && (
-          <Heading level={3}>[Shared] {currentNetwork.name}</Heading>
+          <Heading level={3}>{currentNetwork.name}</Heading>
         )}
         {!isViewingShared && leftHeaderItems}
         {!isViewingShared && currentNetwork && rightHeaderItems}
@@ -508,6 +508,13 @@ export const HeaderMenu: React.FC<IProps> = ({
           <Tip content="The full Quailio experience minus the account. Though you won't be storing anything in our database, you can export and import your networks to save your progress.">
             <Text style={{ marginLeft: "auto" }} color="accent-4">
               Zero-login Mode
+            </Text>
+          </Tip>
+        )}
+        {isViewingShared && (
+          <Tip content="You are viewing a public network.">
+            <Text style={{ marginLeft: "auto" }} color="accent-4">
+              Shared Mode
             </Text>
           </Tip>
         )}
