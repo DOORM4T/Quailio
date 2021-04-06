@@ -1,4 +1,7 @@
 /* ==- GLOBAL STYLES -== */
+/* Font for force-graph text */
+@import url("https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap");
+
 html,
 body {
   margin: 0;

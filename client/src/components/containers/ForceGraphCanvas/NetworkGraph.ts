@@ -37,20 +37,24 @@ export interface IPersonNode {
 // Global variables
 //
 const CHAR_DISPLAY_LIMIT = 30
-const NODE_SIZE = 12
+const NODE_SIZE = 64
 const HIGHLIGHT_SIZE = NODE_SIZE * 1.2
 const INITIAL_DISTANCE = NODE_SIZE * 2
 
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
-const highlightLinks = new Set<NodeObject>()
+const highlightLinkIds = new Set<string>()
 const hoverNode: { node: IPersonNode | null } = { node: null }
 
 // For adding connections
 const nodeToConnect: { node: IPersonNode | null } = { node: null }
 
 // Default color if a node/its links aren't part of a group
-const DEFAULT_COLOR = "black"
+const DEFAULT_NODE_COLOR = "white"
+const DEFAULT_TEXT_COLOR = "black"
+const DEFAULT_LINK_COLOR = "black"
+const FONT_FAMILY = "Indie Flower, Times New Roman"
+const FONT_SIZE = Math.floor(NODE_SIZE / 3)
 
 //
 // Force Graph
@@ -91,53 +95,7 @@ export function createNetworkGraph(
     .linkDirectionalParticleWidth(1.4)
     .onLinkHover(handleLinkHover())
     .linkLabel(getLinkLabel)
-    .linkCanvasObject(
-      (link: LinkObject | null, ctx: CanvasRenderingContext2D) => {
-        if (!link) return null
-
-        const srcNode = link.source as NodeObject & IPersonNode
-        const targetNode = link.target as NodeObject & IPersonNode
-
-        const { x: x1, y: y1 } = srcNode
-        const { x: x2, y: y2 } = targetNode
-        if (!x1 || !y1 || !x2 || !y2) return null
-
-        const centerX = (x1 + x2) / 2
-        const centerY = (y1 + y2) / 2
-        const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
-
-        const linkColors = getLinkColors(link)
-
-        const doHighlight = highlightLinks.has(link)
-        const gradient =
-          linkColors.length > 1
-            ? ctx.createRadialGradient(
-                centerX,
-                centerY,
-                0,
-                centerX,
-                centerY,
-                distance / 3,
-              )
-            : null
-        if (gradient) {
-          linkColors.forEach((color, index) =>
-            gradient.addColorStop(index / linkColors.length, color),
-          )
-        }
-
-        const strokeColor = gradient ? gradient : linkColors[0]
-
-        ctx.strokeStyle = doHighlight ? "yellow" : strokeColor
-        ctx.lineWidth = doHighlight ? 1 : 0.25
-
-        ctx.beginPath()
-        ctx.moveTo(x1, y1)
-        ctx.lineTo(x2, y2)
-        ctx.stroke()
-        return null
-      },
-    )
+    .linkCanvasObject(drawLinkObject)
 
     .backgroundColor("#444")
     .dagMode("radialin")
@@ -247,12 +205,12 @@ function drawPersonNode() {
     const centerY = y / 2
 
     // Rectangle for displaying the node's border color
-    ctx.beginPath()
-
     // Draw a larger rectangle first that acts as a group color outline for this node
     let colors = getNodeGroupColors(node as IPersonNode)
     if (colors.length === 0)
-      colors = [{ backgroundColor: DEFAULT_COLOR, textColor: DEFAULT_COLOR }]
+      colors = [
+        { backgroundColor: DEFAULT_NODE_COLOR, textColor: DEFAULT_TEXT_COLOR },
+      ]
 
     // Node border gradient (for the larger rectangle that will form the border by going behind the node's actual image)
     const gradient =
@@ -261,7 +219,10 @@ function drawPersonNode() {
         : null
     if (gradient) {
       colors.forEach((color, index) =>
-        gradient.addColorStop(index / colors.length, color.backgroundColor),
+        gradient.addColorStop(
+          (index + 1) / colors.length,
+          color.backgroundColor,
+        ),
       )
     }
 
@@ -272,23 +233,37 @@ function drawPersonNode() {
     const doHighlight = hoverNode && highlightNodes && highlightNodes.has(node)
     const isHoveredNode = node === hoverNode.node
     const hoverColor = isHoveredNode ? "red" : "orange"
-    const nodeSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.5 : HIGHLIGHT_SIZE
+    const nodeSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.2 : HIGHLIGHT_SIZE
 
-    // Draw border-color rectangle
-    ctx.fillStyle = doHighlight ? hoverColor : fillColor
-    ctx.rect(x - nodeSize / 2, y - nodeSize / 2, nodeSize, nodeSize)
-    ctx.fill()
+    // Show up to 30 chars of the node's name
+    const text =
+      name.length > CHAR_DISPLAY_LIMIT
+        ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
+        : name
 
-    // Draw white background (this will be overlapped by the thumbnail, if there is one)
-    ctx.beginPath()
-    ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
-    ctx.fillStyle = "white"
-    ctx.fill()
-    ctx.strokeStyle = "black"
-    ctx.stroke()
+    let nameTagOffset = 0
 
-    // Draw the thumbnail, if there is one
+    // Draw the thumbnail-style node, if the node has a thumbnail
     if (thumbnail) {
+      nameTagOffset = NODE_SIZE / 1.2
+
+      ctx.beginPath()
+      // Draw border-color rectangle
+      ctx.fillStyle = "white"
+      ctx.strokeStyle = "black"
+      ctx.lineWidth = 1
+      ctx.rect(x - nodeSize / 2, y - nodeSize / 2, nodeSize, nodeSize * 1.2)
+      ctx.fill()
+      ctx.stroke()
+      ctx.closePath()
+
+      // Draw white background (this will be overlapped by the thumbnail, if there is one)
+      ctx.beginPath()
+      ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+      ctx.fillStyle = "white"
+      ctx.fill()
+      ctx.stroke()
+
       try {
         ctx.drawImage(
           thumbnail,
@@ -299,32 +274,99 @@ function drawPersonNode() {
         )
       } catch (error) {
         // Missing image
-        ctx.beginPath()
         ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
         ctx.fillStyle = "red"
         ctx.fill()
         ctx.strokeStyle = "black"
         ctx.stroke()
       }
+      ctx.closePath()
     }
 
-    // Node Name Text
+    // Draw a name tag for the node
     ctx.textAlign = "center"
     ctx.textBaseline = "top"
-    ctx.fillStyle = "yellow"
+    ctx.font = `bolder ${FONT_SIZE}px ${FONT_FAMILY}`
+
+    // Name tag width is the text width. Minimum width equals the NODE_SIZE
+    let width = ctx.measureText(text).width
+    if (width < NODE_SIZE) width = NODE_SIZE
+
+    const PADDING = 16
+
+    const textX = x - width / 2
+    const textY = y - FONT_SIZE / 2 + nameTagOffset
+
+    ctx.beginPath()
+    ctx.fillStyle = doHighlight ? hoverColor : fillColor
+    ctx.fillRect(
+      textX - PADDING / 2,
+      textY - PADDING / 2,
+      width + PADDING,
+      16 + PADDING,
+    )
+    ctx.lineWidth = 1
     ctx.strokeStyle = "black"
-    ctx.lineWidth = 0.2
-    ctx.font = `${NODE_SIZE / 3}px Sans-Serif`
-
-    // Show up to 30 chars of the node's name
-
-    const text =
-      name.length > CHAR_DISPLAY_LIMIT
-        ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
-        : name
-    ctx.fillText(text, x, y + NODE_SIZE / 2)
-    ctx.strokeText(text, x, y + NODE_SIZE / 2)
+    ctx.strokeRect(
+      textX - PADDING / 2,
+      textY - PADDING / 2,
+      width + PADDING,
+      16 + PADDING,
+    )
+    ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
+    ctx.fillText(text, textX + width / 2, textY, width)
+    ctx.closePath()
   }
+}
+
+function drawLinkObject(
+  link: LinkObject | null,
+  ctx: CanvasRenderingContext2D,
+) {
+  if (!link) return null
+
+  const srcNode = link.source as NodeObject & IPersonNode
+  const targetNode = link.target as NodeObject & IPersonNode
+
+  const { x: x1, y: y1 } = srcNode
+  const { x: x2, y: y2 } = targetNode
+  if (!x1 || !y1 || !x2 || !y2) return null
+
+  const centerX = (x1 + x2) / 2
+  const centerY = (y1 + y2) / 2
+  const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
+
+  const linkColors = getLinkColors(link) ?? [DEFAULT_LINK_COLOR]
+
+  const doHighlight =
+    highlightLinkIds.has(srcNode.id) && highlightLinkIds.has(targetNode.id)
+  const gradient =
+    linkColors.length > 1
+      ? ctx.createRadialGradient(
+          centerX,
+          centerY,
+          0,
+          centerX,
+          centerY,
+          distance / 3,
+        )
+      : null
+  if (gradient) {
+    linkColors.forEach((color, index) =>
+      gradient.addColorStop((index + 1) / linkColors.length, color),
+    )
+  }
+
+  const strokeColor = gradient ? gradient : linkColors[0]
+
+  ctx.strokeStyle = doHighlight ? "yellow" : strokeColor
+  ctx.lineWidth = doHighlight ? 5 : 3
+
+  ctx.beginPath()
+  ctx.moveTo(x1, y1)
+  ctx.lineTo(x2, y2)
+  ctx.stroke()
+  return null
 }
 
 /**
@@ -363,15 +405,21 @@ function getNodeGroupColors(node: IPersonNode): GroupColors[] {
 
 function handleLinkHover() {
   return (link: LinkObject | null) => {
-    if (!highlightLinks || !highlightNodes) return
+    if (!highlightLinkIds || !highlightNodes) return
 
     highlightNodes.clear()
-    highlightLinks.clear()
+    highlightLinkIds.clear()
 
     if (link) {
-      highlightLinks.add(link)
-      highlightNodes.add(link.source as NodeObject)
-      highlightNodes.add(link.target as NodeObject)
+      const srcNode = link.source as NodeObject
+      const targetNode = link.target as NodeObject
+      if (!srcNode || !targetNode) return
+
+      highlightNodes.add(srcNode)
+      highlightNodes.add(targetNode)
+
+      highlightLinkIds.add(srcNode.id as string)
+      highlightLinkIds.add(targetNode.id as string)
     }
   }
 }
@@ -396,15 +444,14 @@ function getLinkLabel(link: LinkObject | null) {
  * @param link
  * @returns Array of common group colors between the linked nodes
  */
-function getLinkColors(link: LinkObject): string[] {
+function getLinkColors(link: LinkObject): string[] | null {
   const srcNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
-  if (!srcNode.relationships || !targetNode.relationships)
-    return [DEFAULT_COLOR]
+  if (!srcNode.relationships || !targetNode.relationships) return null
 
   // Get the group color
   const currentNetwork = store.getState().networks.currentNetwork
-  if (!currentNetwork) return [DEFAULT_COLOR]
+  if (!currentNetwork) return null
 
   const { filteredGroups } = store.getState().ui
   const commonGroups = Object.entries(currentNetwork.relationshipGroups).filter(
@@ -423,7 +470,7 @@ function getLinkColors(link: LinkObject): string[] {
   )
 
   const commonColors = commonGroups.map((group) => group[1].backgroundColor)
-  const colors = commonColors.length > 0 ? commonColors : [DEFAULT_COLOR]
+  const colors = commonColors.length > 0 ? commonColors : null
 
   return colors
 }
@@ -451,14 +498,19 @@ export function highlightNode(n: NodeObject, gData: IForceGraphData) {
   highlightNodes.add(node as NodeObject)
   node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
   gData.links.forEach((link) => {
-    if (link.source === node.id || link.target === node.id)
-      highlightLinks.add(link)
+    const srcId = link.source as string
+    const targetId = link.target as string
+
+    if (srcId === node.id || targetId === node.id) {
+      highlightLinkIds.add(srcId)
+      highlightLinkIds.add(targetId)
+    }
   })
 }
 
 export function clearHighlights() {
   highlightNodes.clear()
-  highlightLinks.clear()
+  highlightLinkIds.clear()
 }
 
 function handleNodeDrag({ container }: IGraphClosureData) {
