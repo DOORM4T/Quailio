@@ -544,6 +544,10 @@ async function handleNodeClick(n: NodeObject | null) {
 
 function handleBackgroundRightClick({ state }: IGraphClosureData) {
   return async () => {
+    // DO NOT allow right click events if in sharing mode
+    if (store.getState().ui.isViewingShared) return
+
+    // Stop if there's no state or if there's a node in the middle of being connected
     if (!state || !nodeToConnect) return
 
     /* if the user is in the middle of making a node connection  */
