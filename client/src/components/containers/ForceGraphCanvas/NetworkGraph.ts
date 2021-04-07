@@ -370,8 +370,6 @@ function drawLinkObject(
 
   const linkColors = getLinkColors(link) ?? [DEFAULT_LINK_COLOR]
 
-  const doHighlight =
-    highlightLinkIds.has(srcNode.id) && highlightLinkIds.has(targetNode.id)
   const gradient =
     linkColors.length > 1
       ? ctx.createRadialGradient(
@@ -389,14 +387,29 @@ function drawLinkObject(
     )
   }
 
-  const strokeColor = gradient ? gradient : linkColors[0]
+  const isHighlighting = highlightLinkIds.size > 0
+  const doHighlightLink =
+    isHighlighting &&
+    highlightLinkIds.has(srcNode.id) &&
+    highlightLinkIds.has(targetNode.id)
 
-  ctx.strokeStyle = doHighlight ? "yellow" : strokeColor
+  if (doHighlightLink) {
+    // Highlight this link
+    ctx.strokeStyle = "yellow"
+  } else if (isHighlighting) {
+    // Links are being highlight but this link isn't one of them
+    ctx.strokeStyle = "gray"
+  } else {
+    // Normal link color
+    ctx.strokeStyle = gradient ? gradient : linkColors[0]
+  }
 
-  let lineWidth = doHighlight ? 5 : 3
+  const DEFAULT_LINK_SIZE = 3
+  let lineWidth = doHighlightLink ? DEFAULT_LINK_SIZE * 2 : DEFAULT_LINK_SIZE
   lineWidth /= currentZoom
-  if (lineWidth < 3) lineWidth = 3
-  if (doHighlight && lineWidth < 5) lineWidth = 5
+  if (lineWidth < DEFAULT_LINK_SIZE) lineWidth = DEFAULT_LINK_SIZE
+  if (doHighlightLink && lineWidth < DEFAULT_LINK_SIZE * 2)
+    lineWidth = DEFAULT_LINK_SIZE * 2
 
   ctx.lineWidth = lineWidth
 
