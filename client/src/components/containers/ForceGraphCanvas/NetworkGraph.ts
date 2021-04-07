@@ -19,6 +19,7 @@ import {
   setPersonInFocus,
   togglePersonOverlay,
 } from "../../../store/ui/uiActions"
+import * as d3 from "d3-force"
 
 export interface IForceGraphData {
   nodes: IPersonNode[]
@@ -98,8 +99,6 @@ export function createNetworkGraph(
     .linkCanvasObject(drawLinkObject)
 
     .backgroundColor("#444")
-    .dagMode("radialin")
-    .dagLevelDistance(INITIAL_DISTANCE)
 
   // Events
   Graph.onNodeHover(
@@ -117,6 +116,11 @@ export function createNetworkGraph(
     .onNodeRightClick(
       handleNodeRightClick({ nodeToConnect, state, forceGraph: Graph }),
     )
+
+  Graph.dagMode("radialin")
+    .dagLevelDistance(INITIAL_DISTANCE)
+    // @ts-ignore
+    .d3Force("collide", d3.forceCollide(Graph.nodeRelSize() * 1.5))
   return Graph
 }
 
