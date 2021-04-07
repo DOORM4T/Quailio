@@ -73,6 +73,11 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
       // Fit the initial force graph to the correct screen dimensions
       handleResize()
+      setTimeout(() => {
+        if (!forceGraphRef.current) return
+
+        forceGraphRef.current.zoomToFit(500)
+      }, 100)
 
       // Re-create the force graph when the window resizes
       window.removeEventListener("resize", handleResize)

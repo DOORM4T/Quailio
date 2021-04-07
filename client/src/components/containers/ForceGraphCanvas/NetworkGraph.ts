@@ -1,3 +1,4 @@
+import * as d3 from "d3-force"
 import ForceGraph, {
   ForceGraphInstance,
   LinkObject,
@@ -19,7 +20,6 @@ import {
   setPersonInFocus,
   togglePersonOverlay,
 } from "../../../store/ui/uiActions"
-import * as d3 from "d3-force"
 
 export interface IForceGraphData {
   nodes: IPersonNode[]
@@ -40,7 +40,7 @@ export interface IPersonNode {
 const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 64
 const HIGHLIGHT_SIZE = NODE_SIZE * 1.2
-const INITIAL_DISTANCE = NODE_SIZE * 2
+const INITIAL_DISTANCE = NODE_SIZE * 4
 
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
@@ -55,7 +55,9 @@ const DEFAULT_NODE_COLOR = "white"
 const DEFAULT_TEXT_COLOR = "black"
 const DEFAULT_LINK_COLOR = "black"
 const FONT_FAMILY = "Indie Flower, Times New Roman"
-const FONT_SIZE = Math.floor(NODE_SIZE / 3)
+const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
+
+let currentZoom = 1 // Use current zoom to scale visuals such as name tags
 
 //
 // Force Graph
@@ -116,11 +118,19 @@ export function createNetworkGraph(
     .onNodeRightClick(
       handleNodeRightClick({ nodeToConnect, state, forceGraph: Graph }),
     )
+    .onZoom((transform) => {
+      // Update the currentZoom variable
+      currentZoom = transform.k
+    })
 
   Graph.dagMode("radialin")
     .dagLevelDistance(INITIAL_DISTANCE)
-    // @ts-ignore
-    .d3Force("collide", d3.forceCollide(Graph.nodeRelSize() * 1.5))
+    .d3Force(
+      "collide",
+      // @ts-ignore
+      d3.forceCollide(Graph.nodeRelSize() * 3),
+    )
+
   return Graph
 }
 
@@ -290,7 +300,12 @@ function drawPersonNode() {
     // Draw a name tag for the node
     ctx.textAlign = "center"
     ctx.textBaseline = "top"
-    ctx.font = `bolder ${FONT_SIZE}px ${FONT_FAMILY}`
+
+    // Scale font size based on the current zoom level
+    let realFontSize = BASE_FONT_SIZE / currentZoom
+    if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
+
+    ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
 
     // Name tag width is the text width. Minimum width equals the NODE_SIZE
     let width = ctx.measureText(text).width
@@ -299,7 +314,7 @@ function drawPersonNode() {
     const PADDING = 16
 
     const textX = x - width / 2
-    const textY = y - FONT_SIZE / 2 + nameTagOffset
+    const textY = y - BASE_FONT_SIZE / 2 + nameTagOffset
 
     ctx.beginPath()
     ctx.fillStyle = doHighlight ? hoverColor : fillColor
@@ -307,7 +322,7 @@ function drawPersonNode() {
       textX - PADDING / 2,
       textY - PADDING / 2,
       width + PADDING,
-      16 + PADDING,
+      realFontSize + PADDING,
     )
     ctx.lineWidth = 1
     ctx.strokeStyle = "black"
@@ -315,7 +330,7 @@ function drawPersonNode() {
       textX - PADDING / 2,
       textY - PADDING / 2,
       width + PADDING,
-      16 + PADDING,
+      realFontSize + PADDING,
     )
     ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
     ctx.fillText(text, textX + width / 2, textY, width)
