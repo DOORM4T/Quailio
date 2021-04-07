@@ -243,11 +243,12 @@ function drawPersonNode() {
     const defaultNodeBorderColor = colors[0].backgroundColor
     const fillColor = gradient ? gradient : defaultNodeBorderColor
 
-    // Orange border if this node is highlighted; Red if hovered
-    const doHighlight = hoverNode && highlightNodes && highlightNodes.has(node)
-    const isHoveredNode = node === hoverNode.node
-    const hoverColor = isHoveredNode ? "red" : "orange"
-    const nodeSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.2 : HIGHLIGHT_SIZE
+    // Node Highlighting
+    const isHighlighting = highlightNodes.size > 0 // Are there any nodes being highlighted?
+    const doHighlightNode = isHighlighting && highlightNodes.has(node) // Should this node be highlighted?
+    const isHoveredNode = node === hoverNode.node // Is this node is being hovered?
+    const highlightColor = isHoveredNode ? "red" : "orange" // Red if hovered; other highlighted nodes are orange
+    const nodeSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.2 : HIGHLIGHT_SIZE // Hovered node is slightly larger
 
     // Show up to 30 chars of the node's name
     const text =
@@ -317,7 +318,19 @@ function drawPersonNode() {
     const textY = y - BASE_FONT_SIZE / 2 + nameTagOffset
 
     ctx.beginPath()
-    ctx.fillStyle = doHighlight ? hoverColor : fillColor
+    // Node color
+
+    if (isHighlighting && doHighlightNode) {
+      // Node is highlighted
+      ctx.fillStyle = highlightColor
+    } else if (isHighlighting && !doHighlightNode) {
+      // There are highlighted nodes but this one isn't one of them
+      ctx.fillStyle = "grey"
+    } else {
+      // Normal fill color
+      ctx.fillStyle = fillColor
+    }
+
     ctx.fillRect(
       textX - PADDING / 2,
       textY - PADDING / 2,
@@ -379,7 +392,13 @@ function drawLinkObject(
   const strokeColor = gradient ? gradient : linkColors[0]
 
   ctx.strokeStyle = doHighlight ? "yellow" : strokeColor
-  ctx.lineWidth = doHighlight ? 5 : 3
+
+  let lineWidth = doHighlight ? 5 : 3
+  lineWidth /= currentZoom
+  if (lineWidth < 3) lineWidth = 3
+  if (doHighlight && lineWidth < 5) lineWidth = 5
+
+  ctx.lineWidth = lineWidth
 
   ctx.beginPath()
   ctx.moveTo(x1, y1)

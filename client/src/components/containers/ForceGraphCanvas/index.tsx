@@ -241,7 +241,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       if (x === undefined || y === undefined) return
 
       // Zoom into the node's coordinates!
-      forceGraph.centerAt(x, y, 250).zoom(8, 1000)
+      forceGraph.centerAt(x, y, 250).zoomToFit(500)
 
       // Highlight the node
       highlightNode(nodeToZoom, forceGraph.graphData() as IForceGraphData)
