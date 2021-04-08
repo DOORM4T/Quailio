@@ -147,11 +147,6 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
           forceGraph.graphData() as IForceGraphData,
         )
       }
-
-      // Zoom the entire graph into view
-      setTimeout(() => {
-        forceGraph.zoomToFit(500)
-      }, 500)
     } else if (peopleLen < existingLen) {
       // Handle deleting people
       // Get the IDs of people in the set who no longer exist in the "people" state
@@ -217,6 +212,15 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       updateGraph()
     }
   }, [props.currentNetwork?.people])
+
+  // When a new force graph is created...
+  React.useEffect(() => {
+    // Zoom the entire graph into view
+    setTimeout(() => {
+      if (!forceGraphRef.current) return
+      forceGraphRef.current.zoomToFit(500)
+    }, 500)
+  }, [forceGraphRef])
 
   // Zoom in on a person node
   React.useEffect(() => {

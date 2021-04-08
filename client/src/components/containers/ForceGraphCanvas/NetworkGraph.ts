@@ -54,6 +54,7 @@ const nodeToConnect: { node: IPersonNode | null } = { node: null }
 const DEFAULT_NODE_COLOR = "white"
 const DEFAULT_TEXT_COLOR = "black"
 const DEFAULT_LINK_COLOR = "black"
+const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/links for non-highlighted nodes when something is being highlighted
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
 
@@ -318,14 +319,14 @@ function drawPersonNode() {
     const textY = y - BASE_FONT_SIZE / 2 + nameTagOffset
 
     ctx.beginPath()
-    // Node color
 
+    // Name tag color
     if (isHighlighting && doHighlightNode) {
       // Node is highlighted
       ctx.fillStyle = highlightColor
     } else if (isHighlighting && !doHighlightNode) {
       // There are highlighted nodes but this one isn't one of them
-      ctx.fillStyle = "grey"
+      ctx.fillStyle = LOW_ATTENTION_COLOR
     } else {
       // Normal fill color
       ctx.fillStyle = fillColor
@@ -338,14 +339,23 @@ function drawPersonNode() {
       realFontSize + PADDING,
     )
     ctx.lineWidth = 1
-    ctx.strokeStyle = "black"
+
+    if (isHighlighting && !doHighlightNode) {
+      // There are highlighted nodes but this one isn't one of them
+      ctx.strokeStyle = LOW_ATTENTION_COLOR
+      ctx.fillStyle = LOW_ATTENTION_COLOR
+    } else {
+      // Normal fill color
+      ctx.strokeStyle = "black"
+      ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
+    }
+
     ctx.strokeRect(
       textX - PADDING / 2,
       textY - PADDING / 2,
       width + PADDING,
       realFontSize + PADDING,
     )
-    ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
     ctx.fillText(text, textX + width / 2, textY, width)
     ctx.closePath()
   }
@@ -387,7 +397,7 @@ function drawLinkObject(
     )
   }
 
-  const isHighlighting = highlightLinkIds.size > 0
+  const isHighlighting = highlightLinkIds.size > 0 || highlightNodes.size > 0
   const doHighlightLink =
     isHighlighting &&
     highlightLinkIds.has(srcNode.id) &&
@@ -398,7 +408,7 @@ function drawLinkObject(
     ctx.strokeStyle = "yellow"
   } else if (isHighlighting) {
     // Links are being highlight but this link isn't one of them
-    ctx.strokeStyle = "gray"
+    ctx.strokeStyle = LOW_ATTENTION_COLOR
   } else {
     // Normal link color
     ctx.strokeStyle = gradient ? gradient : linkColors[0]
@@ -544,13 +554,28 @@ export function highlightNode(n: NodeObject, gData: IForceGraphData) {
 
   // Clear current highlights
   hoverNode.node = node || null
+  highlightNodes.clear()
+  highlightLinkIds.clear()
 
   // Highlight nodes and links related to this node
   highlightNodes.add(node as NodeObject)
   node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
   gData.links.forEach((link) => {
-    const srcId = link.source as string
-    const targetId = link.target as string
+    let srcId: string = ""
+    let targetId: string = ""
+
+    if (typeof link.source === "string") {
+      // Link is a raw string?
+      srcId = link.source as string
+      targetId = link.target as string
+    } else if ((link.source as object).hasOwnProperty("id")) {
+      // Link is an object? Should be an IPersonNode, which has an id field
+      srcId = (link.source as IPersonNode).id
+      targetId = (link.target as IPersonNode).id
+    } else {
+      // Stop if the link is an invalid type
+      return
+    }
 
     if (srcId === node.id || targetId === node.id) {
       highlightLinkIds.add(srcId)
