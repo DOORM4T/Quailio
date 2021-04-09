@@ -1,4 +1,4 @@
-import { Box, Heading, Menu, Select, Text, Tip } from "grommet"
+import { Box, Menu, Select, Text, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -430,7 +430,7 @@ export const HeaderMenu: React.FC<IProps> = ({
 
   const leftHeaderItems: React.ReactNode = (
     <Box direction="row" gap="small" overflow="hidden">
-      {/* Toggle Person Menu button */}
+      {/* Toggle Person Menu button -- shows for any dashboard mode */}
       {currentNetwork && ( // Shows only if there's a current network
         <ToolTipButton
           id="toggle-person-menu"
@@ -449,25 +449,31 @@ export const HeaderMenu: React.FC<IProps> = ({
           }}
         />
       )}
-      <ToolTipButton
-        id="create-network-button"
-        tooltip="Create a new network"
-        ariaLabel="Create a new network"
-        icon={<Icons.Add color="status-ok" />}
-        onClick={handleCreateNetwork}
-        buttonStyle={{
-          border: "2px solid white",
-          borderRadius: "2px",
-        }}
-      />
-      <ToolTipButton
-        key="import-network-json-button"
-        id="import-network-json-button"
-        tooltip="Import network from JSON"
-        ariaLabel="Import a network from a JSON file"
-        icon={<Icons.Upload color="light-1" />}
-        onClick={handleImportFromJSON}
-      />
+
+      {/* Hide these options if in shared mode */}
+      {!isViewingShared && (
+        <React.Fragment>
+          <ToolTipButton
+            id="create-network-button"
+            tooltip="Create a new network"
+            ariaLabel="Create a new network"
+            icon={<Icons.Add color="status-ok" />}
+            onClick={handleCreateNetwork}
+            buttonStyle={{
+              border: "2px solid white",
+              borderRadius: "2px",
+            }}
+          />
+          <ToolTipButton
+            key="import-network-json-button"
+            id="import-network-json-button"
+            tooltip="Import network from JSON"
+            ariaLabel="Import a network from a JSON file"
+            icon={<Icons.Upload color="light-1" />}
+            onClick={handleImportFromJSON}
+          />
+        </React.Fragment>
+      )}
       {/* 
         Render the select menu IFF a user is authenticated
           Unauthenticated users can only have ONE network active at a time, since multiple networks + people would have to be stored locally, 
@@ -523,10 +529,7 @@ export const HeaderMenu: React.FC<IProps> = ({
         width="100%"
         overflow="hidden"
       >
-        {currentNetwork && isViewingShared && (
-          <Heading level={3}>{currentNetwork.name}</Heading>
-        )}
-        {!isViewingShared && leftHeaderItems}
+        {leftHeaderItems}
         {!isViewingShared && currentNetwork && rightHeaderItems}
         {!isViewingShared && isZeroLoginMode && (
           <Tip content="The full Quailio experience minus the account. Though you won't be storing anything in our database, you can export and import your networks to save your progress.">
