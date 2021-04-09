@@ -177,6 +177,7 @@ const PersonMenu: React.FC<IProps> = (props) => {
     if (isViewingShared) return
 
     try {
+      await dispatch(toggleShowNodesWithoutGroups(true))
       await dispatch(addPerson(currentNetwork.id, searchAddInput)) // Add the person in global state
       setSearchAddInput("") // Clear the search/add input
     } catch (error) {
