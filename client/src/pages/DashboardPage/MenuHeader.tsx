@@ -32,12 +32,16 @@ interface IProps {
   networks: INetwork[]
   currentNetwork: INetwork | null
   isZeroLoginMode: boolean
+  doShowPersonMenu: boolean // Whether the PersonMenu is open or not
+  setShowPersonMenu: React.Dispatch<React.SetStateAction<boolean>> // used to toggle showPerson state
 }
 
 export const HeaderMenu: React.FC<IProps> = ({
   currentNetwork,
   networks,
   isZeroLoginMode,
+  doShowPersonMenu,
+  setShowPersonMenu,
 }) => {
   const isSmall = useSmallBreakpoint()
   const dispatch: ActionCreator<AnyAction> = useDispatch()
@@ -214,6 +218,7 @@ export const HeaderMenu: React.FC<IProps> = ({
 
     try {
       await dispatch(createNetwork(networkName))
+      setShowPersonMenu(true) // Open the person menu when the new network is created
     } catch (error) {
       console.error(error)
     }
@@ -425,6 +430,25 @@ export const HeaderMenu: React.FC<IProps> = ({
 
   const leftHeaderItems: React.ReactNode = (
     <Box direction="row" gap="small" overflow="hidden">
+      {/* Toggle Person Menu button */}
+      {currentNetwork && ( // Shows only if there's a current network
+        <ToolTipButton
+          id="toggle-person-menu"
+          tooltip={doShowPersonMenu ? "Collapse menu" : "Expand menu"}
+          icon={
+            doShowPersonMenu ? (
+              <Icons.CaretDown color="status-ok" />
+            ) : (
+              <Icons.CaretNext color="status-critical" />
+            )
+          }
+          onClick={() => setShowPersonMenu((doShow) => !doShow)}
+          buttonStyle={{
+            backgroundColor: "#444",
+            margin: 0,
+          }}
+        />
+      )}
       <ToolTipButton
         id="create-network-button"
         tooltip="Create a new network"

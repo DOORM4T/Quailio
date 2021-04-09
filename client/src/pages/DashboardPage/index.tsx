@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { useHistory } from "react-router"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
+import { fireResizeEvent } from "../../helpers/fireResizeEvent"
 import useAuth from "../../hooks/auth/useAuth"
 import usePageExitConfirmation from "../../hooks/usePageExitConfirmation"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
@@ -13,7 +14,6 @@ import {
   setNetwork,
 } from "../../store/networks/actions"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
-import getIsLoading from "../../store/selectors/getIsLoading"
 import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
 import { getGroupIdsByPersonId } from "../../store/selectors/ui/getGroupIdsByPersonId"
@@ -51,6 +51,15 @@ const DashboardPage: React.FC = () => {
 
   // REDUX SELECTOR | Viewing a shared network?
   const isViewingShared = useSelector(getIsViewingShared)
+
+  // STATE | Show/hide the Person Menu
+  const [doShowPersonMenu, setShowPersonMenu] = React.useState(true)
+
+  // EFFECT | Fire a resize event whenever doShowPersonMenu changes
+  //        | This programmatically triggers the ForceGraphCanvas to resize when the PersonMenu opens or closes
+  React.useEffect(() => {
+    fireResizeEvent()
+  }, [doShowPersonMenu]) // EFFECT | when doShowPersonMenu changes
 
   // EFFECT | On mount, check if viewing a shared network
   React.useEffect(() => {
@@ -127,12 +136,35 @@ const DashboardPage: React.FC = () => {
       }
     : null
 
+  // Wrapper for a Person Menu. Hidden if doShowPersonMenu state is false
+  const PersonMenuWrapper: React.ReactNode = doShowPersonMenu ? (
+    <Box
+      direction="column"
+      justify="start"
+      align="stretch"
+      width="large"
+      height={isSmall ? "50%" : "100%"}
+    >
+      <PersonMenu
+        people={
+          currentNetwork
+            ? currentNetwork.people.sort((p1, p2) =>
+                p1.name.localeCompare(p2.name),
+              )
+            : []
+        }
+      />
+    </Box>
+  ) : null
+
   return (
     <React.Fragment>
       <HeaderMenu
         networks={networks}
         currentNetwork={currentNetwork}
         isZeroLoginMode={isZeroLoginMode}
+        doShowPersonMenu={doShowPersonMenu}
+        setShowPersonMenu={setShowPersonMenu} // HeaderMenu includes a button that will toggle showPersonState
       />
       <Box
         direction={isSmall ? "column" : "row"}
@@ -142,24 +174,7 @@ const DashboardPage: React.FC = () => {
       >
         {currentNetwork ? (
           <React.Fragment>
-            {/* Network Actions & Details */}
-            <Box
-              direction="column"
-              justify="start"
-              align="stretch"
-              width="large"
-              height={isSmall ? "50%" : "100%"}
-            >
-              <PersonMenu
-                people={
-                  currentNetwork
-                    ? currentNetwork.people.sort((p1, p2) =>
-                        p1.name.localeCompare(p2.name),
-                      )
-                    : []
-                }
-              />
-            </Box>
+            {PersonMenuWrapper}
             <ForceGraphCanvas
               id="network-sketch"
               currentNetwork={networkWithActiveNodes}

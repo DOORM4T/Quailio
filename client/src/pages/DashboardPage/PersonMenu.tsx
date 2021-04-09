@@ -417,7 +417,6 @@ const PersonMenu: React.FC<IProps> = (props) => {
         {AllPeopleGroup}
 
         {/* Render user-created groups */}
-        {/* TODO: Render group lists */}
         {currentNetwork.relationshipGroups &&
           Object.entries(currentNetwork.relationshipGroups)
             // Sort each group by name in alphanumeric order
