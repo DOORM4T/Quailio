@@ -1,126 +1,27 @@
 import { Box } from "grommet"
 import React from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { useHistory } from "react-router"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
-import { fireResizeEvent } from "../../helpers/fireResizeEvent"
-import useAuth from "../../hooks/auth/useAuth"
-import usePageExitConfirmation from "../../hooks/usePageExitConfirmation"
-import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
-import {
-  getAllNetworks,
-  resetLocalNetworks,
-  setNetwork,
-} from "../../store/networks/actions"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
-import { getAllNetworkData } from "../../store/selectors/networks/getAllNetworkData"
-import { getCurrentNetwork } from "../../store/selectors/networks/getCurrentNetwork"
-import { getGroupIdsByPersonId } from "../../store/selectors/ui/getGroupIdsByPersonId"
-import { getIsViewingShared } from "../../store/selectors/ui/getIsViewingShared"
-import { getShowNodesWithoutGroups } from "../../store/selectors/ui/getShowNodesWithoutGroups"
-import { setViewingShared } from "../../store/ui/uiActions"
 import HeaderMenu from "./MenuHeader"
 import PersonMenu from "./PersonMenu"
+import useDashboard from "./logic/useDashboard"
 
 const DashboardPage: React.FC = () => {
-  const dispatch = useDispatch()
-  const history = useHistory()
+  // CUSTOM HOOK | Use dashboard states and other hooks
+  const {
+    currentNetwork,
+    doShowNodesWithoutGroups,
+    doShowPersonMenu,
+    groupIdsByPersonId,
+    isSmall,
+    isZeroLoginMode,
+    isAuthenticated,
+    networks,
+    setShowPersonMenu,
+  } = useDashboard()
 
-  // Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes
-  usePageExitConfirmation()
-
-  // Global state selectors
-  const networks = useSelector(getAllNetworkData)
-  const currentNetwork = useSelector(getCurrentNetwork)
-
-  // Responsive breakpoint
-  const isSmall = useSmallBreakpoint()
-
-  // Check if the user is authenticated -- if not, use zero-login features
-  const { isAuthenticated } = useAuth()
-
-  // Variable for checking whether we're in zero-login mode or not
-  const isZeroLoginMode = !isAuthenticated
-
-  // Map of nodes and their groups
-  const groupIdsByPersonId = useSelector(getGroupIdsByPersonId)
-
-  // Global state to show/hide nodes without groups
-  const doShowNodesWithoutGroups = useSelector(getShowNodesWithoutGroups)
-
-  // REDUX SELECTOR | Viewing a shared network?
-  const isViewingShared = useSelector(getIsViewingShared)
-
-  // STATE | Show/hide the Person Menu
-  const [doShowPersonMenu, setShowPersonMenu] = React.useState(true)
-
-  // EFFECT | Fire a resize event whenever doShowPersonMenu changes
-  //        | This programmatically triggers the ForceGraphCanvas to resize when the PersonMenu opens or closes
-  React.useEffect(() => {
-    fireResizeEvent()
-  }, [doShowPersonMenu]) // EFFECT | when doShowPersonMenu changes
-
-  // EFFECT | On mount, check if viewing a shared network
-  React.useEffect(() => {
-    // Get query params from the URL
-    const sharedNetworkId = new URLSearchParams(window.location.search).get(
-      "sharing",
-    )
-
-    // Don't set the network to a shared network if there's no query param
-    if (!sharedNetworkId) {
-      dispatch(setViewingShared(false))
-      return
-    }
-
-    // Set the shared network as the current network
-    async function viewSharedNetwork(sharedId: string) {
-      dispatch(setViewingShared(false))
-
-      // Check if the page points to a shared network
-      try {
-        await dispatch(setNetwork(sharedId, true))
-        dispatch(setViewingShared(true))
-      } catch (error) {
-        // Return to the plain dashboard if the shared network wasn't found
-        console.error(error)
-        history.push("/dashboard")
-      }
-    }
-
-    viewSharedNetwork(sharedNetworkId)
-  }, []) // END | Shared network effect
-
-  // EFFECT | Get the logged-in user's networks
-  React.useEffect(() => {
-    // Clear previous networks
-    dispatch(resetLocalNetworks())
-
-    // Get networks when at /dashboard and when the user is authenticated
-    if (history.location.pathname !== "/dashboard" || !isAuthenticated) return
-
-    async function getNetworks() {
-      try {
-        await dispatch(getAllNetworks())
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    getNetworks()
-
-    // UNMOUNT | Clean up the shared network, if the user was viewing one
-    return () => {
-      // If viewing a shared network, clear it networks when the user navigates away from the dashboard
-      if (isViewingShared) {
-        dispatch(resetLocalNetworks())
-        dispatch(setViewingShared(false))
-      }
-    }
-  }, [isAuthenticated]) // END | Get logged-in networks
-
-  // Only show nodes that have at least one active group
+  // VARS | Will only show nodes that have at least one active group
   const networkWithActiveNodes: ICurrentNetwork | null = currentNetwork
     ? {
         ...currentNetwork,
@@ -134,9 +35,9 @@ const DashboardPage: React.FC = () => {
               return !doHideNode
             }),
       }
-    : null
+    : null // END | networkWithActiveNodes
 
-  // Wrapper for a Person Menu. Hidden if doShowPersonMenu state is false
+  // UI | Wrapper for a Person Menu. Hidden if doShowPersonMenu state is false
   const PersonMenuWrapper: React.ReactNode = doShowPersonMenu ? (
     <Box
       direction="column"
@@ -155,7 +56,7 @@ const DashboardPage: React.FC = () => {
         }
       />
     </Box>
-  ) : null
+  ) : null // END | PersonMenuWrapper
 
   return (
     <React.Fragment>
@@ -191,4 +92,4 @@ const DashboardPage: React.FC = () => {
   )
 }
 
-export default React.memo(DashboardPage)
+export default DashboardPage
