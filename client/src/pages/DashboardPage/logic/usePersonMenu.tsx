@@ -4,6 +4,7 @@ import {
   Button,
   Image,
   List,
+  Stack,
   Text,
   TextInput,
 } from "grommet"
@@ -68,6 +69,11 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
   // STATE | For navigating highlighting an item at an index in the list UI
   const [searchIndex, setSearchIndex] = React.useState(0)
 
+  const isSearching = currentNetwork
+    ? currentNetwork.personIds.length !== filterablePeople.length ||
+      searchIndex > -1
+    : false
+
   // STATE | Indicates whether all groups are showing or not. Used to toggle all groups on/off.
   const [isShowingAllGroups, setShowingAllGroups] = React.useState<boolean>(
     true,
@@ -85,6 +91,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
 
   // REF | For managing the list DOM  (e.g. to focus on an item)
   const listRef = React.useRef<HTMLUListElement>()
+  const allGroupButtonLabelRef = React.useRef<HTMLButtonElement>()
 
   // EFFECT | Update the filterablePeople list
   React.useEffect(() => {
@@ -103,7 +110,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
   React.useEffect(() => {
     // Ensure the list ref exists -- stop if there's no list ref
     if (!listRef.current) return
-
     // Ensure the foundIndex corresponds to a list item
     if (searchIndex >= 0 && searchIndex < filterablePeople.length) {
       // Scroll the person node into view
@@ -185,7 +191,14 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
   } // END | viewPerson
 
   // FUNCTION | Un-zoom on a person in the force-graph
-  const resetZoomedPerson = () => dispatch(zoomToPerson(null)) // END | resetZoomedPerson
+  const resetZoomedPerson = () => {
+    dispatch(zoomToPerson(null))
+
+    if (searchIndex > -1) {
+      // Zoom back in on current search value
+      dispatch(zoomToPerson(filterablePeople[searchIndex].id))
+    }
+  } // END | resetZoomedPerson
 
   /**
    * Creates a function for how a list renders items
@@ -201,7 +214,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
         // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
         onMouseEnter={() => {
           dispatch(zoomToPerson(item.id))
-          setSearchIndex(-1) // Clear the foundPerson highlight
         }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
         onMouseLeave={resetZoomedPerson}
         aria-label="Select person"
@@ -312,21 +324,53 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     dispatch(toggleShowNodesWithoutGroups(!showNodesWithoutGroups)) // Toggle the global UI state
   } // END | toggleShowNodesWithoutGroupsFunc
 
+  // FUNCTION | Clear search state
+  const handleClearSearch = () => {
+    setSearchAddInput("")
+    setSearchIndex(-1)
+    dispatch(zoomToPerson(null))
+  } // END | handleClearSearch
+
+  const searchPlaceholder = `Search for (ENTER, SHIFT+ENTER) ${
+    !isViewingShared ? "or add" : ""
+  } a person`
+
+  const isSearchingAll = isSearching && searchAddInput === ""
+
   // UI | Input for searching/adding people
   const SearchAddInputNode: React.ReactNode = (
     <Box direction="row" align="center" pad="small" gap="none">
-      <TextInput
-        width={`${isViewingShared ? "100%" : "75%"}`}
-        placeholder={`Search for (ENTER, SHIFT+ENTER) ${
-          !isViewingShared ? "or add" : ""
-        } a person`}
-        onChange={handleInputChange}
-        onClick={(e) => e.currentTarget.select()}
-        onBlur={() => setSearchIndex(-1)}
-        value={searchAddInput}
-        onKeyUp={handleAddSearchInputShortkeys}
-        style={{ fontSize: "12px" }}
-      />
+      <Stack anchor="right" style={{ width: "100%" }}>
+        <TextInput
+          width={`${isViewingShared ? "100%" : "75%"}`}
+          placeholder={isSearchingAll ? "Searching all..." : searchPlaceholder}
+          onChange={handleInputChange}
+          onClick={(e) => e.currentTarget.select()}
+          value={searchAddInput}
+          onKeyUp={handleAddSearchInputShortkeys}
+          style={{ fontSize: "12px" }}
+        />
+        {/* Clear search button */}
+        {isSearching && (
+          <button
+            aria-label="Clear search"
+            onClick={handleClearSearch}
+            style={{
+              background: "transparent",
+              cursor: "pointer",
+              border: "none",
+              width: 32,
+              height: 32,
+              display: "grid",
+              placeItems: "center",
+              marginRight: "1rem",
+              padding: "1px 0 0 0",
+            }}
+          >
+            <Icons.Close color="status-critical" />
+          </button>
+        )}
+      </Stack>
       {!isViewingShared && (
         <Box direction="row" width="25%" justify="center">
           <Button
@@ -350,6 +394,9 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
         backgroundColor: "#AAA",
         color: "#222",
       }}
+      ref={(el: any) =>
+        (allGroupButtonLabelRef.current = el as HTMLButtonElement)
+      }
       label={
         <Box
           direction="row"
@@ -361,8 +408,10 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
           <span style={{ marginLeft: "1rem" }}>
             [{filterablePeople.length}]
           </span>
-          <span style={{ marginLeft: "1rem", marginRight: "auto" }}>All</span>
-          {hasGroups && (
+          <span style={{ marginLeft: "1rem", marginRight: "auto" }}>
+            {isSearching ? `Search: ${searchAddInput}` : "All"}
+          </span>
+          {!isSearching && hasGroups && (
             // Show these option buttons if there are groups in the network
             <React.Fragment>
               <ToolTipButton
@@ -396,10 +445,12 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
 
   return {
     AllPeopleGroup,
+    allGroupButtonLabelRef,
     currentNetwork,
     dispatch,
     filterablePeople,
     filterGroups,
+    isSearching,
     isViewingShared,
     renderItem,
     searchAddInput,

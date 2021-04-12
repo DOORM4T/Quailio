@@ -11,25 +11,53 @@ export interface IPersonMenuProps {
 const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
   const {
     AllPeopleGroup,
+    allGroupButtonLabelRef,
     currentNetwork,
     dispatch,
     filterablePeople,
     filterGroups,
+    isSearching,
     isViewingShared,
+
     renderItem,
     searchAddInput,
     SearchAddInputNode,
   } = usePersonMenu(props)
 
+  const [isAllGroupOpen, setAllGroupOpen] = React.useState(false)
+
+  const openAllGroupWhenSearching = (activeIndexes: number[]) => {
+    setAllGroupOpen(activeIndexes.includes(0))
+  }
+
+  // EFFECT | Open the All Group accordion when searching
+  React.useEffect(() => {
+    const shouldToggleAllGroup =
+      (isSearching && !isAllGroupOpen) || (!isSearching && isAllGroupOpen)
+    if (!shouldToggleAllGroup) return
+
+    const allGroupButtonLabel = allGroupButtonLabelRef.current?.querySelector(
+      "button",
+    )
+    if (!allGroupButtonLabel) return
+
+    allGroupButtonLabel.click()
+  }, [isSearching]) // EFFECT | Triggers when isSearching changes
+
   // UI | Person lists by group
   const PersonListsByGroup: React.ReactNode = currentNetwork && (
     <Box fill style={{ overflowY: "auto" }}>
-      <Accordion animate={false} multiple={true}>
-        {/* Render the "All" group first */}
+      <Accordion
+        animate={false}
+        multiple={true}
+        onActive={openAllGroupWhenSearching}
+      >
+        {/* Render the "All" group first (active index 0)*/}
         {AllPeopleGroup}
 
         {/* Render user-created groups */}
-        {currentNetwork.relationshipGroups &&
+        {!isSearching &&
+          currentNetwork.relationshipGroups &&
           Object.entries(currentNetwork.relationshipGroups)
             // Sort each group by name in alphanumeric order
             .sort((e1, e2) =>
