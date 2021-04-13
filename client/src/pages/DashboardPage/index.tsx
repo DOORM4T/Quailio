@@ -1,11 +1,12 @@
 import { Box } from "grommet"
 import React from "react"
+import { Helmet } from "react-helmet"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
+import useDashboard from "./logic/useDashboard"
 import HeaderMenu from "./MenuHeader"
 import PersonMenu from "./PersonMenu"
-import useDashboard from "./logic/useDashboard"
 
 const DashboardPage: React.FC = () => {
   // CUSTOM HOOK | Use dashboard states and other hooks
@@ -17,6 +18,7 @@ const DashboardPage: React.FC = () => {
     isSmall,
     isZeroLoginMode,
     isAuthenticated,
+    isViewingShared,
     networks,
     setShowPersonMenu,
   } = useDashboard()
@@ -60,6 +62,21 @@ const DashboardPage: React.FC = () => {
 
   return (
     <React.Fragment>
+      {/* Set the page title to the network */}
+      {isViewingShared && currentNetwork ? (
+        <Helmet>
+          <title>{currentNetwork.name} (Shared Network)</title>
+          <meta
+            name="description"
+            content={`${currentNetwork.name} on Quailio`}
+          />
+        </Helmet>
+      ) : (
+        <Helmet>
+          <title>Dashboard</title>
+        </Helmet>
+      )}
+
       <HeaderMenu
         networks={networks}
         currentNetwork={currentNetwork}

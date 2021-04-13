@@ -9,6 +9,7 @@ import {
   Text,
 } from "grommet"
 import React from "react"
+import { Helmet } from "react-helmet"
 import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
 import Logo from "../assets/logo.png"
@@ -22,6 +23,9 @@ const HomePage: React.FC = () => {
 
   return (
     <Box height="xxlarge" background="light-1">
+      <Helmet>
+        <title>Home</title>
+      </Helmet>
       <Box align="center" justify="start" direction="column">
         <GrommetHeader
           align="center"

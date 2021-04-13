@@ -121,6 +121,7 @@ export default function useDashboard() {
     isSmall,
     isZeroLoginMode,
     isAuthenticated,
+    isViewingShared,
     networks,
     setShowPersonMenu,
   }

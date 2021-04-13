@@ -9,6 +9,7 @@ import {
 } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { FormEvent } from "react"
+import { Helmet } from "react-helmet"
 import { useDispatch } from "react-redux"
 import { useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
@@ -55,6 +56,9 @@ const SettingsPage: React.FC = () => {
 
   return (
     <React.Fragment>
+      <Helmet>
+        <title>Settings</title>
+      </Helmet>
       <Box
         align="center"
         justify="start"

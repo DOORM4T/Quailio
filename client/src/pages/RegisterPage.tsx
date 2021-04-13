@@ -13,6 +13,7 @@ import {
   TextInput,
 } from "grommet"
 import React from "react"
+import { Helmet } from "react-helmet"
 import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
@@ -65,6 +66,9 @@ const RegisterPage: React.FC = (props) => {
 
   return (
     <React.Fragment>
+      <Helmet>
+        <title>Register</title>
+      </Helmet>
       <Box direction="column" align="center">
         <Card
           height="medium"
