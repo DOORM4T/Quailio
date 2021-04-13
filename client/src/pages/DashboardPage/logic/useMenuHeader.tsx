@@ -471,9 +471,11 @@ export default function useMenuHeader({
             Unauthenticated users can only have ONE network active at a time, since multiple networks + people would have to be stored locally, 
               which can be messy and reduce performance 
               -- they should rely on import/export, since their networks are not saved on the backend.
+
+          Show just the network name if in zero-login mode or shared mode
         */}
-      {isZeroLoginMode ? (
-        // Show just the current network name
+      {isZeroLoginMode || isViewingShared ? (
+        // Show just the current network name in zero-login mode
         currentNetwork ? (
           <Tip
             content={currentNetwork.name}
@@ -487,7 +489,7 @@ export default function useMenuHeader({
           </Tip>
         ) : null
       ) : (
-        // Show the network select menu
+        // Show the network select menu if the user is logged in
         networkSelectMenu
       )}
     </Box>

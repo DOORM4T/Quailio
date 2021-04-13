@@ -1,6 +1,9 @@
 import { Box, Text, Tip } from "grommet"
+import * as Icons from "grommet-icons"
 import React from "react"
+import { useHistory } from "react-router"
 import AppHeader from "../../components/containers/AppHeader"
+import ToolTipButton from "../../components/ToolTipButton"
 import { INetwork } from "../../store/networks/networkTypes"
 import useMenuHeader from "./logic/useMenuHeader"
 
@@ -21,6 +24,11 @@ export const HeaderMenu: React.FC<IMenuHeaderProps> = (props) => {
     rightHeaderItems,
   } = useMenuHeader(props)
 
+  const history = useHistory()
+  const handleExitSharedMode = () => {
+    history.push("/dashboard")
+  }
+
   return (
     <AppHeader title="" showLogo={false}>
       <Box
@@ -39,12 +47,22 @@ export const HeaderMenu: React.FC<IMenuHeaderProps> = (props) => {
             </Text>
           </Tip>
         )}
+
+        {/* Shared Mode content */}
         {isViewingShared && (
-          <Tip content="You are viewing a public network.">
-            <Text style={{ marginLeft: "auto" }} color="accent-4">
-              Shared Mode
-            </Text>
-          </Tip>
+          <React.Fragment>
+            <ToolTipButton
+              id="exit-sharing-button"
+              tooltip="Return to my Dashboard"
+              icon={<Icons.Logout color="accent-1" />}
+              onClick={handleExitSharedMode}
+              isDisabled={!currentNetwork}
+              buttonStyle={{ marginLeft: "auto" }}
+            />
+            <Tip content="You are viewing a public network.">
+              <Text color="accent-4">Shared Mode</Text>
+            </Tip>
+          </React.Fragment>
         )}
       </Box>
     </AppHeader>
