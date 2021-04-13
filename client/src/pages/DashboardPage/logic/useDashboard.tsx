@@ -24,10 +24,6 @@ export default function useDashboard() {
   // HISTORY | For redirecting to differnt paths
   const history = useHistory()
 
-  // CUSTOM HOOKS | Use other custom hooks
-  // Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes
-  usePageExitConfirmation()
-
   // Responsive breakpoint
   const isSmall = useSmallBreakpoint()
 
@@ -43,6 +39,9 @@ export default function useDashboard() {
   const groupIdsByPersonId = useSelector(getGroupIdsByPersonId) // Map of nodes and their groups
   const doShowNodesWithoutGroups = useSelector(getShowNodesWithoutGroups) // Global state to show/hide nodes without groups
   const isViewingShared = useSelector(getIsViewingShared) // Viewing a shared network?
+
+  // Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes
+  usePageExitConfirmation(isViewingShared) // Doesn't set an "unsaved change" confirmation when viewing a shared network
 
   // STATE | Show/hide the Person Menu
   const [doShowPersonMenu, setShowPersonMenu] = React.useState(true)
