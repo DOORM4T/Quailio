@@ -90,7 +90,9 @@ export function createNetworkGraph(
   const Graph = ForceGraph()(container)
     .graphData(gData)
     .nodeRelSize(NODE_SIZE)
-    .nodeCanvasObject(drawPersonNode())
+    .nodeCanvasObject((node, ctx) =>
+      nodePaint(false)(node, (node as any).__indexColor, ctx),
+    )
     .nodeLabel(() => {
       return ""
     })
@@ -131,6 +133,9 @@ export function createNetworkGraph(
       // @ts-ignore
       d3.forceCollide(Graph.nodeRelSize() * 3),
     )
+
+  // @ts-ignore
+  Graph.nodePointerAreaPaint(nodePaint(true))
 
   return Graph
 }
@@ -212,8 +217,13 @@ interface IGraphClosureData {
   state?: ICurrentNetwork
 }
 
-function drawPersonNode() {
-  return (node: NodeObject, ctx: CanvasRenderingContext2D) => {
+// Closure function to draw a node or its pointer collision area
+function nodePaint(isAreaPaint: boolean) {
+  return (
+    node: NodeObject,
+    areaColor: string,
+    ctx: CanvasRenderingContext2D,
+  ) => {
     const { thumbnail, x = 0, y = 0, name, id } = node as NodeObject &
       IPersonNode
     const centerX = x / 2
@@ -260,6 +270,7 @@ function drawPersonNode() {
     let nameTagOffset = 0
 
     // Draw the thumbnail-style node, if the node has a thumbnail
+    // Doesn't draw the thumbnail drawing for the pointer area
     if (thumbnail) {
       nameTagOffset = NODE_SIZE / 1.2
 
@@ -281,13 +292,16 @@ function drawPersonNode() {
       ctx.stroke()
 
       try {
-        ctx.drawImage(
-          thumbnail,
-          x - NODE_SIZE / 2,
-          y - NODE_SIZE / 2,
-          NODE_SIZE,
-          NODE_SIZE,
-        )
+        // Draw the image (don't draw if painting area paint -- will crash)
+        if (!isAreaPaint) {
+          ctx.drawImage(
+            thumbnail,
+            x - NODE_SIZE / 2,
+            y - NODE_SIZE / 2,
+            NODE_SIZE,
+            NODE_SIZE,
+          )
+        }
       } catch (error) {
         // Missing image
         ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
@@ -338,6 +352,7 @@ function drawPersonNode() {
       width + PADDING,
       realFontSize + PADDING,
     )
+
     ctx.lineWidth = 1
 
     if (isHighlighting && !doHighlightNode) {
@@ -358,6 +373,24 @@ function drawPersonNode() {
     )
     ctx.fillText(text, textX + width / 2, textY, width)
     ctx.closePath()
+
+    // Shadow Canvas
+    if (isAreaPaint) {
+      ctx.fillStyle = areaColor
+
+      // Thumbnail shadow
+      if (thumbnail) {
+        ctx.fillRect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+      }
+
+      // Name tag shadow
+      ctx.fillRect(
+        textX - PADDING / 2,
+        textY - PADDING / 2,
+        width + PADDING,
+        realFontSize + PADDING,
+      )
+    }
   }
 }
 
@@ -467,6 +500,7 @@ function getNodeGroupColors(node: IPersonNode): GroupColors[] {
 function handleLinkHover() {
   return (link: LinkObject | null) => {
     if (!highlightLinkIds || !highlightNodes) return
+    if (hoverNode.node) return
 
     highlightNodes.clear()
     highlightLinkIds.clear()
