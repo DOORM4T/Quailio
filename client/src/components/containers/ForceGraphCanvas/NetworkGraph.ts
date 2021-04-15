@@ -608,8 +608,6 @@ function getLinkColors(link: LinkObject): string[] | null {
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {
   return (n: NodeObject | null) => {
-    console.log(n)
-
     clearHighlights()
     hoverNode.node = null
 
