@@ -13,6 +13,7 @@ import {
   ICurrentNetwork,
   IPerson,
   IRelationship,
+  IRelationshipGroup,
   IRelationships,
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
@@ -32,6 +33,7 @@ export interface IPersonNode {
   thumbnail: HTMLImageElement | null
   neighbors: IPersonNode[]
   relationships: IRelationships
+  isGroupNode: boolean // A group can be represented by a PersonNode
 }
 
 //
@@ -79,6 +81,10 @@ export function createNetworkGraph(
     nodes: state.people.map(createPersonNode),
     links: [],
   }
+
+  // Create group nodes
+  addGroupNodesToForceGraph(gData)
+  addGroupNodeLinks(gData)
 
   // Link people by their relationship fields
   state.people.forEach(createLinksByRelationships(gData))
@@ -161,6 +167,25 @@ export function createPersonNode(person: IPerson): IPersonNode {
     thumbnail,
     neighbors: [],
     relationships: person.relationships,
+    isGroupNode: false,
+  }
+}
+
+/**
+ * @param group
+ * @returns the group as a Person Node
+ */
+export function groupAsPersonNode(
+  groupId: string,
+  group: IRelationshipGroup,
+): IPersonNode {
+  return {
+    id: groupId,
+    name: group.name,
+    thumbnail: null,
+    neighbors: [],
+    relationships: {},
+    isGroupNode: true,
   }
 }
 
@@ -224,7 +249,7 @@ function nodePaint(isAreaPaint: boolean) {
     areaColor: string,
     ctx: CanvasRenderingContext2D,
   ) => {
-    const { thumbnail, x = 0, y = 0, name, id } = node as NodeObject &
+    const { thumbnail, x = 0, y = 0, name, isGroupNode } = node as NodeObject &
       IPersonNode
     const centerX = x / 2
     const centerY = y / 2
@@ -327,15 +352,15 @@ function nodePaint(isAreaPaint: boolean) {
     let width = ctx.measureText(text).width
     if (width < NODE_SIZE) width = NODE_SIZE
 
-    const PADDING = 16
+    const PADDING = 32
 
     const textX = x - width / 2
     const textY = y - BASE_FONT_SIZE / 2 + nameTagOffset
 
     ctx.beginPath()
 
-    // Name tag color
-    if (isHighlighting && doHighlightNode) {
+    // Name tag color. Group Nodes keep their color
+    if (isHighlighting && doHighlightNode && !isGroupNode) {
       // Node is highlighted
       ctx.fillStyle = highlightColor
     } else if (isHighlighting && !doHighlightNode) {
@@ -346,11 +371,14 @@ function nodePaint(isAreaPaint: boolean) {
       ctx.fillStyle = fillColor
     }
 
+    // Group nodes get bigger name tags
+    const vertNameTagPadding = isGroupNode ? PADDING * 10 : 1
+
     ctx.fillRect(
       textX - PADDING / 2,
-      textY - PADDING / 2,
+      textY - vertNameTagPadding / 2,
       width + PADDING,
-      realFontSize + PADDING,
+      realFontSize + vertNameTagPadding,
     )
 
     ctx.lineWidth = 1
@@ -367,9 +395,9 @@ function nodePaint(isAreaPaint: boolean) {
 
     ctx.strokeRect(
       textX - PADDING / 2,
-      textY - PADDING / 2,
+      textY - vertNameTagPadding / 2,
       width + PADDING,
-      realFontSize + PADDING,
+      realFontSize + vertNameTagPadding,
     )
     ctx.fillText(text, textX + width / 2, textY, width)
     ctx.closePath()
@@ -386,9 +414,9 @@ function nodePaint(isAreaPaint: boolean) {
       // Name tag shadow
       ctx.fillRect(
         textX - PADDING / 2,
-        textY - PADDING / 2,
+        textY - vertNameTagPadding / 2,
         width + PADDING,
-        realFontSize + PADDING,
+        realFontSize + vertNameTagPadding,
       )
     }
   }
@@ -473,7 +501,15 @@ function getNodeGroupColors(node: IPersonNode): GroupColors[] {
   const currentNetwork = store.getState().networks.currentNetwork
   if (!currentNetwork) return []
 
-  // Get the groups this node is part of
+  // The PersonNode represents a group, instead of an actual person node?
+  if (node.isGroupNode && currentNetwork.relationshipGroups[node.id]) {
+    const { backgroundColor, textColor } = currentNetwork.relationshipGroups[
+      node.id
+    ]
+    return [{ backgroundColor, textColor }]
+  }
+
+  // The node represents an actual IPerson. Get the groups this node is part of
   const { filteredGroups } = store.getState().ui
   const groupsWithThisNode = Object.entries(
     currentNetwork.relationshipGroups,
@@ -572,6 +608,8 @@ function getLinkColors(link: LinkObject): string[] | null {
 
 function handleNodeHover({ container, gData }: IGraphClosureData) {
   return (n: NodeObject | null) => {
+    console.log(n)
+
     clearHighlights()
     hoverNode.node = null
 
@@ -643,6 +681,10 @@ function handleNodeDragEnd({ container }: IGraphClosureData) {
 async function handleNodeClick(n: NodeObject | null) {
   if (!n) return
   const node = n as NodeObject & IPersonNode
+
+  // TODO: Clicking a group node does nothing... for now
+  if (node.isGroupNode) return
+
   try {
     // Focus on the clicked person & show their details
     await store.dispatch<any>(setPersonInFocus(node.id))
@@ -693,6 +735,8 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
     if (!n || !nodeToConnect || !state) return
     const node = n as NodeObject & IPersonNode
 
+    if (node.isGroupNode) return // Cannot change connections for a group node
+
     /* Connect nodes */
     if (!nodeToConnect.node) {
       /* Picked the first node to dis(connect) */
@@ -732,4 +776,48 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
       nodeToConnect.node = null
     }
   }
+}
+
+export function addGroupNodesToForceGraph(gData: IForceGraphData) {
+  if (!gData) return
+
+  const relationshipGroups = store.getState().networks.currentNetwork
+    ?.relationshipGroups
+  if (!relationshipGroups) return
+
+  const visibleGroups = store.getState().ui.filteredGroups
+
+  const groupEntries = Object.entries(relationshipGroups)
+  const groupsAsPersonNodes = groupEntries
+    .map((entry) => {
+      const [groupId, group] = entry
+      const isGroupHidden = visibleGroups[groupId] === false // showing if true or undefined
+      if (!isGroupHidden) return groupAsPersonNode(groupId, group)
+      else return null
+    })
+    .filter((node) => node !== null) as IPersonNode[]
+
+  gData.nodes = gData.nodes.concat(groupsAsPersonNodes)
+}
+
+export function addGroupNodeLinks(gData: IForceGraphData) {
+  if (!gData) return
+
+  const groupNodes = gData.nodes.filter((node) => node.isGroupNode)
+
+  const relationshipGroups = store.getState().networks.currentNetwork
+    ?.relationshipGroups
+  if (!relationshipGroups) return
+
+  groupNodes.forEach((groupNode) => {
+    const group = relationshipGroups[groupNode.id]
+    if (!group) return
+
+    group.personIds.forEach((personId) => {
+      gData.links.push({
+        source: groupNode.id,
+        target: personId,
+      })
+    })
+  })
 }

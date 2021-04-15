@@ -8,6 +8,8 @@ import { IApplicationState } from "../../../store/store"
 import { zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
 import {
+  addGroupNodeLinks as addGroupNodeLinksToForceGraph,
+  addGroupNodesToForceGraph,
   clearHighlights,
   createLinksByRelationships,
   createNetworkGraph,
@@ -113,8 +115,15 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
     // Reusable function to update the graph using the updatedGraphData object
     const updateGraph = () => {
+      // Re-render group nodes
+      updatedGraphData.nodes = updatedGraphData.nodes.filter(
+        (node) => !node.isGroupNode,
+      )
+      addGroupNodesToForceGraph(updatedGraphData)
+
       // Re-render all links & neighbors
       people.forEach(createLinksByRelationships(updatedGraphData))
+      addGroupNodeLinksToForceGraph(updatedGraphData)
       updatedGraphData.links.forEach(setNeighbors(updatedGraphData))
 
       // Update the force graph!
@@ -256,8 +265,8 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 }
 
 export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
-  /* Rerender only if the "people" names, relationships, or thumbnail changed */
-  const skipRerender = deepEqual(
+  // Rerender if the "people" names, relationships, or thumbnail changed
+  const arePeopleSame = deepEqual(
     prevProps.currentNetwork?.people.map((p) => ({
       id: p.id,
       name: p.name,
@@ -272,6 +281,13 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
     })),
   )
 
+  // ...or if groups changed
+  const areGroupsSame = deepEqual(
+    prevProps.currentNetwork?.relationshipGroups,
+    nextProps.currentNetwork?.relationshipGroups,
+  )
+
+  const skipRerender = arePeopleSame && areGroupsSame
   return skipRerender
 })
 
