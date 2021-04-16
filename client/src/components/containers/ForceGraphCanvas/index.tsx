@@ -101,6 +101,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     if (!forceGraphRef.current || !props.currentNetwork) return
     const forceGraph = forceGraphRef.current
     const people = props.currentNetwork.people
+    const groups = props.currentNetwork.relationshipGroups
 
     const { links, nodes } = forceGraphRef.current.graphData() as {
       links: LinkObject[]
@@ -130,10 +131,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       forceGraph.graphData(updatedGraphData)
     }
 
-    // Handle adding new people
-    const peopleLen = people.length
-    const existingLen = existingPeopleIds.size
-    if (peopleLen > existingLen) {
+    const addPeopleToGraph = () => {
       // Find the newly added person(s) -- they shouldn't be in the existingPeopleIds set
       const newPeople = people.filter((p) => !existingPeopleIds.has(p.id))
 
@@ -156,7 +154,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
           forceGraph.graphData() as IForceGraphData,
         )
       }
-    } else if (peopleLen < existingLen) {
+    }
+
+    const removePeopleFromGraph = () => {
       // Handle deleting people
       // Get the IDs of people in the set who no longer exist in the "people" state
       const deletedPeopleIds = Array.from(existingPeopleIds).filter(
@@ -172,8 +172,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
       // Update the graph
       updateGraph()
-    } else if (peopleLen === existingLen) {
-      // #people didn't change; check if a relationship reason or thumbnail changed
+    }
+
+    const rerenderUpdatedPeopleInGraph = () => {
       // Get nodes that changed
       const updatedNodes = updatedGraphData.nodes
         .map((n) => {
@@ -220,7 +221,29 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       // Update the graph
       updateGraph()
     }
-  }, [props.currentNetwork?.people])
+
+    const peopleLen = people.length
+    const existingLen = existingPeopleIds.size
+    const existingGroupNodes = (forceGraph.graphData()
+      .nodes as IPersonNode[]).filter((node) => node.isGroupNode)
+    const numNewGroups = groups ? Object.keys(groups).length : 0
+    const didNumGroupsChange = existingGroupNodes.length !== numNewGroups
+
+    if (peopleLen > existingLen) {
+      addPeopleToGraph()
+    } else if (peopleLen < existingLen) {
+      removePeopleFromGraph()
+    } else if (peopleLen === existingLen) {
+      // #people didn't change; relationship reason or thumbnail changed
+      rerenderUpdatedPeopleInGraph()
+    } else if (didNumGroupsChange) {
+      updateGraph()
+    }
+  }, [
+    props.currentNetwork?.people,
+    props.currentNetwork?.relationshipGroups,
+    props.currentNetwork?.groupIds,
+  ])
 
   // When a new force graph is created...
   React.useEffect(() => {
@@ -265,15 +288,18 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 }
 
 export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
+  const prevCurrentNetwork = prevProps.currentNetwork
+  const nextCurrentNetwork = nextProps.currentNetwork
+
   // Rerender if the "people" names, relationships, or thumbnail changed
   const arePeopleSame = deepEqual(
-    prevProps.currentNetwork?.people.map((p) => ({
+    prevCurrentNetwork?.people.map((p) => ({
       id: p.id,
       name: p.name,
       relationships: p.relationships,
       thumbnail: p.thumbnailUrl,
     })),
-    nextProps.currentNetwork?.people.map((p) => ({
+    nextCurrentNetwork?.people.map((p) => ({
       id: p.id,
       name: p.name,
       relationships: p.relationships,
@@ -282,10 +308,12 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
   )
 
   // ...or if groups changed
-  const areGroupsSame = deepEqual(
-    prevProps.currentNetwork?.relationshipGroups,
-    nextProps.currentNetwork?.relationshipGroups,
-  )
+  const areGroupsSame =
+    deepEqual(
+      prevCurrentNetwork?.relationshipGroups,
+      nextCurrentNetwork?.relationshipGroups,
+    ) &&
+    prevCurrentNetwork?.groupIds.length === nextCurrentNetwork?.groupIds.length
 
   const skipRerender = arePeopleSame && areGroupsSame
   return skipRerender
