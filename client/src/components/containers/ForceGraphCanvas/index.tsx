@@ -123,8 +123,8 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       addGroupNodesToForceGraph(updatedGraphData)
 
       // Re-render all links & neighbors
-      people.forEach(createLinksByRelationships(updatedGraphData))
       addGroupNodeLinksToForceGraph(updatedGraphData)
+      people.forEach(createLinksByRelationships(updatedGraphData))
       updatedGraphData.links.forEach(setNeighbors(updatedGraphData))
 
       // Update the force graph!
@@ -142,8 +142,6 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       const newPersonNodes = newPeople.map(createPersonNode)
       updatedGraphData.nodes = [...nodes, ...newPersonNodes]
 
-      // Links shouldn't change when a new person is added
-      ////
       updateGraph()
 
       // If a node was added, highlight it

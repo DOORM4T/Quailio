@@ -29,5 +29,12 @@ export function restructureLegacyCurrentNetwork(network: ICurrentNetwork) {
     })
   })
 
+  /* Networks created before the groups update might lack the groupIds field, causing the force graph to render incorrectly
+    Restructure the network so its groupIds exist locally in global state
+  */
+  if (!copy.groupIds && copy.relationshipGroups) {
+    copy.groupIds = Object.keys(copy.relationshipGroups)
+  }
+
   return copy
 }

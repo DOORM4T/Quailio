@@ -9,6 +9,7 @@ import {
   connectPeople,
   disconnectPeople,
 } from "../../../store/networks/actions"
+import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
   ICurrentNetwork,
   IPerson,
@@ -426,7 +427,7 @@ function drawLinkObject(
   link: LinkObject | null,
   ctx: CanvasRenderingContext2D,
 ) {
-  if (!link) return null
+  if (!link || !link.source || !link.target) return null
 
   const srcNode = link.source as NodeObject & IPersonNode
   const targetNode = link.target as NodeObject & IPersonNode
@@ -733,41 +734,78 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
     if (!n || !nodeToConnect || !state) return
     const node = n as NodeObject & IPersonNode
 
-    if (node.isGroupNode) return // Cannot change connections for a group node
+    /* Connect two nodes right-clicked nodes
+        Valid connections are:
+          1. Person-Person
+          2. Person-Group
+          3. Group-Person
 
-    /* Connect nodes */
+        Users CANNOT link two groups (Group-Group)
+    */
     if (!nodeToConnect.node) {
-      /* Picked the first node to dis(connect) */
+      // Picked the first node to dis(connect) or toggle in a group
       alert(`Link A: ${node.name}`)
       nodeToConnect.node = node as NodeObject & IPersonNode
     } else {
-      /* Picked the second node to dis(connect) */
+      // Picked the second node to dis(connect) or toggle in a group
+
+      // Group-Group connections are illegal
+      if (nodeToConnect.node.isGroupNode && node.isGroupNode) return
+
       alert(`Link B: ${node.name}`)
 
-      // Check if the node are already connected
-      const areNodesConnected = node.id in nodeToConnect.node.relationships
+      const isOnlyFirstNodeAGroup =
+        nodeToConnect.node.isGroupNode && !node.isGroupNode
+      const isOnlySecondNodeAGroup =
+        !nodeToConnect.node.isGroupNode && node.isGroupNode
+      const isOneAGroup = isOnlyFirstNodeAGroup || isOnlySecondNodeAGroup
 
-      // Disconnect the nodes if they are already connected
-      try {
-        if (areNodesConnected) {
+      if (isOneAGroup) {
+        // One of the nodes is a group; add/remove it to/from the group
+        const groupId = isOnlyFirstNodeAGroup ? nodeToConnect.node.id : node.id
+        const personId = isOnlyFirstNodeAGroup ? node.id : nodeToConnect.node.id
+        const group = store.getState().networks.currentNetwork
+          ?.relationshipGroups[groupId]
+
+        try {
+          if (!group) throw new Error("That group doesn't exist")
+
+          const isPersonInGroup = group.personIds.includes(personId)
+
           await store.dispatch<any>(
-            disconnectPeople(state.id, {
-              p1Id: nodeToConnect.node.id,
-              p2Id: node.id,
-            }),
+            togglePersonInGroup(state.id, groupId, personId, !isPersonInGroup),
           )
-        } else {
-          // Otherwise, connect the nodes
-          await store.dispatch<any>(
-            connectPeople(state.id, {
-              p1Id: nodeToConnect.node.id,
-              p2Id: node.id,
-            }),
-          )
+        } catch (error) {
+          console.error(error)
         }
-        forceGraph?.zoomToFit(500)
-      } catch (error) {
-        console.error(error)
+      } else {
+        // Otherwise, make each node add each other to their relationships field
+
+        // Check if the node are already connected
+        const areNodesConnected = node.id in nodeToConnect.node.relationships
+
+        // Disconnect the nodes if they are already connected
+        try {
+          if (areNodesConnected) {
+            await store.dispatch<any>(
+              disconnectPeople(state.id, {
+                p1Id: nodeToConnect.node.id,
+                p2Id: node.id,
+              }),
+            )
+          } else {
+            // Otherwise, connect the nodes
+            await store.dispatch<any>(
+              connectPeople(state.id, {
+                p1Id: nodeToConnect.node.id,
+                p2Id: node.id,
+              }),
+            )
+          }
+          forceGraph?.zoomToFit(500)
+        } catch (error) {
+          console.error(error)
+        }
       }
 
       // Clear the node to connect
@@ -812,6 +850,12 @@ export function addGroupNodeLinks(gData: IForceGraphData) {
     if (!group) return
 
     group.personIds.forEach((personId) => {
+      //  Ensure the person has a node in the force graph
+      const doesOtherPersonExist = gData.nodes.some(
+        (node) => node.id === personId,
+      )
+      if (!doesOtherPersonExist) return
+
       gData.links.push({
         source: groupNode.id,
         target: personId,

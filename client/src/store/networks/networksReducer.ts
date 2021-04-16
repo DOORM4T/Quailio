@@ -328,14 +328,10 @@ function getTogglePersonInGroupState(
 
   let updatedPersonIds = [...group.personIds]
 
-  console.log(action.toggleOn)
-
   if (action.toggleOn) {
     updatedPersonIds.push(action.personId)
   } else {
     updatedPersonIds = updatedPersonIds.filter((pid) => pid !== action.personId)
-
-    console.log(updatedPersonIds)
   }
 
   const updatedGroup: IRelationshipGroup = {
