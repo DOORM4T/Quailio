@@ -8,6 +8,7 @@ import {
   addPerson,
   connectPeople,
   disconnectPeople,
+  pinNode,
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
@@ -15,7 +16,6 @@ import {
   IPerson,
   IRelationship,
   IRelationshipGroup,
-  IRelationships,
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
 import {
@@ -24,17 +24,14 @@ import {
 } from "../../../store/ui/uiActions"
 
 export interface IForceGraphData {
-  nodes: IPersonNode[]
+  nodes: (IPersonNode & NodeObject)[]
   links: LinkObject[]
 }
 
-export interface IPersonNode {
-  id: string
-  name: string
+export interface IPersonNode extends IPerson {
   thumbnail: HTMLImageElement | null
   neighbors: IPersonNode[]
   links: LinkObject[]
-  relationships: IRelationships
   isGroupNode: boolean // A group can be represented by a PersonNode
 }
 
@@ -121,7 +118,7 @@ export function createNetworkGraph(
     }),
   )
     .onNodeDrag(handleNodeDrag({ container }))
-    .onNodeDragEnd(handleNodeDragEnd({ container }))
+    .onNodeDragEnd(handleNodeDragEnd({ container, state }))
     .onNodeClick(handleNodeClick)
     .onBackgroundRightClick(
       handleBackgroundRightClick({ nodeToConnect, state }),
@@ -156,7 +153,7 @@ export function createNetworkGraph(
  * @param person IPerson data passed from as props from the ForceGraphCanvas component
  * @returns PersonNode for use in the Force Graph
  */
-export function createPersonNode(person: IPerson): IPersonNode {
+export function createPersonNode(person: IPerson): IPersonNode & NodeObject {
   let thumbnail: HTMLImageElement | null = null
   if (person.thumbnailUrl) {
     thumbnail = new Image()
@@ -164,13 +161,15 @@ export function createPersonNode(person: IPerson): IPersonNode {
   }
 
   return {
-    id: person.id,
-    name: person.name,
+    ...person,
     thumbnail,
     neighbors: [],
     links: [],
-    relationships: person.relationships,
     isGroupNode: false,
+
+    // Pin position (if the node has a pinXY property)
+    fx: person.pinXY?.x,
+    fy: person.pinXY?.y,
   }
 }
 
@@ -181,7 +180,7 @@ export function createPersonNode(person: IPerson): IPersonNode {
 export function groupAsPersonNode(
   groupId: string,
   group: IRelationshipGroup,
-): IPersonNode {
+): IPersonNode & NodeObject {
   return {
     id: groupId,
     name: group.name,
@@ -190,6 +189,10 @@ export function groupAsPersonNode(
     links: [],
     relationships: {},
     isGroupNode: true,
+
+    // Pin position (if the node has a pinXY property)
+    fx: group.pinXY?.x,
+    fy: group.pinXY?.y,
   }
 }
 
@@ -649,13 +652,27 @@ function handleNodeDrag({ container }: IGraphClosureData) {
   }
 }
 
-function handleNodeDragEnd({ container }: IGraphClosureData) {
-  return (n: NodeObject | null) => {
-    if (!n || !container) return
+function handleNodeDragEnd({ container, state }: IGraphClosureData) {
+  return async (n: NodeObject | null) => {
+    if (!n || !container || !state) return
+    const node = n as IPersonNode & NodeObject
 
-    /* Fix the node at it's end drag position */
+    // Fix the node at it's end drag position
     n.fx = n.x
     n.fy = n.y
+
+    // Update the person's pinXY in global state using a custom Redux action
+
+    if (n.fx && n.fy) {
+      try {
+        await store.dispatch<any>(
+          pinNode(state.id, node.id, node.isGroupNode, { x: n.fx, y: n.fy }),
+        )
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
     container.style.cursor = "grab"
   }
 }

@@ -34,6 +34,7 @@ export interface IPerson {
   relationships: IRelationships
   thumbnailUrl?: string
   content?: string
+  pinXY?: { x: number; y: number }
 }
 
 // A person's Relationships object maps a relationship to another person by their ID
@@ -53,6 +54,9 @@ export type IRelationshipGroup = {
   personIds: string[]
   backgroundColor: string
   textColor: string
+
+  // The Force Graph node created for a group can be pinned
+  pinXY?: { x: number; y: number }
 }
 
 // -== ACTION TYPES ==- //
@@ -84,6 +88,8 @@ export enum NetworkActionTypes {
 
   SHARE_NETWORK = "NETWORK/SHARE",
   UNSHARE_NETWORK = "NETWORK/UNSHARE",
+
+  SET_NODE_PIN = "NETWORK/SET_NODE_PIN",
 }
 
 export interface INetworkLoadingAction {
@@ -229,6 +235,14 @@ export interface IUnshareNetworkAction {
   networkId: string
 }
 
+export interface ISetNodePinAction {
+  type: NetworkActionTypes.SET_NODE_PIN
+  networkId: string
+  nodeId: string
+  isGroup: boolean
+  pinXY: { x: number; y: number }
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -254,3 +268,4 @@ export type NetworksActions =
   | IChangeGroupColorAction
   | IShareNetworkAction
   | IUnshareNetworkAction
+  | ISetNodePinAction

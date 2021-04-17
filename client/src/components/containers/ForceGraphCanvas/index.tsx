@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal"
-import { ForceGraphInstance, LinkObject } from "force-graph"
+import { ForceGraphInstance, LinkObject, NodeObject } from "force-graph"
 import React, { CSSProperties } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
@@ -135,6 +135,14 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
       // Update the force graph!
       forceGraph.graphData(updatedGraphData)
+
+      // If the node has a pinXY, pin it after the graph re-renders
+      setTimeout(() => {
+        forceGraph.graphData().nodes.forEach((n, index) => {
+          n.fx = updatedGraphData.nodes[index].pinXY?.x
+          n.fy = updatedGraphData.nodes[index].pinXY?.y
+        })
+      }, 10) // Delay to give time for re-rendering -- Force-Graph seems to reset fx and fy for data upon re-render
     }
 
     const addPeopleToGraph = () => {
@@ -179,7 +187,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     }
 
     const rerenderUpdatedPeopleInGraph = () => {
-      // Get nodes that changed
+      // Get nodes whose changes need to be re-rendered in the Force Graph
       const updatedNodes = updatedGraphData.nodes
         .map((n) => {
           // Get the node from the people props field
@@ -202,8 +210,16 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
           // Check whether the node's name changed or not
           const didNameChange = nodeFromProps.name !== n.name
 
+          // Check whether the node's pinXY changed or not
+          const didPinChange = !deepEqual(nodeFromProps.pinXY, n.pinXY)
+
           // Get the updated node
-          if (didRelationshipsChange || didThumbnailChange || didNameChange) {
+          if (
+            didRelationshipsChange ||
+            didThumbnailChange ||
+            didNameChange ||
+            didPinChange
+          ) {
             // Merge the new node and previous node. New node properties override existing ones!
             const mergedNode = { ...n, ...nodeFromProps }
 
@@ -211,7 +227,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
             return mergedNode
           } else return null
         })
-        .filter((n) => n !== null) as IPersonNode[]
+        .filter((n) => n !== null) as (IPersonNode & NodeObject)[]
 
       // Replace the nodes whose relationships updated
       updatedNodes.forEach((n) => {
@@ -302,12 +318,14 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
       name: p.name,
       relationships: p.relationships,
       thumbnail: p.thumbnailUrl,
+      pinXY: p.pinXY,
     })),
     nextCurrentNetwork?.people.map((p) => ({
       id: p.id,
       name: p.name,
       relationships: p.relationships,
       thumbnail: p.thumbnailUrl,
+      pinXY: p.pinXY,
     })),
   )
 

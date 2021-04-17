@@ -22,6 +22,7 @@ import {
   IRenameGroupAction,
   IRenameNetworkAction,
   ISetNetworkAction,
+  ISetNodePinAction,
   ISetPersonThumbnailAction,
   ISharedNetworkProperties,
   IShareNetworkAction,
@@ -71,6 +72,12 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
       return getDeleteNetworkState(state, action)
     }
 
+    case NetworkActionTypes.IMPORT_NETWORK:
+      return getImportedNetworkState(state, action)
+
+    case NetworkActionTypes.RENAME_NETWORK:
+      return getRenamedNetworksState(state, action)
+
     case NetworkActionTypes.RESET_CLIENT: {
       return initialState
     }
@@ -92,21 +99,14 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.SET_PERSON_THUMBNAIL:
       return getUpdatedPersonThumbnailState(state, action)
 
-    case NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP: {
+    case NetworkActionTypes.UPDATE_PERSON_RELATIONSHIP:
       return getUpdatedPersonRelationshipState(state, action)
-    }
 
     case NetworkActionTypes.UPDATE_PERSON_NAME:
       return getUpdatedPersonNameState(state, action)
 
     case NetworkActionTypes.UPDATE_PERSON_CONTENT:
       return getUpdatedPersonContentState(state, action)
-
-    case NetworkActionTypes.IMPORT_NETWORK:
-      return getImportedNetworkState(state, action)
-
-    case NetworkActionTypes.RENAME_NETWORK:
-      return getRenamedNetworksState(state, action)
 
     //
     // GROUPS
@@ -132,8 +132,66 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.UNSHARE_NETWORK:
       return getUnshareNetworkState(state, action)
 
+    // OTHER
+    case NetworkActionTypes.SET_NODE_PIN:
+      return getPinNodeState(state, action)
+
     default:
       return state
+  }
+}
+
+function getPinNodeState(state: INetworksState, action: ISetNodePinAction) {
+  if (state.currentNetwork?.id !== action.networkId) return state
+
+  if (action.isGroup) {
+    // Pinning a group node
+    const updatedGroup = {
+      ...state.currentNetwork.relationshipGroups[action.nodeId],
+    }
+    updatedGroup.pinXY = action.pinXY
+
+    const updatedGroups = {
+      ...state.currentNetwork.relationshipGroups,
+      [action.nodeId]: updatedGroup,
+    }
+
+    const updatedCurrentNetwork: ICurrentNetwork = {
+      ...state.currentNetwork,
+      relationshipGroups: updatedGroups,
+    }
+
+    return {
+      ...state,
+      currentNetwork: updatedCurrentNetwork,
+      isLoading: false,
+    }
+  } else {
+    // Pinning a person node
+    const personIndex = state.currentNetwork.people.findIndex(
+      (p) => p.id === action.nodeId,
+    )
+
+    if (personIndex === -1) return state
+
+    const updatedPerson: IPerson = {
+      ...state.currentNetwork.people[personIndex],
+      pinXY: action.pinXY,
+    }
+
+    const updatedPeople: IPerson[] = [...state.currentNetwork.people]
+    updatedPeople[personIndex] = updatedPerson
+
+    const updatedCurrentNetwork: ICurrentNetwork = {
+      ...state.currentNetwork,
+      people: updatedPeople,
+    }
+
+    return {
+      ...state,
+      currentNetwork: updatedCurrentNetwork,
+      isLoading: false,
+    }
   }
 }
 
