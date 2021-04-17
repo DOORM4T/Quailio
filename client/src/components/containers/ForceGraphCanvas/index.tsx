@@ -17,7 +17,7 @@ import {
   highlightNode,
   IForceGraphData,
   IPersonNode,
-  setNeighbors,
+  setNodeNeighborsAndLinks,
 } from "./NetworkGraph"
 
 /* Empty default state for when the Current Network is null */
@@ -122,10 +122,16 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       )
       addGroupNodesToForceGraph(updatedGraphData)
 
-      // Re-render all links & neighbors
+      // Re-render links in the Graph Data
       addGroupNodeLinksToForceGraph(updatedGraphData)
       people.forEach(createLinksByRelationships(updatedGraphData))
-      updatedGraphData.links.forEach(setNeighbors(updatedGraphData))
+
+      // Re-render links and neighbors for each node
+      updatedGraphData.nodes.forEach((node) => {
+        node.neighbors = []
+        node.links = []
+      })
+      updatedGraphData.links.forEach(setNodeNeighborsAndLinks(updatedGraphData))
 
       // Update the force graph!
       forceGraph.graphData(updatedGraphData)

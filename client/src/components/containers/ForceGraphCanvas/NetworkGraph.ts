@@ -33,6 +33,7 @@ export interface IPersonNode {
   name: string
   thumbnail: HTMLImageElement | null
   neighbors: IPersonNode[]
+  links: LinkObject[]
   relationships: IRelationships
   isGroupNode: boolean // A group can be represented by a PersonNode
 }
@@ -47,7 +48,7 @@ const INITIAL_DISTANCE = NODE_SIZE * 4
 
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
-const highlightLinkIds = new Set<string>()
+const highlightLinks = new Set<LinkObject>()
 const hoverNode: { node: IPersonNode | null } = { node: null }
 
 // For adding connections
@@ -90,8 +91,8 @@ export function createNetworkGraph(
   // Link people by their relationship fields
   state.people.forEach(createLinksByRelationships(gData))
 
-  // Set neighbors
-  gData.links.forEach(setNeighbors(gData))
+  // Set neighbors and links for each node
+  gData.links.forEach(setNodeNeighborsAndLinks(gData))
 
   // Create the Force Graph
   const Graph = ForceGraph()(container)
@@ -167,6 +168,7 @@ export function createPersonNode(person: IPerson): IPersonNode {
     name: person.name,
     thumbnail,
     neighbors: [],
+    links: [],
     relationships: person.relationships,
     isGroupNode: false,
   }
@@ -185,6 +187,7 @@ export function groupAsPersonNode(
     name: group.name,
     thumbnail: null,
     neighbors: [],
+    links: [],
     relationships: {},
     isGroupNode: true,
   }
@@ -221,14 +224,19 @@ export function createLinksByRelationships(gData: IForceGraphData) {
  * Creates an array pipeline function (for use by forEach) that sets the neighbors of each Person node
  * @param gData graph data to use and modify
  */
-export function setNeighbors(gData: IForceGraphData) {
+export function setNodeNeighborsAndLinks(gData: IForceGraphData) {
   return (link: LinkObject) => {
     const a = gData.nodes.find((node) => node.id === link.source)
     const b = gData.nodes.find((node) => node.id === link.target)
     if (!a || !b) return
 
+    // Each node will track their neighbors
     a.neighbors.push(b)
     b.neighbors.push(a)
+
+    // They'll track their links too
+    a.links.push(link)
+    b.links.push(link)
   }
 }
 
@@ -459,11 +467,8 @@ function drawLinkObject(
     )
   }
 
-  const isHighlighting = highlightLinkIds.size > 0 || highlightNodes.size > 0
-  const doHighlightLink =
-    isHighlighting &&
-    highlightLinkIds.has(srcNode.id) &&
-    highlightLinkIds.has(targetNode.id)
+  const isHighlighting = highlightLinks.size > 0 || highlightNodes.size > 0
+  const doHighlightLink = isHighlighting && highlightLinks.has(link)
 
   if (doHighlightLink) {
     // Highlight this link
@@ -536,11 +541,11 @@ function getNodeGroupColors(node: IPersonNode): GroupColors[] {
 
 function handleLinkHover() {
   return (link: LinkObject | null) => {
-    if (!highlightLinkIds || !highlightNodes) return
+    if (!highlightLinks || !highlightNodes) return
     if (hoverNode.node) return
 
     highlightNodes.clear()
-    highlightLinkIds.clear()
+    highlightLinks.clear()
 
     if (link) {
       const srcNode = link.source as NodeObject
@@ -550,8 +555,7 @@ function handleLinkHover() {
       highlightNodes.add(srcNode)
       highlightNodes.add(targetNode)
 
-      highlightLinkIds.add(srcNode.id as string)
-      highlightLinkIds.add(targetNode.id as string)
+      highlightLinks.add(link)
     }
   }
 }
@@ -626,38 +630,17 @@ export function highlightNode(n: NodeObject, gData: IForceGraphData) {
   // Clear current highlights
   hoverNode.node = node || null
   highlightNodes.clear()
-  highlightLinkIds.clear()
+  highlightLinks.clear()
 
   // Highlight nodes and links related to this node
   highlightNodes.add(node as NodeObject)
   node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor))
-  gData.links.forEach((link) => {
-    let srcId: string = ""
-    let targetId: string = ""
-
-    if (typeof link.source === "string") {
-      // Link is a raw string?
-      srcId = link.source as string
-      targetId = link.target as string
-    } else if ((link.source as object).hasOwnProperty("id")) {
-      // Link is an object? Should be an IPersonNode, which has an id field
-      srcId = (link.source as IPersonNode).id
-      targetId = (link.target as IPersonNode).id
-    } else {
-      // Stop if the link is an invalid type
-      return
-    }
-
-    if (srcId === node.id || targetId === node.id) {
-      highlightLinkIds.add(srcId)
-      highlightLinkIds.add(targetId)
-    }
-  })
+  node.links.forEach((link) => highlightLinks.add(link))
 }
 
 export function clearHighlights() {
   highlightNodes.clear()
-  highlightLinkIds.clear()
+  highlightLinks.clear()
 }
 
 function handleNodeDrag({ container }: IGraphClosureData) {
