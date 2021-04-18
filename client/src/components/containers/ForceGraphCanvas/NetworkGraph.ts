@@ -380,13 +380,11 @@ function nodePaint(isAreaPaint: boolean) {
 
     // Group nodes get bigger name tags
     const vertNameTagPadding = isGroupNode ? PADDING * 10 : 1
+    const nameTagX = textX - PADDING / 2
+    const nameTagY = textY - vertNameTagPadding / 2
+    const nameTagHeight = realFontSize + vertNameTagPadding
 
-    ctx.fillRect(
-      textX - PADDING / 2,
-      textY - vertNameTagPadding / 2,
-      width + PADDING,
-      realFontSize + vertNameTagPadding,
-    )
+    ctx.fillRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
 
     ctx.lineWidth = 1
 
@@ -400,12 +398,7 @@ function nodePaint(isAreaPaint: boolean) {
       ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
     }
 
-    ctx.strokeRect(
-      textX - PADDING / 2,
-      textY - vertNameTagPadding / 2,
-      width + PADDING,
-      realFontSize + vertNameTagPadding,
-    )
+    ctx.strokeRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
     ctx.fillText(text, textX + width / 2, textY, width)
     ctx.closePath()
 
@@ -413,18 +406,18 @@ function nodePaint(isAreaPaint: boolean) {
     if (isAreaPaint) {
       ctx.fillStyle = areaColor
 
-      // Thumbnail shadow
+      // Thumbnail border rectangle shadow
       if (thumbnail) {
-        ctx.fillRect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+        ctx.fillRect(
+          x - nodeSize / 2,
+          y - nodeSize / 2,
+          nodeSize,
+          nodeSize * 1.2,
+        )
       }
 
       // Name tag shadow
-      ctx.fillRect(
-        textX - PADDING / 2,
-        textY - vertNameTagPadding / 2,
-        width + PADDING,
-        realFontSize + vertNameTagPadding,
-      )
+      ctx.fillRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
     }
   }
 }
