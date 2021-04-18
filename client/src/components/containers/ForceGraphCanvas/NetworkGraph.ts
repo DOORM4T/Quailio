@@ -166,10 +166,6 @@ export function createPersonNode(person: IPerson): IPersonNode & NodeObject {
     neighbors: [],
     links: [],
     isGroupNode: false,
-
-    // Pin position (if the node has a pinXY property)
-    fx: person.pinXY?.x,
-    fy: person.pinXY?.y,
   }
 }
 
@@ -191,8 +187,7 @@ export function groupAsPersonNode(
     isGroupNode: true,
 
     // Pin position (if the node has a pinXY property)
-    fx: group.pinXY?.x,
-    fy: group.pinXY?.y,
+    pinXY: group.pinXY,
   }
 }
 

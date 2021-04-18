@@ -249,6 +249,10 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     const numNewGroups = groups ? Object.keys(groups).length : 0
     const didNumGroupsChange = existingGroupNodes.length !== numNewGroups
 
+    const groupPins = Object.values(groups).map((group) => group.pinXY)
+    const existingGroupPins = existingGroupNodes.map((group) => group.pinXY)
+    const didAnyGroupPinChange = !deepEqual(groupPins, existingGroupPins)
+
     if (peopleLen > existingLen) {
       addPeopleToGraph()
     } else if (peopleLen < existingLen) {
@@ -256,7 +260,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     } else if (peopleLen === existingLen) {
       // #people didn't change; relationship reason or thumbnail changed
       rerenderUpdatedPeopleInGraph()
-    } else if (didNumGroupsChange) {
+    } else if (didNumGroupsChange || didAnyGroupPinChange) {
       updateGraph()
     }
   }, [
