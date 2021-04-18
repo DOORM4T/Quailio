@@ -1,3 +1,4 @@
+import { groupsCollection, peopleCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import { ISetNodePinAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
@@ -18,17 +19,16 @@ export const pinNode = (
     dispatch(setNetworkLoading(true))
 
     try {
-      /* Firestore updates if the user is authenticated */
-      //   const uid = getState().auth.userId
-      //   if (uid) {
-      //     const personDoc = await peopleCollection.doc(personId).get()
+      // Firestore updates if the user is authenticated
+      const uid = getState().auth.userId
+      if (uid) {
+        const nodeDoc = isGroup
+          ? await groupsCollection.doc(nodeId).get()
+          : await peopleCollection.doc(nodeId).get()
 
-      //     /* Stop if the Person does not exist */
-      //     if (!personDoc.exists) throw new Error("That person does not exist.")
-
-      //     /* Update person's content field  */
-      //     await personDoc.ref.update({ content })
-      //   }
+        if (!nodeDoc) throw new Error("That node does not exist.")
+        await nodeDoc.ref.update({ pinXY }) // Updates JUST the pinXY field on the document
+      }
 
       /* Action to update state with the new person content */
       const action: ISetNodePinAction = {
