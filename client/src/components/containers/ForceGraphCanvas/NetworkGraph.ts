@@ -138,6 +138,12 @@ export function createNetworkGraph(
       // @ts-ignore
       d3.forceCollide(Graph.nodeRelSize() * 3),
     )
+    // @ts-ignore
+    .d3Force("charge", null)
+    // @ts-ignore
+    .d3Force("link", null)
+    // @ts-ignore
+    .d3Force("center", null)
 
   // @ts-ignore
   Graph.nodePointerAreaPaint(nodePaint(true))
