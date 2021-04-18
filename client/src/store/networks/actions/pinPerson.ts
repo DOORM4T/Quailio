@@ -19,9 +19,10 @@ export const pinNode = (
     dispatch(setNetworkLoading(true))
 
     try {
-      // Firestore updates if the user is authenticated
+      // Firestore updates if the NOT is sharing mode and the user is authenticated
+      const isSharing = getState().ui.isViewingShared // Viewers on a shared network should not be able to update the pinXY in Firestore
       const uid = getState().auth.userId
-      if (uid) {
+      if (!isSharing && uid) {
         const nodeDoc = isGroup
           ? await groupsCollection.doc(nodeId).get()
           : await peopleCollection.doc(nodeId).get()
