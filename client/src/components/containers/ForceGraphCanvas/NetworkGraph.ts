@@ -256,8 +256,14 @@ function nodePaint(isAreaPaint: boolean) {
     areaColor: string,
     ctx: CanvasRenderingContext2D,
   ) => {
-    const { thumbnail, x = 0, y = 0, name, isGroupNode } = node as NodeObject &
-      IPersonNode
+    const {
+      thumbnail,
+      x = 0,
+      y = 0,
+      name,
+      isGroupNode,
+      pinXY,
+    } = node as NodeObject & IPersonNode
     const centerX = x / 2
     const centerY = y / 2
 
@@ -402,7 +408,10 @@ function nodePaint(isAreaPaint: boolean) {
     ctx.fillText(text, textX + width / 2, textY, width)
     ctx.closePath()
 
-    // Shadow Canvas
+    // Draw a pin for pinned nodes
+    drawPin(pinXY, ctx, x, y)
+
+    // Shadow Canvas for pointer detection -- things drawn here will not appear on the force graph
     if (isAreaPaint) {
       ctx.fillStyle = areaColor
 
@@ -418,6 +427,32 @@ function nodePaint(isAreaPaint: boolean) {
 
       // Name tag shadow
       ctx.fillRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
+
+      // Pin shadow
+      drawPin(pinXY, ctx, x, y, areaColor)
+    }
+  }
+
+  function drawPin(
+    pinXY: { x: number; y: number } | undefined,
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    color: string = "red",
+  ) {
+    if (pinXY) {
+      ctx.beginPath()
+      ctx.moveTo(x, y - NODE_SIZE / 2.5)
+      ctx.lineTo(x, y - NODE_SIZE)
+      ctx.lineWidth = 3 / currentZoom
+      ctx.strokeStyle = "black"
+      ctx.stroke()
+      ctx.closePath()
+
+      // Pin Circle
+      ctx.arc(x, y - NODE_SIZE, 10, 0, 2 * Math.PI)
+      ctx.fillStyle = color
+      ctx.fill()
     }
   }
 }
