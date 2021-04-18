@@ -415,7 +415,9 @@ function nodePaint(isAreaPaint: boolean) {
     ctx.closePath()
 
     // Draw a pin for pinned nodes
-    drawPin(pinXY, ctx, x, y)
+    if (pinXY) {
+      drawPin(ctx, x, y, Boolean(thumbnail))
+    }
 
     // Shadow Canvas for pointer detection -- things drawn here will not appear on the force graph
     if (isAreaPaint) {
@@ -435,31 +437,44 @@ function nodePaint(isAreaPaint: boolean) {
       ctx.fillRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
 
       // Pin shadow
-      drawPin(pinXY, ctx, x, y, areaColor)
+      if (pinXY) {
+        drawPin(ctx, x, y, Boolean(thumbnail), areaColor)
+      }
     }
   }
 
   function drawPin(
-    pinXY: { x: number; y: number } | undefined,
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
+    hasThumbnail: boolean,
     color: string = "red",
   ) {
-    if (pinXY) {
-      ctx.beginPath()
-      ctx.moveTo(x, y - NODE_SIZE / 2.5)
-      ctx.lineTo(x, y - NODE_SIZE)
-      ctx.lineWidth = 3 / currentZoom
-      ctx.strokeStyle = "black"
-      ctx.stroke()
-      ctx.closePath()
+    ctx.beginPath()
 
-      // Pin Circle
-      ctx.arc(x, y - NODE_SIZE, 10, 0, 2 * Math.PI)
-      ctx.fillStyle = color
-      ctx.fill()
+    if (hasThumbnail) {
+      ctx.moveTo(x, y - NODE_SIZE / 2.5)
+      ctx.lineTo(x, y - NODE_SIZE / 1.2)
+    } else {
+      // Draw the line lower if no thumbnail
+      ctx.moveTo(x, y - BASE_FONT_SIZE / 4)
+      ctx.lineTo(x, y - BASE_FONT_SIZE)
     }
+    ctx.lineWidth = 3 / currentZoom
+    ctx.strokeStyle = "black"
+    ctx.stroke()
+    ctx.closePath()
+
+    // Pin Circle
+    ctx.arc(
+      x,
+      y - (hasThumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE),
+      5,
+      0,
+      2 * Math.PI,
+    )
+    ctx.fillStyle = color
+    ctx.fill()
   }
 }
 
@@ -831,7 +846,6 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
               }),
             )
           }
-          forceGraph?.zoomToFit(500)
         } catch (error) {
           console.error(error)
         }
