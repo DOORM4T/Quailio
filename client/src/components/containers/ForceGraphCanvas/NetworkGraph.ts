@@ -452,27 +452,30 @@ function nodePaint(isAreaPaint: boolean) {
   ) {
     ctx.beginPath()
 
-    if (hasThumbnail) {
-      ctx.moveTo(x, y - NODE_SIZE / 2.5)
-      ctx.lineTo(x, y - NODE_SIZE / 1.2)
-    } else {
-      // Draw the line lower if no thumbnail
-      ctx.moveTo(x, y - BASE_FONT_SIZE / 4)
-      ctx.lineTo(x, y - BASE_FONT_SIZE)
-    }
-    ctx.lineWidth = 3 / currentZoom
+    const pinStartOffset = hasThumbnail ? NODE_SIZE / 2.5 : BASE_FONT_SIZE / 4
+    const pinEndOffset = hasThumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
+    ctx.moveTo(x, y - pinStartOffset)
+    ctx.lineTo(x, y - pinEndOffset)
+
+    const MIN_LINE_WIDTH = 3
+    let lineWidth = MIN_LINE_WIDTH / currentZoom
+    if (lineWidth < MIN_LINE_WIDTH) lineWidth = MIN_LINE_WIDTH
+    ctx.lineWidth = lineWidth
+
+    ctx.lineCap = "round"
     ctx.strokeStyle = "black"
     ctx.stroke()
+
     ctx.closePath()
 
     // Pin Circle
-    ctx.arc(
-      x,
-      y - (hasThumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE),
-      5,
-      0,
-      2 * Math.PI,
-    )
+    const pinYOffset = hasThumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
+
+    const MIN_PIN_RADIUS = 5
+    let pinRadius = MIN_PIN_RADIUS / currentZoom
+    if (pinRadius < MIN_PIN_RADIUS) pinRadius = MIN_PIN_RADIUS
+
+    ctx.arc(x, y - pinYOffset, pinRadius, 0, 2 * Math.PI)
     ctx.fillStyle = color
     ctx.fill()
   }
