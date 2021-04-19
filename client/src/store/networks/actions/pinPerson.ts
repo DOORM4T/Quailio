@@ -1,3 +1,4 @@
+import firebase from "firebase"
 import { groupsCollection, peopleCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import { ISetNodePinAction, NetworkActionTypes } from "../networkTypes"
@@ -13,7 +14,7 @@ export const pinNode = (
   networkId: string,
   nodeId: string, // Can refer to a person ID or group ID -- groups are represented as nodes in the Force Graph and can be pinned
   isGroup: boolean,
-  pinXY: { x: number; y: number },
+  pinXY: { x: number; y: number } | undefined,
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
@@ -28,7 +29,15 @@ export const pinNode = (
           : await peopleCollection.doc(nodeId).get()
 
         if (!nodeDoc) throw new Error("That node does not exist.")
-        await nodeDoc.ref.update({ pinXY }) // Updates JUST the pinXY field on the document
+
+        // Updates JUST the pinXY field on the document
+        if (pinXY === undefined) {
+          await nodeDoc.ref.update({
+            pinXY: firebase.firestore.FieldValue.delete(),
+          })
+        } else {
+          await nodeDoc.ref.update({ pinXY })
+        }
       }
 
       /* Action to update state with the new person content */

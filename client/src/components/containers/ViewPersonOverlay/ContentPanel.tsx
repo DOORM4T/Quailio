@@ -1,5 +1,6 @@
 import deepEqual from "deep-equal"
 import { Box, Button, Text } from "grommet"
+import * as Icons from "grommet-icons"
 import React from "react"
 import ReactQuill from "react-quill"
 import "react-quill/dist/quill.snow.css"
@@ -14,7 +15,6 @@ import {
   getPersonInFocusData,
   getPersonInFocusId,
 } from "../../../store/selectors/ui/getPersonInFocusData"
-import * as Icons from "grommet-icons"
 
 /* Content on the view panel when the user has no content */
 const DEFAULT_VIEW_CONTENT = ""
@@ -99,7 +99,7 @@ const ContentPanel: React.FC<IProps> = (props) => {
   }
 
   // Manage listener events to prevent unsaved changes
-  const preventUnsavedChanges = async (e: Event) => {
+  async function preventUnsavedChanges(e: Event) {
     if (isSaved) return
 
     /* Exit confirmation when closing the window */

@@ -240,7 +240,7 @@ export interface ISetNodePinAction {
   networkId: string
   nodeId: string
   isGroup: boolean
-  pinXY: { x: number; y: number }
+  pinXY: { x: number; y: number } | undefined
 }
 
 /* Action types used by the networks reducer */

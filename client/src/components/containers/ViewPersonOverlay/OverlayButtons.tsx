@@ -7,6 +7,7 @@ import {
   connectPeople,
   deletePerson as deletePersonById,
   disconnectPeople,
+  pinNode,
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import { IRelationships } from "../../../store/networks/networkTypes"
@@ -51,6 +52,10 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     ...entry[1],
     id: entry[0],
   }))
+
+  const isPersonPinned = Boolean(
+    currentNetworkPeople.find((p) => p.id === currentPersonId)?.pinXY,
+  )
 
   // Connection drop-button ref -- used to trigger a click to close the menu
   const connectPeopleDropButtonRef = React.useRef<any>()
@@ -293,6 +298,23 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     </Tip>
   )
 
+  const handleUnpinPerson = async () => {
+    try {
+      await dispatch(
+        pinNode(currentNetworkId, currentPersonId, false, undefined),
+      )
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  const unpinPersonButton: React.ReactNode = (
+    <ToolTipButton
+      tooltip="Unpin from graph"
+      id="unpin-person-button"
+      icon={<Icons.Pin color="status-critical" />}
+      onClick={handleUnpinPerson}
+    />
+  )
   return (
     <Box direction="row">
       {props.isEditing ? (
@@ -302,6 +324,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
           {ConnectPeopleDropButton}
           {ManageGroupsDropButton}
           {deleteCurrentPersonButton}
+          {isPersonPinned && unpinPersonButton}
         </React.Fragment>
       ) : (
         // View Mode
