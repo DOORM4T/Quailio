@@ -15,7 +15,11 @@ import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentN
 import { getGroupIdsByPersonId } from "../../../store/selectors/ui/getGroupIdsByPersonId"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import { getShowNodesWithoutGroups } from "../../../store/selectors/ui/getShowNodesWithoutGroups"
-import { setViewingShared } from "../../../store/ui/uiActions"
+import {
+  setViewingShared,
+  togglePersonOverlay,
+  toggleShareOverlay,
+} from "../../../store/ui/uiActions"
 
 export default function useDashboard() {
   // REDUX DISPATCH | For dispatching custom Redux actions
@@ -46,8 +50,7 @@ export default function useDashboard() {
   // STATE | Show/hide the Person Menu
   const [doShowPersonMenu, setShowPersonMenu] = React.useState(true)
 
-  // EFFECT | Fire a resize event whenever doShowPersonMenu changes
-  //        | This programmatically triggers the ForceGraphCanvas to resize when the PersonMenu opens or closes
+  // EFFECT | Programmatically triggers the ForceGraphCanvas to resize when the PersonMenu opens or closes
   React.useEffect(() => {
     fireResizeEvent()
   }, [doShowPersonMenu]) // EFFECT | when doShowPersonMenu changes
@@ -111,6 +114,12 @@ export default function useDashboard() {
       }
     }
   }, [isAuthenticated]) // END | Get logged-in networks
+
+  // EFFECT | Hide all modals by default
+  React.useEffect(() => {
+    dispatch(togglePersonOverlay(false))
+    dispatch(toggleShareOverlay(false))
+  }, [])
 
   // RETURN | All the hook values that will be used by the Dashboard page
   return {
