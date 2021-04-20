@@ -27,17 +27,20 @@ interface IRelatedPersonData {
 
 interface IRelationshipsProps {
   isEditing: boolean
-  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const Relationships: React.FC<IRelationshipsProps> = (props) => {
+const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
   //
   // #region Hooks
   //
   const dispatch: Dispatch<any> = useDispatch()
+
+  /* We use memoized selectors here instead of current network or person props to...
+      -prevent fields like unsaved person content from resetting when a relationship changes
+      -prevent the connections & groups checklist menus from closing whenever one item is clicked (which is not fun) */
   const currentNetworkId = useSelector(getCurrentNetworkId)
   const currentPersonId = useSelector(getPersonInFocusId)
-  const currentPersonRelationships = useSelector(getPersonInFocusRelationships)
+  const relationships = useSelector(getPersonInFocusRelationships)
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
 
   const [didChangeReason, setDidChangeReason] = React.useState<boolean>(false)
@@ -47,20 +50,17 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
 
   // Update relatedPeopleData state every time the selected person changes
   React.useEffect(() => {
-    if (!currentPersonRelationships) return
+    if (!relationships) return
 
-    const relatedPeople = getRelatedPeople(
-      currentPersonRelationships,
-      currentNetworkPeople,
-    )
+    const relatedPeople = getRelatedPeople(relationships, currentNetworkPeople)
     setRelatedPeopleData(relatedPeople)
-  }, [currentPersonRelationships])
+  }, [relationships])
 
   //
   // #endregion Hooks
   //
 
-  // Do not render if no network or person is selected
+  // Don't render if no network or person is selected
   if (!currentNetworkId || !currentPersonId) return null
 
   //
@@ -168,9 +168,7 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
     )
 
     const relationshipContent = (
-      <Box>
-        {props.isEditing ? relationshipReasonEditor : readOnlyRelReason}
-      </Box>
+      <Box>{isEditing ? relationshipReasonEditor : readOnlyRelReason}</Box>
     )
 
     return (
@@ -190,7 +188,7 @@ const Relationships: React.FC<IRelationshipsProps> = (props) => {
   }
 
   const listItemAction = (otherPerson: IRelatedPersonData) => {
-    if (!props.isEditing) return null
+    if (!isEditing) return null
 
     const destroyRelationship = async () => {
       try {

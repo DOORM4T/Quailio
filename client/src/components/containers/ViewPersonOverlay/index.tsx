@@ -50,10 +50,7 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   )
 
   const RelationshipsContainer: React.ReactNode = (
-    <Relationships
-      isEditing={isViewingShared ? false : isEditing}
-      setIsEditing={setIsEditing}
-    />
+    <Relationships isEditing={isViewingShared ? false : isEditing} />
   )
 
   const ContentContainer: React.ReactNode = (
