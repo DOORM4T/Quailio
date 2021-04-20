@@ -24,6 +24,7 @@ import {
   ISetNetworkAction,
   ISetNodePinAction,
   ISetPersonThumbnailAction,
+  ISetRelationshipShape,
   ISharedNetworkProperties,
   IShareNetworkAction,
   ITogglePersonInGroupAction,
@@ -108,6 +109,9 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.UPDATE_PERSON_CONTENT:
       return getUpdatedPersonContentState(state, action)
 
+    case NetworkActionTypes.SET_RELATIONSHIP_SHAPE:
+      return getSetRelationshipShapeState(state, action)
+
     //
     // GROUPS
     //
@@ -139,6 +143,40 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     default:
       return state
   }
+}
+
+function getSetRelationshipShapeState(
+  state: INetworksState,
+  action: ISetRelationshipShape,
+): INetworksState {
+  if (state.currentNetwork?.id !== action.networkId) return state
+
+  const personIndex = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.personId,
+  )
+
+  if (personIndex === -1) return state
+
+  const updatedPerson = { ...state.currentNetwork.people[personIndex] }
+  const relationship = updatedPerson.relationships[action.relationshipId]
+  if (!relationship) return state
+  const updatedRel = { ...relationship }
+  updatedRel.shape = action.shape
+
+  updatedPerson.relationships = {
+    ...updatedPerson.relationships,
+    [action.relationshipId]: updatedRel,
+  }
+
+  const updatedPeople = [...state.currentNetwork.people]
+  updatedPeople[personIndex] = updatedPerson
+
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
+  }
+
+  return { ...state, currentNetwork: updatedCurrentNetwork, isLoading: false }
 }
 
 function getPinNodeState(state: INetworksState, action: ISetNodePinAction) {

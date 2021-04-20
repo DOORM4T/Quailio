@@ -39,11 +39,13 @@ export interface IPerson {
 
 // A person's Relationships object maps a relationship to another person by their ID
 export type IRelationships = { [otherPersonId: string]: IRelationship }
-
-// A Relationship consists of a reason and a map of groups the relationship covers
-export type IRelationship = {
-  reason: string
+export interface IRelationship {
+  reason: string // How two people in a relationship are related
+  shape?: ConnectionShape
 }
+
+// Shape that appears on the related person's node
+export type ConnectionShape = "arrow" | "none"
 
 // Map of Relationship Groups using their IDs as keys
 export type IRelationshipGroups = { [groupId: string]: IRelationshipGroup }
@@ -90,6 +92,8 @@ export enum NetworkActionTypes {
   UNSHARE_NETWORK = "NETWORK/UNSHARE",
 
   SET_NODE_PIN = "NETWORK/SET_NODE_PIN",
+
+  SET_RELATIONSHIP_SHAPE = "NETWORK/SET_RELATIONSHIP_SHAPE",
 }
 
 export interface INetworkLoadingAction {
@@ -243,6 +247,14 @@ export interface ISetNodePinAction {
   pinXY: { x: number; y: number } | undefined
 }
 
+export interface ISetRelationshipShape {
+  type: NetworkActionTypes.SET_RELATIONSHIP_SHAPE
+  networkId: string
+  personId: string
+  relationshipId: string
+  shape: ConnectionShape
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -269,3 +281,4 @@ export type NetworksActions =
   | IShareNetworkAction
   | IUnshareNetworkAction
   | ISetNodePinAction
+  | ISetRelationshipShape
