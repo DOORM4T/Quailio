@@ -13,173 +13,31 @@ import {
   IImportNetworkAction,
   INetwork,
   IPerson,
-  IRelationshipGroups,
   NetworkActionTypes,
 } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
- * Create a new network
- * @param name
+ * Import a network from JSON
+ *
+ * Is Authenticated: Imports then network to Firestore for the user
+ * @param networkJSON object with network JSON properties
  */
-
 export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
-    // COPY THE NETWORK, BUT WITH NEW IDs
-    // Give the network a new ID
-    const newNetworkId = uuidv4()
-
-    // Will update groups and people with new IDs
-    const groupsCopy: IRelationshipGroups = {
-      ...networkJSON.relationshipGroups,
-    }
-    const peopleCopy: IPerson[] = [...networkJSON.people]
-
-    // Update all group IDs
-    Object.keys(groupsCopy).forEach((groupId) => {
-      // Copy the group data before deleting the old key-value pair
-      const groupData = { ...groupsCopy[groupId] }
-
-      // Delete the old key-value pair
-      const newGroupId = uuidv4()
-      delete groupsCopy[groupId]
-
-      // Create the new key-value pair with the updated ID as the key
-      groupsCopy[newGroupId] = groupData
-    })
-
-    // Give each person a new ID
-    peopleCopy.forEach((p) => {
-      // Remember the old ID
-      const oldId = p.id
-
-      // Assign a new ID
-      p.id = uuidv4()
-
-      // Update all relationships
-      peopleCopy.forEach((otherPerson) => {
-        // Ensure the person has a relationship with the person whose ID we are updating
-        const hasRelationship = oldId in otherPerson.relationships
-        if (!hasRelationship) return
-
-        // Copy the relationship using the old ID
-        const relationshipCopy = otherPerson.relationships[oldId]
-        // Delete the existing relationship using the old ID
-        delete otherPerson.relationships[oldId]
-
-        // Re-create the relationship with the new ID
-        otherPerson.relationships[p.id] = relationshipCopy
-      })
-
-      // Update all groups
-      Object.keys(groupsCopy).forEach((groupId) => {
-        const group = groupsCopy[groupId]
-
-        // Replace the current person's old ID with their new one
-        const personIdIndex = group.personIds.findIndex((pid) => pid === oldId)
-        if (personIdIndex === -1) return // Stop if the current person's ID wasn't found
-
-        group.personIds[personIdIndex] = p.id
-      })
-    })
-
-    // Get all the updated person IDs
-    const updatedPersonIds = peopleCopy.map((p) => p.id)
-
-    // Get all the updated group IDs
-    const updatedGroupIds = Object.keys(groupsCopy)
-
-    // Format as a CurrentNetwork
-    const asCurrentNetwork: ICurrentNetwork = {
-      ...networkJSON,
-      id: newNetworkId,
-      people: peopleCopy,
-      personIds: updatedPersonIds,
-      groupIds: updatedGroupIds,
-      relationshipGroups: groupsCopy,
-    }
-
     try {
-      // Import to the Firestore if the user is authenticated (Offline users can still import; their data just isn't stored in Firestore)
+      const currentNetworkCopy = makeNetworkCopy(networkJSON)
+
       const uid = getState().auth.userId
-      if (uid) {
-        // Add the network's ID to the user doc networks list
-        const addToNetworkIds: { networkIds: any } = {
-          networkIds: firebase.firestore.FieldValue.arrayUnion(
-            asCurrentNetwork.id,
-          ),
-        }
-        await usersCollection.doc(uid).update(addToNetworkIds)
+      if (uid) await importToFirestore(uid, currentNetworkCopy)
 
-        //
-        // Add the network
-        //
-        const networkDoc = await networksCollection
-          .doc(asCurrentNetwork.id)
-          .get()
-
-        // Ensure the network doesn't already exist (in case the new UUID clashes, under astronomical odds)
-        if (networkDoc.exists)
-          throw new Error(
-            "Network ID clashed with an existing network. How unfortunate!",
-          )
-
-        // Actually add the network
-        const network: INetwork = {
-          id: asCurrentNetwork.id,
-          name: asCurrentNetwork.name,
-          personIds: asCurrentNetwork.personIds,
-          groupIds: asCurrentNetwork.groupIds, // TODO: Update group IDs
-        }
-        await networkDoc.ref.set(network)
-
-        //
-        // Add every person
-        //
-        const uploadPersonPromises = asCurrentNetwork.people.map(async (p) => {
-          const personDoc = await peopleCollection.doc(p.id).get()
-
-          // Stop importing if a person already exists (ID clash. This should very rarely happen.)
-          if (personDoc.exists)
-            throw new Error(
-              "Person ID clashed with an existing person. Stopping import.",
-            )
-
-          // Return a promise to set the person document
-          const setPersonPromise = personDoc.ref.set(p)
-          return setPersonPromise
-        })
-
-        await Promise.all(uploadPersonPromises)
-
-        // TODO: Create group docs in Firestore
-        const uploadGroupsPromises = Object.entries(
-          asCurrentNetwork.relationshipGroups,
-        ).map(async (groupEntry) => {
-          const [groupId, group] = groupEntry
-          const groupDoc = await groupsCollection.doc(groupId).get()
-
-          // Stop importing if the group already exists (ID clash. This should very rarely happen.)
-          if (groupDoc.exists)
-            throw new Error(
-              "Group ID clashed with an existing group. Stopping import.",
-            )
-
-          // Return a promise to set the person document
-          const setGroupPromise = groupDoc.ref.set(group)
-          return setGroupPromise
-        })
-
-        await Promise.all(uploadGroupsPromises)
-      }
-
-      // Action to import the network to global state
       const action: IImportNetworkAction = {
         type: NetworkActionTypes.IMPORT_NETWORK,
-        asCurrentNetwork,
+        asCurrentNetwork: currentNetworkCopy,
       }
+
       return dispatch(action)
     } catch (error) {
       /* Failed to import the Network */
@@ -187,4 +45,153 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
       throw error
     }
   }
+}
+
+/**
+ * @param networkJSON
+ * @returns a current network with updated UUIDs
+ */
+function makeNetworkCopy(networkJSON: INetworkJSON) {
+  const groupsCopy = { ...networkJSON.relationshipGroups }
+  const groupIds = Object.keys(groupsCopy)
+  const peopleCopy = [...networkJSON.people]
+
+  groupIds.forEach(updateGroupCopyId)
+  peopleCopy.forEach(updatePersonCopyId)
+
+  const updatedPersonIds = peopleCopy.map((p) => p.id)
+  const updatedGroupIds = Object.keys(groupsCopy)
+
+  const updatedNetworkId = uuidv4()
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...networkJSON,
+    id: updatedNetworkId,
+    people: peopleCopy,
+    personIds: updatedPersonIds,
+    groupIds: updatedGroupIds,
+    relationshipGroups: groupsCopy,
+  }
+
+  return updatedCurrentNetwork
+
+  //
+  // #region makeNetworkCopy: HELPERS
+  //
+  function updateGroupCopyId(groupId: string) {
+    const groupData = { ...groupsCopy[groupId] }
+
+    const newGroupId = uuidv4()
+    delete groupsCopy[groupId]
+    groupsCopy[newGroupId] = groupData
+  }
+
+  function updatePersonCopyId(personCopy: IPerson) {
+    const oldId = personCopy.id
+    personCopy.id = uuidv4()
+    peopleCopy.forEach(updatePersonIdInRels)
+
+    const groupCopyIds = Object.keys(groupsCopy)
+    groupCopyIds.forEach(updatePersonIdInGroups)
+
+    // #region assignNewIds: HELPERS
+    function updatePersonIdInRels(otherPerson: IPerson) {
+      const { id: newId } = personCopy
+
+      const hasRelationship = oldId in otherPerson.relationships
+      if (!hasRelationship) return
+
+      const relationshipCopy = otherPerson.relationships[oldId]
+      delete otherPerson.relationships[oldId]
+
+      otherPerson.relationships[newId] = relationshipCopy
+    }
+
+    function updatePersonIdInGroups(groupId: string) {
+      const group = groupsCopy[groupId]
+
+      const personIdIndexInGroup = group.personIds.findIndex(
+        (pid) => pid === oldId,
+      )
+      if (personIdIndexInGroup === -1) return
+
+      group.personIds[personIdIndexInGroup] = personCopy.id
+    }
+
+    // #endregion assignNewIds: HELPERS
+  }
+
+  //
+  // #endregion makeNetworkCopy: HELPERS
+  //
+}
+
+/**
+ * @param uid authenticated user's uid
+ * @param toImport current network copy to import
+ */
+async function importToFirestore(uid: string, toImport: ICurrentNetwork) {
+  // Add the network's ID to the user doc networks list
+  const addToNetworkIds: { networkIds: any } = {
+    networkIds: firebase.firestore.FieldValue.arrayUnion(toImport.id),
+  }
+  await usersCollection.doc(uid).update(addToNetworkIds)
+
+  //
+  // Add the network
+  //
+  const networkDoc = await networksCollection.doc(toImport.id).get()
+
+  // Ensure the network doesn't already exist (in case the new UUID clashes, under astronomical odds)
+  if (networkDoc.exists)
+    throw new Error(
+      "Network ID clashed with an existing network. How unfortunate!",
+    )
+
+  // Actually add the network
+  const network: INetwork = {
+    id: toImport.id,
+    name: toImport.name,
+    personIds: toImport.personIds,
+    groupIds: toImport.groupIds, // TODO: Update group IDs
+  }
+  await networkDoc.ref.set(network)
+
+  //
+  // Add every person
+  //
+  const uploadPersonPromises = toImport.people.map(async (p) => {
+    const personDoc = await peopleCollection.doc(p.id).get()
+
+    // Stop importing if a person already exists (ID clash. This should very rarely happen.)
+    if (personDoc.exists)
+      throw new Error(
+        "Person ID clashed with an existing person. Stopping import.",
+      )
+
+    // Return a promise to set the person document
+    const setPersonPromise = personDoc.ref.set(p)
+    return setPersonPromise
+  })
+
+  await Promise.all(uploadPersonPromises)
+
+  // TODO: Create group docs in Firestore
+  const uploadGroupsPromises = Object.entries(toImport.relationshipGroups).map(
+    async (groupEntry) => {
+      const [groupId, group] = groupEntry
+      const groupDoc = await groupsCollection.doc(groupId).get()
+
+      // Stop importing if the group already exists (ID clash. This should very rarely happen.)
+      if (groupDoc.exists)
+        throw new Error(
+          "Group ID clashed with an existing group. Stopping import.",
+        )
+
+      // Return a promise to set the person document
+      const setGroupPromise = groupDoc.ref.set(group)
+      return setGroupPromise
+    },
+  )
+
+  await Promise.all(uploadGroupsPromises)
 }
