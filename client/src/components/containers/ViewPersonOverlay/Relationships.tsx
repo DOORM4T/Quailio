@@ -5,9 +5,14 @@ import { useDispatch, useSelector } from "react-redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import {
   disconnectPeople,
+  setRelationshipShape,
   updateRelationshipReason,
 } from "../../../store/networks/actions"
-import { IPerson, IRelationships } from "../../../store/networks/networkTypes"
+import {
+  ConnectionShape,
+  IPerson,
+  IRelationships,
+} from "../../../store/networks/networkTypes"
 import {
   getCurrentNetworkId,
   getCurrentNetworkPeople,
@@ -17,12 +22,15 @@ import {
   getPersonInFocusRelationships,
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
+import ToolTipButton from "../../ToolTipButton"
 
 // Specific data to display for a person related to the current person
 interface IRelatedPersonData {
   id: string
   name: string
   reason: string
+  relationshipId: string
+  lineEndingShape: ConnectionShape
 }
 
 interface IRelationshipsProps {
@@ -171,16 +179,64 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
       <Box>{isEditing ? relationshipReasonEditor : readOnlyRelReason}</Box>
     )
 
+    const pickShape = (shape: ConnectionShape) => async () => {
+      if (person.lineEndingShape === shape) return
+
+      try {
+        await dispatch(
+          setRelationshipShape(
+            currentNetworkId,
+            currentPersonId,
+            person.relationshipId,
+            shape,
+          ),
+        )
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    const shapeHighlight = (shape: ConnectionShape) =>
+      person.lineEndingShape === shape ? "status-ok" : "status-disabled"
+
     return (
       <Box
         key={`${person.id}-${index}`}
         width="large"
         border={{ side: "bottom" }}
+        direction="row"
       >
+        <Box direction="column">
+          <ToolTipButton
+            onClick={pickShape("none")}
+            icon={<Icons.Clear size="16px" color={shapeHighlight("none")} />}
+            tooltip="No line ending"
+            buttonStyle={{
+              height: "16px",
+            }}
+          />
+          <ToolTipButton
+            onClick={pickShape("arrow")}
+            icon={
+              <Icons.CaretNext size="16px" color={shapeHighlight("arrow")} />
+            }
+            tooltip="Arrow line ending"
+            buttonStyle={{ height: "16px" }}
+          />
+        </Box>
         {
-          <Box direction="column">
+          <Box
+            direction="column"
+            style={{
+              width: "calc(100%)",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+              display: "inline-block",
+            }}
+          >
             {relatedPersonNameAnchor}
-            {relationshipContent}
+            <Box pad="4px">{relationshipContent}</Box>
           </Box>
         }
       </Box>
@@ -254,12 +310,16 @@ function getRelatedPeople(
     )
     if (!otherPerson) return null
 
-    const reason = personRelationships[relationshipId].reason || ""
+    const relationship = personRelationships[relationshipId]
+    const reason = relationship.reason || ""
+    const lineEndingShape: ConnectionShape = relationship.shape || "none"
 
     return {
       id: otherPerson.id,
       name: otherPerson.name,
       reason,
+      relationshipId,
+      lineEndingShape,
     }
   }
 
