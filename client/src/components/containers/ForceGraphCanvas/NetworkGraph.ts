@@ -12,6 +12,7 @@ import {
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
+  ConnectionShape,
   ICurrentNetwork,
   IPerson,
   IRelationship,
@@ -42,6 +43,8 @@ const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 64
 const HIGHLIGHT_SIZE = NODE_SIZE * 1.2
 const INITIAL_DISTANCE = NODE_SIZE * 4
+const NAMETAG_OFFSET_SCALE = 1.2
+const DEFAULT_LINK_SIZE = 3
 
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
@@ -256,6 +259,9 @@ interface IGraphClosureData {
 }
 
 // Closure function to draw a node or its pointer collision area
+const DEFAULT_NODE_COLOR_OBJECT = [
+  { backgroundColor: DEFAULT_NODE_COLOR, textColor: DEFAULT_TEXT_COLOR },
+]
 function nodePaint(isAreaPaint: boolean) {
   return (
     node: NodeObject,
@@ -270,40 +276,19 @@ function nodePaint(isAreaPaint: boolean) {
       isGroupNode,
       pinXY,
     } = node as NodeObject & IPersonNode
-    const centerX = x / 2
-    const centerY = y / 2
 
-    // Rectangle for displaying the node's border color
-    // Draw a larger rectangle first that acts as a group color outline for this node
     let colors = getNodeGroupColors(node as IPersonNode)
-    if (colors.length === 0)
-      colors = [
-        { backgroundColor: DEFAULT_NODE_COLOR, textColor: DEFAULT_TEXT_COLOR },
-      ]
+    if (colors.length === 0) colors = DEFAULT_NODE_COLOR_OBJECT
 
-    // Node border gradient (for the larger rectangle that will form the border by going behind the node's actual image)
-    const gradient =
-      colors.length > 1
-        ? ctx.createLinearGradient(centerX, y, centerX, y + NODE_SIZE)
-        : null
-    if (gradient) {
-      colors.forEach((color, index) =>
-        gradient.addColorStop(
-          (index + 1) / colors.length,
-          color.backgroundColor,
-        ),
-      )
-    }
-
+    const gradient = makeGradient()
     const defaultNodeBorderColor = colors[0].backgroundColor
     const fillColor = gradient ? gradient : defaultNodeBorderColor
 
-    // Node Highlighting
-    const isHighlighting = highlightNodes.size > 0 // Are there any nodes being highlighted?
-    const doHighlightNode = isHighlighting && highlightNodes.has(node) // Should this node be highlighted?
-    const isHoveredNode = node === hoverNode.node // Is this node is being hovered?
-    const highlightColor = isHoveredNode ? "red" : "orange" // Red if hovered; other highlighted nodes are orange
-    const nodeSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.2 : HIGHLIGHT_SIZE // Hovered node is slightly larger
+    const isHighlighting = highlightNodes.size > 0
+    const doHighlightNode = isHighlighting && highlightNodes.has(node)
+    const isHoveredNode = node === hoverNode.node
+    const highlightColor = isHoveredNode ? "red" : "orange"
+    const highlightSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.2 : HIGHLIGHT_SIZE
 
     // Show up to 30 chars of the node's name
     const text =
@@ -311,19 +296,91 @@ function nodePaint(isAreaPaint: boolean) {
         ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
         : name
 
-    let nameTagOffset = 0
+    drawThumbnail()
+    drawNameTag()
 
-    // Draw the thumbnail-style node, if the node has a thumbnail
-    // Doesn't draw the thumbnail drawing for the pointer area
-    if (thumbnail) {
-      nameTagOffset = NODE_SIZE / 1.2
+    if (pinXY) drawPin()
+
+    //
+    // #region paintNode: HELPERS
+    //
+
+    function drawNameTag() {
+      ctx.textAlign = "center"
+      ctx.textBaseline = "top"
+
+      // Scale font size based on the current zoom level
+      let realFontSize = BASE_FONT_SIZE / currentZoom
+      if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
+
+      ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
+
+      // Name tag width is the text width. Minimum width equals the NODE_SIZE
+      const nameTagYOffset = thumbnail ? NODE_SIZE / NAMETAG_OFFSET_SCALE : 0
+      let nameTagWidth = ctx.measureText(text).width
+      if (nameTagWidth < NODE_SIZE) nameTagWidth = NODE_SIZE
+
+      const PADDING = 32
+
+      const textX = x - nameTagWidth / 2
+      const textY = y - BASE_FONT_SIZE / 2 + nameTagYOffset
 
       ctx.beginPath()
+
+      // Name tag color. Group Nodes keep their color
+      if (isAreaPaint && areaColor) {
+        // Paint pointer collision area (this color will not actually appear on the force graph)
+        ctx.fillStyle = areaColor
+      } else if (isHighlighting && doHighlightNode && !isGroupNode) {
+        // Node is highlighted
+        ctx.fillStyle = highlightColor
+      } else if (isHighlighting && !doHighlightNode) {
+        // There are highlighted nodes but this one isn't one of them
+        ctx.fillStyle = LOW_ATTENTION_COLOR
+      } else {
+        // Normal fill color
+        ctx.fillStyle = fillColor
+      }
+
+      // Group nodes get bigger name tags
+      const vertNameTagPadding = isGroupNode ? PADDING * 10 : 1
+      const nameTagX = textX - PADDING / 2
+      const nameTagY = textY - vertNameTagPadding / 2
+      const nameTagHeight = realFontSize + vertNameTagPadding
+
+      ctx.fillRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
+
+      ctx.lineWidth = 1
+      if (isHighlighting && !doHighlightNode) {
+        // There are highlighted nodes but this one isn't one of them
+        ctx.strokeStyle = LOW_ATTENTION_COLOR
+        ctx.fillStyle = LOW_ATTENTION_COLOR
+      } else {
+        // Normal fill color
+        ctx.strokeStyle = "black"
+        ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
+      }
+
+      ctx.strokeRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
+      ctx.fillText(text, textX + nameTagWidth / 2, textY, nameTagWidth)
+      ctx.closePath()
+    }
+
+    function drawThumbnail() {
+      if (!thumbnail) return
+
+      ctx.beginPath()
+
       // Draw border-color rectangle
       ctx.fillStyle = "white"
       ctx.strokeStyle = "black"
       ctx.lineWidth = 1
-      ctx.rect(x - nodeSize / 2, y - nodeSize / 2, nodeSize, nodeSize * 1.2)
+      ctx.rect(
+        x - highlightSize / 2,
+        y - highlightSize / 2,
+        highlightSize,
+        highlightSize * NAMETAG_OFFSET_SCALE,
+      )
       ctx.fill()
       ctx.stroke()
       ctx.closePath()
@@ -355,129 +412,71 @@ function nodePaint(isAreaPaint: boolean) {
         ctx.stroke()
       }
       ctx.closePath()
-    }
 
-    // Draw a name tag for the node
-    ctx.textAlign = "center"
-    ctx.textBaseline = "top"
-
-    // Scale font size based on the current zoom level
-    let realFontSize = BASE_FONT_SIZE / currentZoom
-    if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
-
-    ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
-
-    // Name tag width is the text width. Minimum width equals the NODE_SIZE
-    let width = ctx.measureText(text).width
-    if (width < NODE_SIZE) width = NODE_SIZE
-
-    const PADDING = 32
-
-    const textX = x - width / 2
-    const textY = y - BASE_FONT_SIZE / 2 + nameTagOffset
-
-    ctx.beginPath()
-
-    // Name tag color. Group Nodes keep their color
-    if (isHighlighting && doHighlightNode && !isGroupNode) {
-      // Node is highlighted
-      ctx.fillStyle = highlightColor
-    } else if (isHighlighting && !doHighlightNode) {
-      // There are highlighted nodes but this one isn't one of them
-      ctx.fillStyle = LOW_ATTENTION_COLOR
-    } else {
-      // Normal fill color
-      ctx.fillStyle = fillColor
-    }
-
-    // Group nodes get bigger name tags
-    const vertNameTagPadding = isGroupNode ? PADDING * 10 : 1
-    const nameTagX = textX - PADDING / 2
-    const nameTagY = textY - vertNameTagPadding / 2
-    const nameTagHeight = realFontSize + vertNameTagPadding
-
-    ctx.fillRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
-
-    ctx.lineWidth = 1
-
-    if (isHighlighting && !doHighlightNode) {
-      // There are highlighted nodes but this one isn't one of them
-      ctx.strokeStyle = LOW_ATTENTION_COLOR
-      ctx.fillStyle = LOW_ATTENTION_COLOR
-    } else {
-      // Normal fill color
-      ctx.strokeStyle = "black"
-      ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
-    }
-
-    ctx.strokeRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
-    ctx.fillText(text, textX + width / 2, textY, width)
-    ctx.closePath()
-
-    // Draw a pin for pinned nodes
-    if (pinXY) {
-      drawPin(ctx, x, y, Boolean(thumbnail))
-    }
-
-    // Shadow Canvas for pointer detection -- things drawn here will not appear on the force graph
-    if (isAreaPaint) {
-      ctx.fillStyle = areaColor
-
-      // Thumbnail border rectangle shadow
-      if (thumbnail) {
+      if (isAreaPaint && areaColor) {
+        // Paint pointer collision area (this color will not actually appear on the force graph)
+        ctx.fillStyle = areaColor
         ctx.fillRect(
-          x - nodeSize / 2,
-          y - nodeSize / 2,
-          nodeSize,
-          nodeSize * 1.2,
+          x - highlightSize / 2,
+          y - highlightSize / 2,
+          highlightSize,
+          highlightSize * NAMETAG_OFFSET_SCALE,
+        )
+      }
+    }
+
+    function drawPin() {
+      ctx.beginPath()
+
+      const pinStartOffset = thumbnail ? NODE_SIZE / 2.5 : BASE_FONT_SIZE / 4
+      const pinEndOffset = thumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
+      ctx.moveTo(x, y - pinStartOffset)
+      ctx.lineTo(x, y - pinEndOffset)
+
+      const MIN_LINE_WIDTH = 3
+      let lineWidth = MIN_LINE_WIDTH / currentZoom
+      if (lineWidth < MIN_LINE_WIDTH) lineWidth = MIN_LINE_WIDTH
+      ctx.lineWidth = lineWidth
+
+      ctx.lineCap = "round"
+      ctx.strokeStyle = "black"
+      ctx.stroke()
+
+      ctx.closePath()
+
+      // Pin Circle
+      const pinYOffset = thumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
+
+      const MIN_PIN_RADIUS = 5
+      let pinRadius = MIN_PIN_RADIUS / currentZoom
+      if (pinRadius < MIN_PIN_RADIUS) pinRadius = MIN_PIN_RADIUS
+
+      ctx.arc(x, y - pinYOffset, pinRadius, 0, 2 * Math.PI)
+      if (isAreaPaint && areaColor) ctx.fillStyle = areaColor
+      else ctx.fillStyle = "red"
+      ctx.fill()
+    }
+
+    function makeGradient() {
+      if (colors.length === 1) return null
+
+      const colorGradient = ctx.createLinearGradient(x, y, x, y + NODE_SIZE)
+
+      if (colorGradient) {
+        colors.forEach((color, index) =>
+          colorGradient.addColorStop(
+            (index + 1) / colors.length,
+            color.backgroundColor,
+          ),
         )
       }
 
-      // Name tag shadow
-      ctx.fillRect(nameTagX, nameTagY, width + PADDING, nameTagHeight)
-
-      // Pin shadow
-      if (pinXY) {
-        drawPin(ctx, x, y, Boolean(thumbnail), areaColor)
-      }
+      return colorGradient
     }
-  }
 
-  function drawPin(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    hasThumbnail: boolean,
-    color: string = "red",
-  ) {
-    ctx.beginPath()
-
-    const pinStartOffset = hasThumbnail ? NODE_SIZE / 2.5 : BASE_FONT_SIZE / 4
-    const pinEndOffset = hasThumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
-    ctx.moveTo(x, y - pinStartOffset)
-    ctx.lineTo(x, y - pinEndOffset)
-
-    const MIN_LINE_WIDTH = 3
-    let lineWidth = MIN_LINE_WIDTH / currentZoom
-    if (lineWidth < MIN_LINE_WIDTH) lineWidth = MIN_LINE_WIDTH
-    ctx.lineWidth = lineWidth
-
-    ctx.lineCap = "round"
-    ctx.strokeStyle = "black"
-    ctx.stroke()
-
-    ctx.closePath()
-
-    // Pin Circle
-    const pinYOffset = hasThumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
-
-    const MIN_PIN_RADIUS = 5
-    let pinRadius = MIN_PIN_RADIUS / currentZoom
-    if (pinRadius < MIN_PIN_RADIUS) pinRadius = MIN_PIN_RADIUS
-
-    ctx.arc(x, y - pinYOffset, pinRadius, 0, 2 * Math.PI)
-    ctx.fillStyle = color
-    ctx.fill()
+    //
+    // #endregion paintNode: HELPERS
+    //
   }
 }
 
@@ -490,8 +489,8 @@ function drawLinkObject(
   const srcNode = link.source as NodeObject & IPersonNode
   const targetNode = link.target as NodeObject & IPersonNode
 
-  const { x: x1, y: y1 } = srcNode
-  const { x: x2, y: y2 } = targetNode
+  const { x: x1, y: y1, relationships: srcRels, id: srcId } = srcNode
+  const { x: x2, y: y2, relationships: targetRels, id: targetId } = targetNode
   if (!x1 || !y1 || !x2 || !y2) return null
 
   const centerX = (x1 + x2) / 2
@@ -531,20 +530,77 @@ function drawLinkObject(
     ctx.strokeStyle = gradient ? gradient : linkColors[0]
   }
 
-  const DEFAULT_LINK_SIZE = 3
   let lineWidth = doHighlightLink ? DEFAULT_LINK_SIZE * 2 : DEFAULT_LINK_SIZE
   lineWidth /= currentZoom
   if (lineWidth < DEFAULT_LINK_SIZE) lineWidth = DEFAULT_LINK_SIZE
   if (doHighlightLink && lineWidth < DEFAULT_LINK_SIZE * 2)
     lineWidth = DEFAULT_LINK_SIZE * 2
-
   ctx.lineWidth = lineWidth
 
+  // Draw the relationship line
   ctx.beginPath()
   ctx.moveTo(x1, y1)
   ctx.lineTo(x2, y2)
   ctx.stroke()
-  return null
+  ctx.closePath()
+
+  // Draw the line ending shape (if there is one)
+  // e.g. srcNode's shape is "arrow" in its relationship with target node? Draw an arrow at targetNode's end of the link line
+  const shapeAtTarget = srcRels[targetId]?.shape
+  const shapeAtSrc = targetRels[srcId]?.shape
+  if (shapeAtTarget && shapeAtTarget !== "none")
+    drawLineEndShape(shapeAtTarget, "target")
+  if (shapeAtSrc && shapeAtSrc !== "none")
+    drawLineEndShape(shapeAtSrc, "source")
+
+  //
+  // #region drawLinkObject: HELPERS
+  //
+
+  function drawLineEndShape(shape: ConnectionShape, at: "target" | "source") {
+    if (!x1 || !x2 || !y1 || !y2) return
+    const toX = at === "target" ? x2 : x1
+    const toY = at === "target" ? y2 : y1
+    const fromX = at === "target" ? x1 : x2
+    const fromY = at === "target" ? y1 : y2
+
+    switch (shape) {
+      case "arrow": {
+        const HEAD_LENGTH = 20
+        const dx = toX - fromX
+        const dy = toY - fromY
+        const angle = Math.atan2(dy, dx)
+        const angle1 = Math.atan2(dy, dx) - Math.PI / 6
+        const angle2 = Math.atan2(dy, dx) + Math.PI / 6
+
+        ctx.beginPath()
+        ctx.ellipse(toX, toY, 200, 200, 0, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.closePath()
+
+        // TODO: Arrow
+        // ctx.beginPath()
+        // ctx.moveTo(toX, toY)
+        // ctx.lineTo(
+        //   toX - HEAD_LENGTH * Math.cos(angle1),
+        //   fromY - HEAD_LENGTH * Math.sin(angle1),
+        // )
+        // ctx.moveTo(toX, toY)
+        // ctx.lineTo(
+        //   toX - HEAD_LENGTH * Math.cos(angle2),
+        //   toY - HEAD_LENGTH * Math.sin(angle2),
+        // )
+        // ctx.lineWidth = 10
+        // ctx.strokeStyle = "black"
+        // ctx.stroke()
+        // ctx.closePath()
+      }
+    }
+  }
+
+  //
+  // #endregion drawLinkObject: HELPERS
+  //
 }
 
 /**
