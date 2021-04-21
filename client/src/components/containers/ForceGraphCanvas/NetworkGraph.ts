@@ -328,10 +328,7 @@ function nodePaint(isAreaPaint: boolean) {
       ctx.beginPath()
 
       // Name tag color. Group Nodes keep their color
-      if (isAreaPaint && areaColor) {
-        // Paint pointer collision area (this color will not actually appear on the force graph)
-        ctx.fillStyle = areaColor
-      } else if (isHighlighting && doHighlightNode && !isGroupNode) {
+      if (isHighlighting && doHighlightNode && !isGroupNode) {
         // Node is highlighted
         ctx.fillStyle = highlightColor
       } else if (isHighlighting && !doHighlightNode) {
@@ -351,11 +348,7 @@ function nodePaint(isAreaPaint: boolean) {
       ctx.fillRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
 
       ctx.lineWidth = 1
-      if (isAreaPaint && areaColor) {
-        // Paint pointer collision area (this color will not actually appear on the force graph)
-        ctx.fillStyle = areaColor
-        ctx.strokeStyle = areaColor
-      } else if (isHighlighting && !doHighlightNode) {
+      if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.strokeStyle = LOW_ATTENTION_COLOR
         ctx.fillStyle = LOW_ATTENTION_COLOR
@@ -368,6 +361,12 @@ function nodePaint(isAreaPaint: boolean) {
       ctx.strokeRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
       ctx.fillText(text, textX + nameTagWidth / 2, textY, nameTagWidth)
       ctx.closePath()
+
+      if (isAreaPaint && areaColor) {
+        // Paint pointer collision area (this color will not actually appear on the force graph)
+        ctx.fillStyle = areaColor
+        ctx.fillRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
+      }
     }
 
     function drawThumbnail() {
