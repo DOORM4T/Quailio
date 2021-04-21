@@ -199,6 +199,25 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
     const shapeHighlight = (shape: ConnectionShape) =>
       person.lineEndingShape === shape ? "status-ok" : "status-disabled"
 
+    const shapeButtons = (
+      <Box direction="column">
+        <ToolTipButton
+          onClick={pickShape("none")}
+          icon={<Icons.Clear size="16px" color={shapeHighlight("none")} />}
+          tooltip="No line ending"
+          buttonStyle={{
+            height: "16px",
+          }}
+        />
+        <ToolTipButton
+          onClick={pickShape("arrow")}
+          icon={<Icons.CaretNext size="16px" color={shapeHighlight("arrow")} />}
+          tooltip="Arrow line ending"
+          buttonStyle={{ height: "16px" }}
+        />
+      </Box>
+    )
+
     return (
       <Box
         key={`${person.id}-${index}`}
@@ -206,24 +225,7 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
         border={{ side: "bottom" }}
         direction="row"
       >
-        <Box direction="column">
-          <ToolTipButton
-            onClick={pickShape("none")}
-            icon={<Icons.Clear size="16px" color={shapeHighlight("none")} />}
-            tooltip="No line ending"
-            buttonStyle={{
-              height: "16px",
-            }}
-          />
-          <ToolTipButton
-            onClick={pickShape("arrow")}
-            icon={
-              <Icons.CaretNext size="16px" color={shapeHighlight("arrow")} />
-            }
-            tooltip="Arrow line ending"
-            buttonStyle={{ height: "16px" }}
-          />
-        </Box>
+        {isEditing && shapeButtons}
         {
           <Box
             direction="column"
