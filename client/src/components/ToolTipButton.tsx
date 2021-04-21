@@ -23,7 +23,12 @@ const ToolTipButton: React.FC<IProps> = (props) => {
       onClick={props.onClick}
       disabled={props.isDisabled}
       hoverIndicator
-      style={props.buttonStyle}
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        ...props.buttonStyle,
+      }}
     />
   )
 
