@@ -351,7 +351,11 @@ function nodePaint(isAreaPaint: boolean) {
       ctx.fillRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
 
       ctx.lineWidth = 1
-      if (isHighlighting && !doHighlightNode) {
+      if (isAreaPaint && areaColor) {
+        // Paint pointer collision area (this color will not actually appear on the force graph)
+        ctx.fillStyle = areaColor
+        ctx.strokeStyle = areaColor
+      } else if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.strokeStyle = LOW_ATTENTION_COLOR
         ctx.fillStyle = LOW_ATTENTION_COLOR
