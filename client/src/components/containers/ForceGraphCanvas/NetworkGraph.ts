@@ -496,6 +496,8 @@ function drawLinkObject(
   const { x: x2, y: y2, relationships: targetRels, id: targetId } = targetNode
   if (!x1 || !y1 || !x2 || !y2) return null
 
+  const isGroupConnection = srcNode.isGroupNode || targetNode.isGroupNode
+
   const centerX = (x1 + x2) / 2
   const centerY = (y1 + y2) / 2
   const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
@@ -522,14 +524,17 @@ function drawLinkObject(
   const isHighlighting = highlightLinks.size > 0 || highlightNodes.size > 0
   const doHighlightLink = isHighlighting && highlightLinks.has(link)
 
+  ctx.setLineDash([])
+  if (isGroupConnection) ctx.setLineDash([5 / currentZoom, 20 / currentZoom])
+
   if (doHighlightLink) {
-    // Highlight this link
     ctx.strokeStyle = "yellow"
   } else if (isHighlighting) {
     // Links are being highlight but this link isn't one of them
     ctx.strokeStyle = LOW_ATTENTION_COLOR
+  } else if (isGroupConnection) {
+    ctx.strokeStyle = "rgba(0,0,0,0.2)"
   } else {
-    // Normal link color
     ctx.strokeStyle = gradient ? gradient : linkColors[0]
   }
 
