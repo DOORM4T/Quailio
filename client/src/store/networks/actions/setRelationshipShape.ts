@@ -1,6 +1,9 @@
+import { peopleCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import {
   ConnectionShape,
+  IPerson,
+  IRelationships,
   ISetRelationshipShape,
   NetworkActionTypes,
 } from "../networkTypes"
@@ -23,8 +26,8 @@ export const setRelationshipShape = (
   dispatch(setNetworkLoading(true))
 
   try {
-    // const uid = getState().auth.userId
-    // if (uid) updateShapeInFirestore()
+    const uid = getState().auth.userId
+    if (uid) await updateShapeInFirestore(personId, relationshipId, shape)
 
     const action: ISetRelationshipShape = {
       type: NetworkActionTypes.SET_RELATIONSHIP_SHAPE,
@@ -39,4 +42,21 @@ export const setRelationshipShape = (
     dispatch(setNetworkLoading(false))
     throw error
   }
+}
+
+async function updateShapeInFirestore(
+  personId: string,
+  relationshipId: string,
+  shape: ConnectionShape,
+) {
+  const personDoc = await peopleCollection.doc(personId).get()
+  if (!personDoc.exists) throw new Error("That person does not exist")
+
+  const person = personDoc.data() as IPerson
+  const updatedRelationship: IRelationships = {
+    ...person.relationships,
+    [relationshipId]: { ...person.relationships[relationshipId], shape },
+  }
+
+  personDoc.ref.update({ relationships: updatedRelationship })
 }
