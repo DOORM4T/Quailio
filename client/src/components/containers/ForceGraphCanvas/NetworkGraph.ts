@@ -569,35 +569,43 @@ function drawLinkObject(
 
     switch (shape) {
       case "arrow": {
-        const HEAD_LENGTH = 20
-        const dx = toX - fromX
-        const dy = toY - fromY
-        const angle = Math.atan2(dy, dx)
-        const angle1 = Math.atan2(dy, dx) - Math.PI / 6
-        const angle2 = Math.atan2(dy, dx) + Math.PI / 6
-
-        ctx.beginPath()
-        ctx.ellipse(toX, toY, 200, 200, 0, 0, Math.PI * 2)
-        ctx.stroke()
-        ctx.closePath()
-
-        // TODO: Arrow
-        // ctx.beginPath()
-        // ctx.moveTo(toX, toY)
-        // ctx.lineTo(
-        //   toX - HEAD_LENGTH * Math.cos(angle1),
-        //   fromY - HEAD_LENGTH * Math.sin(angle1),
-        // )
-        // ctx.moveTo(toX, toY)
-        // ctx.lineTo(
-        //   toX - HEAD_LENGTH * Math.cos(angle2),
-        //   toY - HEAD_LENGTH * Math.sin(angle2),
-        // )
-        // ctx.lineWidth = 10
-        // ctx.strokeStyle = "black"
-        // ctx.stroke()
-        // ctx.closePath()
+        drawArrow()
+        break
       }
+    }
+
+    function drawArrow() {
+      const MIN_HEAD_LENGTH = 20
+      let headLen = MIN_HEAD_LENGTH / currentZoom
+      if (headLen < MIN_HEAD_LENGTH) headLen = MIN_HEAD_LENGTH
+
+      const ANGLE_OFFSET = Math.PI / 4
+
+      const dx = toX - fromX
+      const dy = toY - fromY
+      const angle = Math.atan2(dy, dx)
+
+      const offsetAngle = (angle + Math.PI) % (2 * Math.PI)
+      const headAngle1 = offsetAngle - ANGLE_OFFSET
+      const headAngle2 = offsetAngle + ANGLE_OFFSET
+
+      const cx = (toX + fromX) / 2
+      const cy = (toY + fromY) / 2
+
+      const head1X = cx + headLen * Math.cos(headAngle1)
+      const head1Y = cy + headLen * Math.sin(headAngle1)
+      const head2X = cx + headLen * Math.cos(headAngle2)
+      const head2Y = cy + headLen * Math.sin(headAngle2)
+
+      ctx.beginPath()
+      ctx.moveTo(cx, cy)
+      ctx.lineTo(head1X, head1Y)
+      ctx.moveTo(cx, cy)
+      ctx.lineTo(head2X, head2Y)
+
+      ctx.lineCap = "square"
+      ctx.stroke()
+      ctx.closePath()
     }
   }
 
