@@ -13,6 +13,7 @@ import { Helmet } from "react-helmet"
 import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
 import Logo from "../assets/logo.png"
+import { HEADER_HEIGHT } from "../components/containers/AppHeader"
 import { auth } from "../firebase/services"
 import { routeNames } from "../Routes"
 import { getIsAuthenticated } from "../store/selectors/auth/getIsAuthenticated"
@@ -23,7 +24,7 @@ const HomePage: React.FC = () => {
   const isLoggedIn = useSelector(getIsAuthenticated)
 
   return (
-    <Box height="xxlarge" background="light-1">
+    <Box height={`calc(100vh - ${HEADER_HEIGHT}px)`} background="light-1">
       <Helmet>
         <title>Home</title>
       </Helmet>
@@ -93,10 +94,7 @@ const HomePage: React.FC = () => {
             <Accordion width="large">
               <AccordionPanel label="Connecting Families">
                 <Box pad="medium">
-                  <Text>
-                    Create family trees to share with family and watch your
-                    branches grow!
-                  </Text>
+                  <Text>Create family trees to share with family!</Text>
                 </Box>
               </AccordionPanel>
               <AccordionPanel label="Organizational Hierarchy">
@@ -118,23 +116,6 @@ const HomePage: React.FC = () => {
             </Accordion>
           </Box>
         </Box>
-      </Box>
-
-      <Box
-        background="dark-1"
-        pad="large"
-        width="large"
-        height="large"
-        margin={{ horizontal: "auto", vertical: "large" }}
-        align="center"
-        justify="center"
-      >
-        Coming Soon:
-        <ul>
-          <li>Group renaming and custom group colors</li>
-          <li>A shiny UI redesign</li>
-          <li>GIF demos</li>
-        </ul>
       </Box>
     </Box>
   )
