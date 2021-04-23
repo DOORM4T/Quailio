@@ -102,9 +102,6 @@ export function createNetworkGraph(
   const Graph = ForceGraph()(container)
     .graphData(gData)
     .nodeRelSize(NODE_SIZE)
-    .nodeCanvasObject((node, ctx) =>
-      nodePaint(false)(node, (node as any).__indexColor, ctx),
-    )
     .nodeLabel(() => {
       return ""
     })
@@ -128,13 +125,7 @@ export function createNetworkGraph(
     .onNodeDragEnd(handleNodeDragEnd({ container, state: currentNetwork }))
     .onNodeClick(handleNodeClick)
     .onBackgroundRightClick(handleBackgroundRightClick(Graph, currentNetwork))
-    .onNodeRightClick(
-      handleNodeRightClick({
-        nodeToConnect,
-        state: currentNetwork,
-        forceGraph: Graph,
-      }),
-    )
+    .onNodeRightClick(handleNodeRightClick(currentNetwork))
     .onZoom((transform) => {
       // Update the currentZoom variable
       currentZoom = transform.k
@@ -155,7 +146,9 @@ export function createNetworkGraph(
     .d3Force("center", null)
 
   // @ts-ignore
-  Graph.nodePointerAreaPaint(nodePaint(true))
+  Graph.nodeCanvasObject((node, ctx) =>
+    nodePaint(Graph, false)(node, (node as any).__indexColor, ctx),
+  ).nodePointerAreaPaint(nodePaint(Graph, true))
 
   return Graph
 }
@@ -269,7 +262,16 @@ interface IGraphClosureData {
 const DEFAULT_NODE_COLOR_OBJECT = [
   { backgroundColor: DEFAULT_NODE_COLOR, textColor: DEFAULT_TEXT_COLOR },
 ]
-function nodePaint(isAreaPaint: boolean) {
+
+const mouseCoords: { x: number; y: number } = { x: 0, y: 0 }
+window.addEventListener("mousemove", (e) => {
+  if (!nodeToConnect.node) return
+
+  mouseCoords.x = e.offsetX
+  mouseCoords.y = e.offsetY
+})
+
+function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
   return (
     node: NodeObject,
     areaColor: string,
@@ -282,7 +284,11 @@ function nodePaint(isAreaPaint: boolean) {
       name,
       isGroupNode,
       pinXY,
+      id,
     } = node as NodeObject & IPersonNode
+
+    const isConnecting = id === nodeToConnect.node?.id
+    if (isConnecting && !isAreaPaint) drawLineToMouse(ctx, x, y)
 
     let colors = getNodeGroupColors(node as IPersonNode)
     if (colors.length === 0) colors = DEFAULT_NODE_COLOR_OBJECT
@@ -487,6 +493,25 @@ function nodePaint(isAreaPaint: boolean) {
     //
     // #endregion paintNode: HELPERS
     //
+  }
+
+  function drawLineToMouse(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+  ) {
+    const { x: mouseX, y: mouseY } = graph.screen2GraphCoords(
+      mouseCoords.x,
+      mouseCoords.y,
+    )
+
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(mouseX, mouseY)
+    ctx.lineWidth = DEFAULT_LINK_SIZE / currentZoom
+    ctx.strokeStyle = "black"
+    ctx.stroke()
+    ctx.closePath()
   }
 }
 
@@ -829,14 +854,9 @@ function handleBackgroundRightClick(
     // DO NOT allow right click events if in sharing mode
     if (store.getState().ui.isViewingShared) return
 
-    // User is in the middle of making a node connection?
+    // Cancel connection-making action
     if (nodeToConnect.node) {
-      const doCancelConnectionAction = window.confirm(
-        "Cancel connection? Press OK to cancel the current connect action.",
-      )
-      if (doCancelConnectionAction) {
-        nodeToConnect.node = null
-      }
+      nodeToConnect.node = null
       return
     }
 
@@ -854,12 +874,12 @@ function handleBackgroundRightClick(
   }
 }
 
-function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
+function handleNodeRightClick(currentNetwork: ICurrentNetwork) {
   return async (n: NodeObject | null) => {
     // DO NOT allow right click events if in sharing mode
     if (store.getState().ui.isViewingShared) return
 
-    if (!n || !nodeToConnect || !state) return
+    if (!n || !nodeToConnect) return
     const node = n as NodeObject & IPersonNode
 
     /* Connect two nodes right-clicked nodes
@@ -869,10 +889,10 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
           3. Group-Person
 
         Users CANNOT link two groups (Group-Group)
+        Users CANNOT link a node to itself
     */
     if (!nodeToConnect.node) {
       // Picked the first node to dis(connect) or toggle in a group
-      alert(`Link A: ${node.name}`)
       nodeToConnect.node = node as NodeObject & IPersonNode
     } else {
       // Picked the second node to dis(connect) or toggle in a group
@@ -880,7 +900,8 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
       // Group-Group connections are illegal
       if (nodeToConnect.node.isGroupNode && node.isGroupNode) return
 
-      alert(`Link B: ${node.name}`)
+      // Self-Self connections are illegal
+      if (nodeToConnect.node.id === node.id) return
 
       const isOnlyFirstNodeAGroup =
         nodeToConnect.node.isGroupNode && !node.isGroupNode
@@ -901,7 +922,12 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
           const isPersonInGroup = group.personIds.includes(personId)
 
           await store.dispatch<any>(
-            togglePersonInGroup(state.id, groupId, personId, !isPersonInGroup),
+            togglePersonInGroup(
+              currentNetwork.id,
+              groupId,
+              personId,
+              !isPersonInGroup,
+            ),
           )
         } catch (error) {
           console.error(error)
@@ -916,7 +942,7 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
         try {
           if (areNodesConnected) {
             await store.dispatch<any>(
-              disconnectPeople(state.id, {
+              disconnectPeople(currentNetwork.id, {
                 p1Id: nodeToConnect.node.id,
                 p2Id: node.id,
               }),
@@ -924,7 +950,7 @@ function handleNodeRightClick({ state, forceGraph }: IGraphClosureData) {
           } else {
             // Otherwise, connect the nodes
             await store.dispatch<any>(
-              connectPeople(state.id, {
+              connectPeople(currentNetwork.id, {
                 p1Id: nodeToConnect.node.id,
                 p2Id: node.id,
               }),
