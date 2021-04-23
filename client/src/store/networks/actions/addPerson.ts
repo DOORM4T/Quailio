@@ -18,7 +18,11 @@ import { setNetworkLoading } from "./setNetworkLoading"
  * @param name new person's name
  */
 
-export const addPerson = (networkId: string, name: string): AppThunk => {
+export const addPerson = (
+  networkId: string,
+  name: string,
+  pinXY?: { x: number; y: number },
+): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
@@ -28,6 +32,7 @@ export const addPerson = (networkId: string, name: string): AppThunk => {
       name,
       relationships: {},
       content: "",
+      pinXY,
     }
 
     try {

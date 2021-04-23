@@ -36,6 +36,10 @@ export interface IPersonNode extends IPerson {
   isGroupNode: boolean // A group can be represented by a PersonNode
 }
 
+type NodeToConnect = {
+  node: IPersonNode | null
+}
+
 //
 // Global variables
 //
@@ -71,16 +75,16 @@ let currentZoom = 1 // Use current zoom to scale visuals such as name tags
 /**
  *
  * @param container
- * @param state
+ * @param currentNetwork
  * @param disconnected whether the graph is connected to Network state or not. Set to false for standalone demo graphs.
  */
 export function createNetworkGraph(
   container: HTMLDivElement,
-  state: ICurrentNetwork,
+  currentNetwork: ICurrentNetwork,
 ) {
   // Create nodes from the People in the current Network
   const gData: IForceGraphData = {
-    nodes: state.people.map(createPersonNode),
+    nodes: currentNetwork.people.map(createPersonNode),
     links: [],
   }
 
@@ -89,7 +93,7 @@ export function createNetworkGraph(
   addGroupNodeLinks(gData)
 
   // Link people by their relationship fields
-  state.people.forEach(createLinksByRelationships(gData))
+  currentNetwork.people.forEach(createLinksByRelationships(gData))
 
   // Set neighbors and links for each node
   gData.links.forEach(setNodeNeighborsAndLinks(gData))
@@ -121,13 +125,15 @@ export function createNetworkGraph(
     }),
   )
     .onNodeDrag(handleNodeDrag({ container }))
-    .onNodeDragEnd(handleNodeDragEnd({ container, state }))
+    .onNodeDragEnd(handleNodeDragEnd({ container, state: currentNetwork }))
     .onNodeClick(handleNodeClick)
-    .onBackgroundRightClick(
-      handleBackgroundRightClick({ nodeToConnect, state }),
-    )
+    .onBackgroundRightClick(handleBackgroundRightClick(Graph, currentNetwork))
     .onNodeRightClick(
-      handleNodeRightClick({ nodeToConnect, state, forceGraph: Graph }),
+      handleNodeRightClick({
+        nodeToConnect,
+        state: currentNetwork,
+        forceGraph: Graph,
+      }),
     )
     .onZoom((transform) => {
       // Update the currentZoom variable
@@ -250,6 +256,7 @@ export function setNodeNeighborsAndLinks(gData: IForceGraphData) {
 //
 // GRAPH RENDERING & INTERACTIVITY FUNCTIONS
 //
+// TODO: Remove this logic. Causes functions to need to check if the value exists, so might as well define custom signatures
 interface IGraphClosureData {
   container?: HTMLDivElement
   forceGraph?: ForceGraphInstance
@@ -812,15 +819,17 @@ async function handleNodeClick(n: NodeObject | null) {
   }
 }
 
-function handleBackgroundRightClick({ state }: IGraphClosureData) {
-  return async () => {
+function handleBackgroundRightClick(
+  graph: ForceGraphInstance,
+  currentNetwork: ICurrentNetwork,
+) {
+  return async (e: MouseEvent) => {
+    const { x, y } = graph.screen2GraphCoords(e.offsetX, e.offsetY)
+
     // DO NOT allow right click events if in sharing mode
     if (store.getState().ui.isViewingShared) return
 
-    // Stop if there's no state or if there's a node in the middle of being connected
-    if (!state || !nodeToConnect) return
-
-    /* if the user is in the middle of making a node connection  */
+    // User is in the middle of making a node connection?
     if (nodeToConnect.node) {
       const doCancelConnectionAction = window.confirm(
         "Cancel connection? Press OK to cancel the current connect action.",
@@ -838,7 +847,7 @@ function handleBackgroundRightClick({ state }: IGraphClosureData) {
         return
       }
 
-      await store.dispatch<any>(addPerson(state.id, name))
+      await store.dispatch<any>(addPerson(currentNetwork.id, name, { x, y }))
     } catch (error) {
       console.error(error)
     }
