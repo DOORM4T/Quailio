@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import Logo from "../../assets/logo.png"
 import useAuth from "../../hooks/auth/useAuth"
+import { routeNames } from "../../Routes"
 import { logout } from "../../store/auth/authActions"
 import Header from "../Header"
 import { MenuItems } from "./AppBurgerMenu"
@@ -39,7 +40,7 @@ const AppHeader: React.FC<IProps> = (props) => {
         <React.Fragment>
           {props.showLogo && (
             <React.Fragment>
-              <Link to="/">
+              <Link to={routeNames.HOME}>
                 <Image
                   src={Logo}
                   style={{ width: "50px" }}

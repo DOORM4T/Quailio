@@ -3,6 +3,7 @@ import * as Icons from "grommet-icons"
 import React from "react"
 import { Link } from "react-router-dom"
 import { auth } from "../../firebase/services"
+import { routeNames } from "../../Routes"
 
 // -== MENU  ==- //
 interface IMenuProps {
@@ -13,7 +14,10 @@ export function MenuItems(props: IMenuProps) {
   const labels: { label: JSX.Element }[] = [
     {
       label: (
-        <Link to="/" style={{ display: "inline-block", width: "100%" }}>
+        <Link
+          to={routeNames.HOME}
+          style={{ display: "inline-block", width: "100%" }}
+        >
           <Box fill pad="small" direction="row">
             <Text margin={{ right: "small" }}>
               <Icons.Home color="accent-1" />
@@ -27,7 +31,10 @@ export function MenuItems(props: IMenuProps) {
 
   labels.push({
     label: (
-      <Link to="/dashboard" style={{ display: "inline-block", width: "100%" }}>
+      <Link
+        to={routeNames.DASHBOARD}
+        style={{ display: "inline-block", width: "100%" }}
+      >
         <Box fill pad="small" direction="row">
           <Text margin={{ right: "small" }}>
             <Icons.Dashboard color="accent-1" />
@@ -38,12 +45,12 @@ export function MenuItems(props: IMenuProps) {
     ),
   })
 
-  /* show user auth pages */
+  // Links to show for logged-in users
   if (props.isLoggedIn) {
     labels.push({
       label: (
         <Link
-          to="/settings"
+          to={routeNames.SETTINGS}
           id="settings-anchor"
           style={{ display: "inline-block", width: "100%" }}
         >
@@ -77,11 +84,11 @@ export function MenuItems(props: IMenuProps) {
       ),
     })
   } else {
-    /* otherwise, show register & login links */
+    // Otherwise, show register & login links
     labels.push({
       label: (
         <Link
-          to="/login"
+          to={routeNames.LOGIN}
           id="login-anchor"
           style={{ display: "inline-block", width: "100%" }}
         >
@@ -97,7 +104,10 @@ export function MenuItems(props: IMenuProps) {
 
     labels.push({
       label: (
-        <Link to="/register" style={{ display: "inline-block", width: "100%" }}>
+        <Link
+          to={routeNames.REGISTER}
+          style={{ display: "inline-block", width: "100%" }}
+        >
           <Box fill pad="small" direction="row">
             <Text margin={{ right: "small" }}>
               <Icons.UserNew color="accent-1" />

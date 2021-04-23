@@ -14,6 +14,7 @@ import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
 import Logo from "../assets/logo.png"
 import { auth } from "../firebase/services"
+import { routeNames } from "../Routes"
 import { getIsAuthenticated } from "../store/selectors/auth/getIsAuthenticated"
 
 const APP_NAME = "Quailio"
@@ -66,20 +67,20 @@ const HomePage: React.FC = () => {
                     <Text color="brand">{auth.currentUser.email}</Text>
                   </Heading>
                 )}
-                <Link to="/dashboard">
+                <Link to={routeNames.DASHBOARD}>
                   <Button label="Dashboard" />
                 </Link>
               </Box>
             ) : (
               <Box direction="column" gap="small">
-                <Link to="/dashboard">
+                <Link to={routeNames.DASHBOARD}>
                   <Button label="Zero-login dashboard" />
                 </Link>
                 <Box direction="row" gap="small">
-                  <Link to="/login">
+                  <Link to={routeNames.LOGIN}>
                     <Button label="Sign in" id="sign-in-button" />
                   </Link>
-                  <Link to="/register">
+                  <Link to={routeNames.REGISTER}>
                     <Button label="Register" id="register-button" />
                   </Link>
                 </Box>

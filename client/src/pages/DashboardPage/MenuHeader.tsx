@@ -4,6 +4,7 @@ import React from "react"
 import { useHistory } from "react-router"
 import AppHeader from "../../components/containers/AppHeader"
 import ToolTipButton from "../../components/ToolTipButton"
+import { routeNames } from "../../Routes"
 import { INetwork } from "../../store/networks/networkTypes"
 import useMenuHeader from "./logic/useMenuHeader"
 
@@ -26,7 +27,7 @@ export const HeaderMenu: React.FC<IMenuHeaderProps> = (props) => {
 
   const history = useHistory()
   const handleExitSharedMode = () => {
-    history.push("/dashboard")
+    history.push(routeNames.DASHBOARD)
   }
 
   return (

@@ -19,6 +19,7 @@ import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
 import { handlePasswordReset } from "../helpers/handlePasswordReset"
+import { routeNames } from "../Routes"
 import { login } from "../store/auth/authActions"
 
 const LoginPage: React.FC = () => {
@@ -34,7 +35,7 @@ const LoginPage: React.FC = () => {
     try {
       const loginAction = login(submitted.email, submitted.password)
       await dispatch(loginAction)
-      history.push("/dashboard")
+      history.push(routeNames.DASHBOARD)
     } catch (error) {
       /* show error message upon failure */
       setMessage(error.message)
@@ -94,7 +95,7 @@ const LoginPage: React.FC = () => {
             background="light-2"
           >
             <Box margin={{ left: "auto" }}>
-              <Link to="/register">Or... Register now!</Link>
+              <Link to={routeNames.REGISTER}>Or... Register now!</Link>
             </Box>
           </CardFooter>
         </Card>

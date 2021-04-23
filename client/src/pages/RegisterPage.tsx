@@ -17,6 +17,7 @@ import { Helmet } from "react-helmet"
 import { useDispatch } from "react-redux"
 import { Link, useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
+import { routeNames } from "../Routes"
 import { createAccount } from "../store/auth/authActions"
 
 const RegisterPage: React.FC = (props) => {
@@ -126,7 +127,7 @@ const RegisterPage: React.FC = (props) => {
             background="light-2"
           >
             <Box margin={{ left: "auto" }}>
-              <Link to="/login">Or... Log in!</Link>
+              <Link to={routeNames.LOGIN}>Or... Log in!</Link>
             </Box>
           </CardFooter>
         </Card>

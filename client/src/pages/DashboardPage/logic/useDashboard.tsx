@@ -5,6 +5,7 @@ import { fireResizeEvent } from "../../../helpers/fireResizeEvent"
 import useAuth from "../../../hooks/auth/useAuth"
 import usePageExitConfirmation from "../../../hooks/usePageExitConfirmation"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
+import { routeNames } from "../../../Routes"
 import {
   getAllNetworks,
   resetLocalNetworks,
@@ -79,7 +80,7 @@ export default function useDashboard() {
       } catch (error) {
         // Return to the plain dashboard if the shared network wasn't found
         console.error(error)
-        history.push("/dashboard")
+        history.push(routeNames.DASHBOARD)
       }
     } // END | viewSharedNetwork
 
@@ -92,7 +93,11 @@ export default function useDashboard() {
     dispatch(resetLocalNetworks())
 
     // Get networks when at /dashboard and when the user is authenticated
-    if (history.location.pathname !== "/dashboard" || !isAuthenticated) return
+    if (
+      history.location.pathname !== routeNames.DASHBOARD.valueOf() ||
+      !isAuthenticated
+    )
+      return
 
     // FUNCTION | Put the user's networks in global state
     async function getNetworks() {
