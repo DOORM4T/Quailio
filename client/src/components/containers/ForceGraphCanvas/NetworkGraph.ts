@@ -53,10 +53,14 @@ const DEFAULT_LINK_SIZE = 3
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
 const highlightLinks = new Set<LinkObject>()
-const hoverNode: { node: IPersonNode | null } = { node: null }
+const hoverNode: NodeToConnect = { node: null }
 
 // For adding connections
-const nodeToConnect: { node: IPersonNode | null } = { node: null }
+const nodeToConnect: NodeToConnect = { node: null }
+let isPanningOrZooming = false
+let isMouseOver = false
+let isShiftDown = false
+const mouseCoords: { x: number; y: number } = { x: 0, y: 0 }
 
 // Default color if a node/its links aren't part of a group
 const DEFAULT_NODE_COLOR = "white"
@@ -98,6 +102,10 @@ export function createNetworkGraph(
   // Set neighbors and links for each node
   gData.links.forEach(setNodeNeighborsAndLinks(gData))
 
+  // Custom Event Listeners
+  clearCustomListeners(container)
+  setCustomListeners(container)
+
   // Create the Force Graph
   const Graph = ForceGraph()(container)
     .graphData(gData)
@@ -125,11 +133,9 @@ export function createNetworkGraph(
     .onNodeDragEnd(handleNodeDragEnd({ container, state: currentNetwork }))
     .onNodeClick(handleNodeClick)
     .onBackgroundRightClick(handleBackgroundRightClick(Graph, currentNetwork))
-    .onNodeRightClick(handleNodeRightClick(currentNetwork))
-    .onZoom((transform) => {
-      // Update the currentZoom variable
-      currentZoom = transform.k
-    })
+    .onNodeRightClick(handleNodeRightClick(Graph, currentNetwork))
+    .onZoom(handleZoomPan)
+    .onZoomEnd(handleZoomPanEnd)
 
   Graph.dagMode("radialin")
     .dagLevelDistance(INITIAL_DISTANCE)
@@ -254,7 +260,7 @@ interface IGraphClosureData {
   container?: HTMLDivElement
   forceGraph?: ForceGraphInstance
   gData?: IForceGraphData
-  nodeToConnect?: { node: IPersonNode | null }
+  nodeToConnect?: NodeToConnect
   state?: ICurrentNetwork
 }
 
@@ -262,14 +268,6 @@ interface IGraphClosureData {
 const DEFAULT_NODE_COLOR_OBJECT = [
   { backgroundColor: DEFAULT_NODE_COLOR, textColor: DEFAULT_TEXT_COLOR },
 ]
-
-const mouseCoords: { x: number; y: number } = { x: 0, y: 0 }
-window.addEventListener("mousemove", (e) => {
-  if (!nodeToConnect.node) return
-
-  mouseCoords.x = e.offsetX
-  mouseCoords.y = e.offsetY
-})
 
 function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
   return (
@@ -288,7 +286,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     } = node as NodeObject & IPersonNode
 
     const isConnecting = id === nodeToConnect.node?.id
-    if (isConnecting && !isAreaPaint) drawLineToMouse(ctx, x, y)
+    if (isConnecting && isMouseOver && !isPanningOrZooming && !isAreaPaint)
+      drawLineToMouse(ctx, x, y)
 
     let colors = getNodeGroupColors(node as IPersonNode)
     if (colors.length === 0) colors = DEFAULT_NODE_COLOR_OBJECT
@@ -315,7 +314,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     if (pinXY) drawPin()
 
     //
-    // #region paintNode: HELPERS
+    // #region nodePaint: HELPERS
     //
 
     function drawNameTag() {
@@ -491,7 +490,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     }
 
     //
-    // #endregion paintNode: HELPERS
+    // #endregion nodePaint: HELPERS
     //
   }
 
@@ -874,7 +873,10 @@ function handleBackgroundRightClick(
   }
 }
 
-function handleNodeRightClick(currentNetwork: ICurrentNetwork) {
+function handleNodeRightClick(
+  graph: ForceGraphInstance,
+  currentNetwork: ICurrentNetwork,
+) {
   return async (n: NodeObject | null) => {
     // DO NOT allow right click events if in sharing mode
     if (store.getState().ui.isViewingShared) return
@@ -962,6 +964,14 @@ function handleNodeRightClick(currentNetwork: ICurrentNetwork) {
       }
 
       // Clear the node to connect
+      // Can keep making connections to the first node if SHIFT is down
+      if (isShiftDown) {
+        const updatedNode = graph
+          .graphData()
+          .nodes.find((gNode) => gNode.id === nodeToConnect.node?.id)
+        nodeToConnect.node = (updatedNode as IPersonNode) || null
+        return
+      }
       nodeToConnect.node = null
     }
   }
@@ -1015,4 +1025,66 @@ export function addGroupNodeLinks(gData: IForceGraphData) {
       })
     })
   })
+}
+
+function updateMouseCoords(e: MouseEvent) {
+  if (!nodeToConnect.node) return
+  setMouseCoords(e)
+}
+
+function setMouseOver(e: MouseEvent) {
+  if (isMouseOver) return
+  isMouseOver = true
+}
+
+function setMouseOut(e: MouseEvent) {
+  if (!isMouseOver) return
+  isMouseOver = false
+}
+
+function setMouseCoords(e: MouseEvent) {
+  mouseCoords.x = e.offsetX
+  mouseCoords.y = e.offsetY
+}
+
+function setShiftDown(e: KeyboardEvent) {
+  if (isShiftDown === e.shiftKey) return
+
+  isShiftDown = e.shiftKey
+  console.log(isShiftDown)
+}
+
+export function clearCustomListeners(container: HTMLElement) {
+  container.removeEventListener("mousemove", updateMouseCoords)
+  container.removeEventListener("mouseup", setMouseCoords)
+
+  container.removeEventListener("mouseenter", setMouseOver)
+  container.removeEventListener("mouseleave", setMouseOut)
+
+  window.removeEventListener("keydown", setShiftDown)
+  window.removeEventListener("keyup", setShiftDown)
+}
+
+function setCustomListeners(container: HTMLElement) {
+  container.addEventListener("mousemove", updateMouseCoords)
+  container.addEventListener("mouseup", setMouseCoords)
+
+  container.addEventListener("mouseenter", setMouseOver)
+  container.addEventListener("mouseleave", setMouseOut)
+
+  window.addEventListener("keydown", setShiftDown)
+  window.addEventListener("keyup", setShiftDown)
+}
+
+function handleZoomPan(transform: { k: number; x: number; y: number }) {
+  // Update the currentZoom variable
+  currentZoom = transform.k
+
+  if (isPanningOrZooming) return
+  isPanningOrZooming = true
+}
+
+function handleZoomPanEnd(transform: { k: number; x: number; y: number }) {
+  if (!isPanningOrZooming) return
+  isPanningOrZooming = false
 }

@@ -10,6 +10,7 @@ import Canvas from "../../Canvas"
 import {
   addGroupNodeLinks as addGroupNodeLinksToForceGraph,
   addGroupNodesToForceGraph,
+  clearCustomListeners,
   clearHighlights,
   createLinksByRelationships,
   createNetworkGraph,
@@ -45,52 +46,63 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
   // ==- Instantiate the Force Graph -== //
   const renderForceGraph = () => {
+    if (!canvasRef.current) return
     const graphState = props.currentNetwork ? props.currentNetwork : emptyState
 
-    if (canvasRef.current) {
-      // Add each person's ID to the existingPeopleIds set -- this is to track existing nodes while we dynamically add new nodes
-      existingPeopleIds.clear()
-      graphState.people.forEach((n) => existingPeopleIds.add(n.id))
+    // Add each person's ID to the existingPeopleIds set -- this is to track existing nodes while we dynamically add new nodes
+    existingPeopleIds.clear()
+    graphState.people.forEach((n) => existingPeopleIds.add(n.id))
 
-      // Create the force graph
-      // Destroy the previous force graph, if there was one
-      if (forceGraphRef.current) forceGraphRef.current._destructor()
+    // Create the force graph
+    // Destroy the previous force graph, if there was one
+    if (forceGraphRef.current) destroyForceGraph()
 
-      /* Set canvas width and height based on container dimensions */
-      forceGraphRef.current = createNetworkGraph(
-        canvasRef.current,
-        graphState,
-      ) as ForceGraphInstance
+    /* Set canvas width and height based on container dimensions */
+    forceGraphRef.current = createNetworkGraph(
+      canvasRef.current,
+      graphState,
+    ) as ForceGraphInstance
 
-      // Fit the force graph canvas when the window resizes
-      const handleResize = () => {
-        const currentForceGraph = forceGraphRef.current
-        const currentCanvasContainer = canvasRef.current
-        if (!currentForceGraph || !currentCanvasContainer) return
+    // Fit the initial force graph to the correct screen dimensions
+    handleResize()
+    setTimeout(() => {
+      if (!forceGraphRef.current) return
 
-        const { width, height } = currentCanvasContainer.getBoundingClientRect()
+      forceGraphRef.current.zoomToFit(500)
+    }, 100)
 
-        currentForceGraph.width(width).height(height)
-      }
+    // Re-create the force graph when the window resizes
+    window.removeEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize)
 
-      // Fit the initial force graph to the correct screen dimensions
-      handleResize()
-      setTimeout(() => {
-        if (!forceGraphRef.current) return
-
-        forceGraphRef.current.zoomToFit(500)
-      }, 100)
-
-      // Re-create the force graph when the window resizes
-      window.removeEventListener("resize", handleResize)
-      window.addEventListener("resize", handleResize)
-
-      return () => {
-        window.removeEventListener("resize", handleResize)
-        if (!forceGraphRef.current) return
-        forceGraphRef.current._destructor()
-      }
+    return () => {
+      destroyForceGraph()
     }
+  }
+
+  // Fit the force graph canvas when the window resizes
+  function handleResize() {
+    const currentForceGraph = forceGraphRef.current
+    const currentCanvasContainer = canvasRef.current
+    if (!currentForceGraph || !currentCanvasContainer) return
+
+    const { width, height } = currentCanvasContainer.getBoundingClientRect()
+
+    currentForceGraph.width(width).height(height)
+  }
+
+  // Destroy the graph and related listeners to prevent memory leaks
+  function destroyForceGraph() {
+    if (!forceGraphRef.current) return
+    forceGraphRef.current._destructor()
+    forceGraphRef.current = undefined
+    window.removeEventListener("resize", handleResize)
+
+    // This does not work upon component unmount because canvasRef becomes undefined
+    // BUT this works as intended when the user opens an new network, removing any previous listeners
+    if (!canvasRef.current) return
+    clearCustomListeners(canvasRef.current)
+    console.log("removed listeners")
   }
 
   // Render force graph on container mount or when we switch to a different network
