@@ -4,8 +4,14 @@ import { ICurrentNetwork, IRelationship } from "../networkTypes"
 export function restructureLegacyCurrentNetwork(network: ICurrentNetwork) {
   const copy = { ...network }
 
+  // This fixes a bug with people becoming undefined in Firestore
+  // by removing undefined people
+  copy.people = copy.people.filter((p) => p !== undefined)
+  copy.personIds = copy.people.map((p) => p.id)
+
   // Update legacy relationship formats (e.g. [reason1, reason2], "sharedReason")
   copy.people.forEach((person) => {
+    if (!person.relationships) return
     const relationshipIds = Object.keys(person.relationships)
 
     relationshipIds.forEach((id) => {
