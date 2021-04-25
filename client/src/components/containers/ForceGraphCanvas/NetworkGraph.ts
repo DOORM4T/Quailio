@@ -93,7 +93,10 @@ export function createNetworkGraph(
   }
 
   // Create group nodes
-  addGroupNodesToForceGraph(gData)
+  Object.entries(currentNetwork.relationshipGroups).forEach((entry) => {
+    const [groupId, group] = entry
+    addGroupNodeToForceGraph(gData, groupId, group)
+  })
   addGroupNodeLinks(gData)
 
   // Link people by their relationship fields
@@ -137,7 +140,7 @@ export function createNetworkGraph(
     .onZoom(handleZoomPan)
     .onZoomEnd(handleZoomPanEnd)
 
-  Graph.dagMode("radialin")
+  Graph.dagMode("td")
     .dagLevelDistance(INITIAL_DISTANCE)
     .d3Force(
       "collide",
@@ -977,26 +980,19 @@ function handleNodeRightClick(
   }
 }
 
-export function addGroupNodesToForceGraph(gData: IForceGraphData) {
+export function addGroupNodeToForceGraph(
+  gData: IForceGraphData,
+  groupId: string,
+  group: IRelationshipGroup,
+) {
   if (!gData) return
 
-  const relationshipGroups = store.getState().networks.currentNetwork
-    ?.relationshipGroups
-  if (!relationshipGroups) return
-
   const visibleGroups = store.getState().ui.filteredGroups
+  // Hidden if explicitly false. undefined/true indicate the group is visible
+  if (visibleGroups[groupId] === false) return
 
-  const groupEntries = Object.entries(relationshipGroups)
-  const groupsAsPersonNodes = groupEntries
-    .map((entry) => {
-      const [groupId, group] = entry
-      const isGroupHidden = visibleGroups[groupId] === false // showing if true or undefined
-      if (!isGroupHidden) return groupAsPersonNode(groupId, group)
-      else return null
-    })
-    .filter((node) => node !== null) as IPersonNode[]
-
-  gData.nodes = gData.nodes.concat(groupsAsPersonNodes)
+  const node = groupAsPersonNode(groupId, group)
+  gData.nodes = gData.nodes.concat(node)
 }
 
 export function addGroupNodeLinks(gData: IForceGraphData) {
@@ -1051,7 +1047,6 @@ function setShiftDown(e: KeyboardEvent) {
   if (isShiftDown === e.shiftKey) return
 
   isShiftDown = e.shiftKey
-  console.log(isShiftDown)
 }
 
 export function clearCustomListeners(container: HTMLElement) {
