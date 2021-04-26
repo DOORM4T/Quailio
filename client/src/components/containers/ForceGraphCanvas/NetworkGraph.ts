@@ -70,6 +70,12 @@ const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/link
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
 
+// Line dash constants
+const MIN_SEGMENT_LENGTH = 5
+const MIN_SPACE_LENGTH = 20
+const MAX_SEGMENT_LENGTH = 50
+const MAX_SPACE_LENGTH = 100
+
 let currentZoom = 1 // Use current zoom to scale visuals such as name tags
 
 //
@@ -559,7 +565,7 @@ function drawLinkObject(
   const doHighlightLink = isHighlighting && highlightLinks.has(link)
 
   ctx.setLineDash([])
-  if (isGroupConnection) ctx.setLineDash([5 / currentZoom, 20 / currentZoom])
+  if (isGroupConnection) dashLine()
 
   if (doHighlightLink) {
     ctx.strokeStyle = "yellow"
@@ -646,6 +652,19 @@ function drawLinkObject(
       ctx.stroke()
       ctx.closePath()
     }
+  }
+
+  function dashLine() {
+    let segment = MIN_SEGMENT_LENGTH / currentZoom
+    let space = MIN_SPACE_LENGTH / currentZoom
+    if (segment < MIN_SEGMENT_LENGTH) segment = MIN_SEGMENT_LENGTH
+    if (segment > MAX_SEGMENT_LENGTH) segment = MAX_SEGMENT_LENGTH
+
+    if (space < MIN_SPACE_LENGTH) space = MIN_SPACE_LENGTH
+    if (space > MAX_SPACE_LENGTH) space = MAX_SPACE_LENGTH
+
+    ctx.lineCap = "square"
+    ctx.setLineDash([segment, space])
   }
 
   //
