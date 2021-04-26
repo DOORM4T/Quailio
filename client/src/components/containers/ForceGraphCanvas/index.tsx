@@ -1,5 +1,5 @@
 import deepEqual from "deep-equal"
-import { ForceGraphInstance, LinkObject, NodeObject } from "force-graph"
+import { ForceGraphInstance, LinkObject } from "force-graph"
 import React, { CSSProperties } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
@@ -8,7 +8,7 @@ import { IApplicationState } from "../../../store/store"
 import { zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
 import {
-  addGroupNodeLinks as addGroupNodeLinksToForceGraph,
+  addGroupNodeLinks,
   clearCustomListeners,
   clearHighlights,
   createLinksByRelationships,
@@ -21,17 +21,11 @@ import {
   setNodeNeighborsAndLinks,
 } from "./NetworkGraph"
 
-/* Empty default state for when the Current Network is null */
-const emptyState: ICurrentNetwork = {
-  id: "",
-  name: "",
-  people: [],
-  personIds: [],
-  groupIds: [],
-  relationshipGroups: {},
-}
-
-const ForceGraphCanvas: React.FC<IProps> = (props) => {
+const ForceGraphCanvas: React.FC<IProps> = ({
+  currentNetwork,
+  id: graphId,
+  style,
+}) => {
   // create a ref for forwarding to the Canvas presentational component
   const canvasRef = React.useRef<HTMLDivElement>()
   const forceGraphRef = React.useRef<ForceGraphInstance | undefined>()
@@ -46,31 +40,19 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
   // ==- Instantiate the Force Graph -== //
   const renderForceGraph = () => {
-    if (!canvasRef.current) return
-    const graphState = props.currentNetwork ? props.currentNetwork : emptyState
+    if (forceGraphRef.current) destroyForceGraph()
+    if (!canvasRef.current || !currentNetwork) return
 
     // Add each person's ID to the existingPeopleIds set -- this is to track existing nodes while we dynamically add new nodes
     existingPeopleIds.clear()
-    graphState.people.forEach((n) => existingPeopleIds.add(n.id))
+    currentNetwork.people.forEach((n) => existingPeopleIds.add(n.id))
 
-    // Create the force graph
-    // Destroy the previous force graph, if there was one
-    if (forceGraphRef.current) destroyForceGraph()
-
-    /* Set canvas width and height based on container dimensions */
     forceGraphRef.current = createNetworkGraph(
       canvasRef.current,
-      graphState,
+      currentNetwork,
     ) as ForceGraphInstance
 
-    // Fit the initial force graph to the correct screen dimensions
     handleResize()
-    setTimeout(() => {
-      if (!forceGraphRef.current) return
-
-      forceGraphRef.current.zoomToFit(500)
-    }, 100)
-
     window.removeEventListener("resize", handleResize)
     window.addEventListener("resize", handleResize)
 
@@ -88,6 +70,13 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     const { width, height } = currentCanvasContainer.getBoundingClientRect()
 
     currentForceGraph.width(width).height(height)
+
+    const fitToScreen = () => {
+      if (!forceGraphRef.current) return
+
+      forceGraphRef.current.zoomToFit(500)
+    }
+    setTimeout(fitToScreen, 100)
   }
 
   // Destroy the graph and related listeners to prevent memory leaks
@@ -104,14 +93,14 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
   }
 
   // Render force graph on container mount or when we switch to a different network
-  React.useEffect(renderForceGraph, [canvasRef, props.currentNetwork?.id])
+  React.useEffect(renderForceGraph, [canvasRef, currentNetwork?.id])
 
-  // Update the existing force graph when person state changes
+  // Update the existing force graph when people or groups change
   React.useEffect(() => {
-    if (!forceGraphRef.current || !props.currentNetwork) return
+    if (!forceGraphRef.current || !currentNetwork) return
     const forceGraph = forceGraphRef.current
-    const people = props.currentNetwork.people
-    const groups = props.currentNetwork.relationshipGroups
+    const people = currentNetwork.people
+    const groups = currentNetwork.relationshipGroups
 
     const { links, nodes } = forceGraphRef.current.graphData() as {
       links: LinkObject[]
@@ -126,27 +115,27 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
 
     // Reusable function to update the graph using the updatedGraphData object
     const updateGraph = () => {
-      // Re-render links in the Graph Data
-      addGroupNodeLinksToForceGraph(updatedGraphData)
       people.forEach(createLinksByRelationships(updatedGraphData))
+      addGroupNodeLinks(updatedGraphData)
 
-      // Re-render links and neighbors for each node
+      // Refresh links and neighbors for each node (This is for highlighting)
       updatedGraphData.nodes.forEach((node) => {
         node.neighbors = []
-        node.links = []
+        node.links = [] // These links are different from the graphData links, which handle the actual drawn links
       })
       updatedGraphData.links.forEach(setNodeNeighborsAndLinks(updatedGraphData))
 
       // Update the force graph!
       forceGraph.graphData(updatedGraphData)
 
-      // If the node has a pinXY, pin it after the graph re-renders
-      setTimeout(() => {
+      // Pin nodes at a delay -- Force-Graph seems to reset fx and fy for data upon re-render
+      const pinNodes = () => {
         forceGraph.graphData().nodes.forEach((n, index) => {
           n.fx = updatedGraphData.nodes[index].pinXY?.x
           n.fy = updatedGraphData.nodes[index].pinXY?.y
         })
-      }, 10) // Delay to give time for re-rendering -- Force-Graph seems to reset fx and fy for data upon re-render
+      }
+      setTimeout(pinNodes, 10)
     }
 
     const addPeopleToGraph = () => {
@@ -159,6 +148,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       // Create person nodes out of the new people. These nodes will be added to the force graph.
       const newPersonNodes = newPeople.map(createPersonNode)
       updatedGraphData.nodes = [...nodes, ...newPersonNodes]
+
+      // No links are created when new people are added
+      //
 
       updateGraph()
 
@@ -173,18 +165,16 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     }
 
     const removePeopleFromGraph = () => {
-      // Handle deleting people
-      // Get the IDs of people in the set who no longer exist in the "people" state
-      const deletedPeopleIds = Array.from(existingPeopleIds).filter(
-        (id) => !people.some((p) => p.id === id),
-      )
+      const wasRemoved = (id: string) => !people.some((p) => p.id === id)
+      const deletedPeopleIds = Array.from(existingPeopleIds).filter(wasRemoved)
 
-      // Remove all deleted people from the existing people Ids set
-      deletedPeopleIds.forEach((id) => existingPeopleIds.delete(id))
+      const removeFromExisting = (id: string) => existingPeopleIds.delete(id)
+      deletedPeopleIds.forEach(removeFromExisting)
 
-      // Filter out the deleted people from the current force graph node data
-      const updatedNodes = nodes.filter((n) => !deletedPeopleIds.includes(n.id))
-      updatedGraphData.nodes = updatedNodes
+      const keepIfExisting = (n: IPersonNode) =>
+        !deletedPeopleIds.includes(n.id)
+      const nodeWithoutRemoved = nodes.filter(keepIfExisting)
+      updatedGraphData.nodes = nodeWithoutRemoved
 
       // Update the graph
       updateGraph()
@@ -193,56 +183,62 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     const rerenderUpdatedPeopleInGraph = () => {
       // Get nodes whose changes need to be re-rendered in the Force Graph
       const updatedNodes = updatedGraphData.nodes
-        .map((n) => {
-          // Get the node from the people props field
-          const personFromProps = people.find((p) => p.id === n.id)
-          if (!personFromProps) return null // The node is missing? Something went wrong. Return null.
+        .map(asUpdatedNode)
+        .filter((n) => n !== null) as IPersonNode[]
 
-          // Create a force-graph node out of the person's data
-          const nodeFromProps = createPersonNode(personFromProps)
+      updatedNodes.forEach(replaceUpdatedInGraph)
 
-          // Check if the node's relationships field is different from the props node's relationships
-          const didRelationshipsChange = !deepEqual(
-            nodeFromProps.relationships,
-            n.relationships,
-          )
+      // DO NOT call updateGraph -- it will be called after other group-rerendering functions run
 
-          // Check whether the node's thumbnail changed or not
-          const didThumbnailChange =
-            nodeFromProps.thumbnail?.src !== n.thumbnail?.src
+      // #region rerenderUpdatedPeopleInGraph: HELPERS
+      function asUpdatedNode(n: IPersonNode) {
+        // Get the node from the people props field
+        const personFromProps = people.find((p) => p.id === n.id)
+        if (!personFromProps) return null // The node is missing? Something went wrong. Return null.
 
-          // Check whether the node's name changed or not
-          const didNameChange = nodeFromProps.name !== n.name
+        // Create a force-graph node out of the person's data
+        const nodeFromProps = createPersonNode(personFromProps)
 
-          // Check whether the node's pinXY changed or not
-          const didPinChange = !deepEqual(nodeFromProps.pinXY, n.pinXY)
+        // Check if the node's relationships field is different from the props node's relationships
+        const didRelationshipsChange = !deepEqual(
+          nodeFromProps.relationships,
+          n.relationships,
+        )
 
-          // Get the updated node
-          if (
-            didRelationshipsChange ||
-            didThumbnailChange ||
-            didNameChange ||
-            didPinChange
-          ) {
-            // Merge the new node and previous node. New node properties override existing ones!
-            const mergedNode = { ...n, ...nodeFromProps }
+        // Check whether the node's thumbnail changed or not
+        const didThumbnailChange =
+          nodeFromProps.thumbnail?.src !== n.thumbnail?.src
 
-            // Map to the updated node
-            return mergedNode
-          } else return null
-        })
-        .filter((n) => n !== null) as (IPersonNode & NodeObject)[]
+        // Check whether the node's name changed or not
+        const didNameChange = nodeFromProps.name !== n.name
 
-      // Replace the nodes whose relationships updated
-      updatedNodes.forEach((n) => {
+        // Check whether the node's pinXY changed or not
+        const didPinChange = !deepEqual(nodeFromProps.pinXY, n.pinXY)
+
+        // Get the updated node
+        if (
+          didRelationshipsChange ||
+          didThumbnailChange ||
+          didNameChange ||
+          didPinChange
+        ) {
+          // Merge the new node and previous node. New node properties override existing ones!
+          const mergedNode = { ...n, ...nodeFromProps }
+
+          // Map to the updated node
+          return mergedNode
+        } else return null
+      }
+
+      function replaceUpdatedInGraph(n: IPersonNode) {
         const indexToReplace = updatedGraphData.nodes.findIndex(
           (node) => node.id === n.id,
         )
 
         updatedGraphData.nodes[indexToReplace] = n
-      })
+      }
 
-      // DO NOT call updateGraph -- it will be called after other group-rerendering functions run
+      // #endregion rerenderUpdatedPeopleInGraph: HELPERS
     }
 
     const rerenderUpdatedGroupsInGraph = () => {
@@ -330,9 +326,9 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
       updateGraph()
     }
   }, [
-    props.currentNetwork?.people,
-    props.currentNetwork?.relationshipGroups,
-    props.currentNetwork?.groupIds,
+    currentNetwork?.people,
+    currentNetwork?.relationshipGroups,
+    currentNetwork?.groupIds,
   ])
 
   // When a new force graph is created...
@@ -374,7 +370,7 @@ const ForceGraphCanvas: React.FC<IProps> = (props) => {
     }
   }, [personIdToZoom])
 
-  return <Canvas id={props.id} ref={canvasRef} style={props.style} />
+  return <Canvas id={graphId} ref={canvasRef} style={style} />
 }
 
 export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
