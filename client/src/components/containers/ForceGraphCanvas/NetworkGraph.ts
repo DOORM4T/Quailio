@@ -9,6 +9,7 @@ import {
   connectPeople,
   disconnectPeople,
   pinNode,
+  updateRelationshipReason,
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
@@ -123,9 +124,9 @@ export function createNetworkGraph(
       return ""
     })
     .nodeAutoColorBy("id")
-    .linkDirectionalParticles(1)
-    .linkDirectionalParticleWidth(1.4)
+    .linkDirectionalParticles(0)
     .onLinkHover(handleLinkHover())
+    .onLinkClick(handleLinkClick)
     .linkLabel(getLinkLabel)
     .linkCanvasObject(drawLinkObject)
 
@@ -1101,4 +1102,30 @@ function handleZoomPan(transform: { k: number; x: number; y: number }) {
 function handleZoomPanEnd(transform: { k: number; x: number; y: number }) {
   if (!isPanningOrZooming) return
   isPanningOrZooming = false
+}
+
+async function handleLinkClick(link: LinkObject) {
+  const srcNode = link.source as IPersonNode | undefined
+  const targetNode = link.target as IPersonNode | undefined
+  if (!srcNode || !targetNode) return
+  if (srcNode.isGroupNode || targetNode.isGroupNode) return
+
+  const relationship = srcNode.relationships[targetNode.id]
+  if (!relationship) return
+
+  const updatedReason = prompt("Edit relationship: ", relationship.reason)
+  const didCancel = updatedReason === null
+  if (didCancel) return
+
+  try {
+    await store.dispatch<any>(
+      updateRelationshipReason(
+        srcNode.id,
+        targetNode.id,
+        updatedReason as string,
+      ),
+    )
+  } catch (error) {
+    console.error(error)
+  }
 }
