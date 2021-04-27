@@ -157,7 +157,7 @@ export function createNetworkGraph(
     // @ts-ignore
     .d3Force("charge", null)
     // @ts-ignore
-    // .d3Force("link", null)
+    .d3Force("link", null)
     // @ts-ignore
     .d3Force("center", null)
 
