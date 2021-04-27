@@ -1125,6 +1125,8 @@ async function handleLinkClick(link: LinkObject) {
         updatedReason as string,
       ),
     )
+    highlightLinks.clear()
+    highlightNodes.clear()
   } catch (error) {
     console.error(error)
   }
