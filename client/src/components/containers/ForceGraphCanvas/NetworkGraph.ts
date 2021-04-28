@@ -37,6 +37,15 @@ export interface IPersonNode extends IPerson {
   isGroupNode: boolean // A group can be represented by a PersonNode
 }
 
+export interface IArticleNode extends IPersonNode {
+  articleType: ArticleType
+  position: XYVals
+  scale: XYVals
+  articleURL?: string
+}
+type ArticleType = "image" | "externallink"
+type XYVals = { x: number; y: number }
+
 type NodeToConnect = {
   node: IPersonNode | null
 }
@@ -61,7 +70,7 @@ const nodeToConnect: NodeToConnect = { node: null }
 let isPanningOrZooming = false
 let isMouseOver = false
 let isShiftDown = false
-const mouseCoords: { x: number; y: number } = { x: 0, y: 0 }
+const mouseCoords: XYVals = { x: 0, y: 0 }
 
 // Default color if a node/its links aren't part of a group
 const DEFAULT_NODE_COLOR = "white"
@@ -93,11 +102,22 @@ export function createNetworkGraph(
   container: HTMLDivElement,
   currentNetwork: ICurrentNetwork,
 ) {
-  // Create nodes from the People in the current Network
   const gData: IForceGraphData = {
-    nodes: currentNetwork.people.map(createPersonNode),
+    nodes: [],
     links: [],
   }
+
+  // const artNode1 = createArticleNode(
+  //   "image",
+  //   "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fwww.localsplash.com%2Fwp-content%2Fuploads%2F2013%2F05%2FGoogle-Maps.png&f=1&nofb=1",
+  //   "test",
+  //   "testID",
+  // )
+  // const articleNodes = [artNode1]
+  // gData.nodes = gData.nodes.concat(articleNodes)
+
+  const personNodes = currentNetwork.people.map(createPersonNode)
+  gData.nodes = gData.nodes.concat(personNodes)
 
   // Create group nodes
   Object.entries(currentNetwork.relationshipGroups).forEach((entry) => {
@@ -835,7 +855,6 @@ function handleNodeDragEnd({ container, state }: IGraphClosureData) {
     n.fy = n.y
 
     // Update the person's pinXY in global state using a custom Redux action
-
     if (n.fx && n.fy) {
       try {
         await store.dispatch<any>(
@@ -1105,6 +1124,9 @@ function handleZoomPanEnd(transform: { k: number; x: number; y: number }) {
 }
 
 async function handleLinkClick(link: LinkObject) {
+  // DO NOT allow right click events if in sharing mode
+  if (store.getState().ui.isViewingShared) return
+
   const srcNode = link.source as IPersonNode | undefined
   const targetNode = link.target as IPersonNode | undefined
   if (!srcNode || !targetNode) return
@@ -1129,5 +1151,33 @@ async function handleLinkClick(link: LinkObject) {
     highlightNodes.clear()
   } catch (error) {
     console.error(error)
+  }
+}
+
+function createArticleNode(
+  articleType: ArticleType,
+  articleURL: string,
+  name: string,
+  id: string,
+  scale: XYVals = { x: 1, y: 1 },
+  position: XYVals = { x: 0, y: 0 },
+): IArticleNode {
+  // Satisfy IPersonNode props -- most of these fields will not be used when rendering an article node
+  const personNodeProps: IPersonNode = {
+    neighbors: [],
+    relationships: {},
+    thumbnail: null,
+    id,
+    links: [],
+    name,
+    isGroupNode: false,
+  }
+
+  return {
+    ...personNodeProps,
+    articleType,
+    position,
+    scale,
+    articleURL,
   }
 }
