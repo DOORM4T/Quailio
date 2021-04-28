@@ -21,10 +21,9 @@ export const setPersonThumbnail = (
 
   try {
     // If a thumbnail was uploaded, ensure it fits the size limit
-    if (thumbnail instanceof File) {
-      if (thumbnail.size > UPLOAD_LIMIT) {
-        throw new Error("Uploaded thumbnail must be under 1 MB")
-      }
+    if (thumbnail instanceof File && thumbnail.size > UPLOAD_LIMIT) {
+      window.alert("Image size must be under 1 MB")
+      throw new Error("Uploaded thumbnail must be under 1 MB")
     }
 
     let thumbnailUrl: string | null = null

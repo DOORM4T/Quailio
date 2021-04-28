@@ -20,6 +20,13 @@ import {
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import ToolTipButton from "../../ToolTipButton"
 
+/* Limit for data urls as image links
+    This value is equivalent to the max size for a field value -- 1MiB - 89 bytes
+    This keeps an uploaded network from breaking
+    According to https://firebase.google.com/docs/firestore/quotas
+*/
+const MAX_DATA_URL_SIZE = 1_048_487
+
 interface IProps {
   isEditing: boolean
 }
@@ -50,18 +57,18 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
    */
   const handleUploadThumbnail = async (fileInput: HTMLInputElement) => {
     try {
-      /* Get the file (first file, multiple files at once are not accepted) */
+      // Get the file (first file, multiple files at once are not accepted)
       const file = fileInput.files ? fileInput.files[0] : null
 
-      /* Stop if no file was uploaded */
+      // Stop if no file was uploaded
       if (!file) throw new Error("No file was uploaded.")
 
-      /* Update the person in the database and in global state  */
+      // Update the person in the database and in global state
       await dispatch(
         setPersonThumbnail(currentNetworkId, currentPersonId, file),
       )
     } catch (error) {
-      /* Failed to upload a thumbnail */
+      // Failed to upload a thumbnail
       console.error(error)
     }
   }
@@ -75,7 +82,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
     fileInput.accept = "image/*"
     fileInput.click()
 
-    /* Wait for the user to upload an image file*/
+    // Wait for the user to upload an image file
     fileInput.onchange = async () => {
       await handleUploadThumbnail(fileInput)
       fileInput.remove()
@@ -87,7 +94,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
       "Thumbnail URL: ",
       currentPersonThumbnailURL || "",
     )
-    if (!url) return
+    if (!url || url.length > MAX_DATA_URL_SIZE) return
 
     try {
       await dispatch(setPersonThumbnail(currentNetworkId, currentPersonId, url))
@@ -283,7 +290,7 @@ const ThumbnailsOverlay: React.FC<IThumbnailsOverlayProps> = ({
   }: IThumbnailDetails) => async () => {
     // Ensure the user wants to delete the thumbnail
     const doContinue = window.confirm(
-      "Are you sure you want to clear this thumbnail?",
+      "Are you sure you want to delete this thumbnail?",
     )
     if (!doContinue) return
 
