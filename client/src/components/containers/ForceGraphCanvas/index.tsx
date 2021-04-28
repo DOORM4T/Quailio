@@ -157,10 +157,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       // If a node was added, highlight it
       if (newPersonNodes.length === 1) {
         clearHighlights()
-        highlightNode(
-          newPersonNodes[0],
-          forceGraph.graphData() as IForceGraphData,
-        )
+        highlightNode(newPersonNodes[0])
       }
     }
 
@@ -366,7 +363,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       forceGraph.centerAt(x, y, 250).zoomToFit(500)
 
       // Highlight the node
-      highlightNode(nodeToZoom, forceGraph.graphData() as IForceGraphData)
+      highlightNode(nodeToZoom)
     }
   }, [personIdToZoom])
 

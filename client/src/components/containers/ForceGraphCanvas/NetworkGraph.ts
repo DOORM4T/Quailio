@@ -63,7 +63,7 @@ const DEFAULT_LINK_SIZE = 3
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
 const highlightLinks = new Set<LinkObject>()
-const hoverNode: NodeToConnect = { node: null }
+let hoverNodeId: string | null = null
 
 // For adding connections
 const nodeToConnect: NodeToConnect = { node: null }
@@ -145,20 +145,14 @@ export function createNetworkGraph(
     })
     .nodeAutoColorBy("id")
     .linkDirectionalParticles(0)
-    .onLinkHover(handleLinkHover())
+    .onLinkHover(handleLinkHover(container))
     .onLinkClick(handleLinkClick)
     .linkLabel(getLinkLabel)
     .linkCanvasObject(drawLinkObject)
-
     .backgroundColor("#444")
 
   // Events
-  Graph.onNodeHover(
-    handleNodeHover({
-      container,
-      gData,
-    }),
-  )
+  Graph.onNodeHover(handleNodeHover(container))
     .onNodeDrag(handleNodeDrag({ container }))
     .onNodeDragEnd(handleNodeDragEnd({ container, state: currentNetwork }))
     .onNodeClick(handleNodeClick)
@@ -180,6 +174,7 @@ export function createNetworkGraph(
     .d3Force("link", null)
     // @ts-ignore
     .d3Force("center", null)
+    .autoPauseRedraw(false) // Keep redrawing -- or else hovering breaks
 
   // @ts-ignore
   Graph.nodeCanvasObject((node, ctx) =>
@@ -328,7 +323,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
     const isHighlighting = highlightNodes.size > 0
     const doHighlightNode = isHighlighting && highlightNodes.has(node)
-    const isHoveredNode = node === hoverNode.node
+    const isHoveredNode = node.id === hoverNodeId
     const highlightColor = isHoveredNode ? "red" : "orange"
     const highlightSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.2 : HIGHLIGHT_SIZE
 
@@ -735,27 +730,21 @@ function getNodeGroupColors(node: IPersonNode): GroupColors[] {
   return colors
 }
 
-function handleLinkHover() {
+function handleLinkHover(container: HTMLDivElement) {
   return (link: LinkObject | null) => {
-    if (!highlightLinks || !highlightNodes) return
-    if (hoverNode.node) return
+    clearHighlights()
+    container.style.cursor = link ? "pointer" : "grab"
+    if (!link || hoverNodeId) return
 
-    highlightNodes.clear()
-    highlightLinks.clear()
+    const srcNode = link.source as NodeObject
+    const targetNode = link.target as NodeObject
+    if (!srcNode || !targetNode) return
 
-    if (link) {
-      const srcNode = link.source as NodeObject
-      const targetNode = link.target as NodeObject
-      if (!srcNode || !targetNode) return
-
-      highlightNodes.add(srcNode)
-      highlightNodes.add(targetNode)
-
-      highlightLinks.add(link)
-    }
+    highlightNodes.add(srcNode)
+    highlightNodes.add(targetNode)
+    highlightLinks.add(link)
   }
 }
-
 function getLinkLabel(link: LinkObject | null) {
   if (!link || !link.source || !link.target) return ""
 
@@ -807,26 +796,19 @@ function getLinkColors(link: LinkObject): string[] | null {
   return colors
 }
 
-function handleNodeHover({ container, gData }: IGraphClosureData) {
+function handleNodeHover(container: HTMLDivElement) {
   return (n: NodeObject | null) => {
     clearHighlights()
-    hoverNode.node = null
+    container.style.cursor = n ? "pointer" : "grab"
 
-    if (container) container.style.cursor = n ? "help" : "grab"
-    if (!n || !gData) return
-
-    // Highlight the hovered node's neighbors
-    highlightNode(n, gData)
+    if (!n) return
+    highlightNode(n)
   }
 }
 
-export function highlightNode(n: NodeObject, gData: IForceGraphData) {
+export function highlightNode(n: NodeObject) {
   const node = n as NodeObject & IPersonNode
-
-  // Clear current highlights
-  hoverNode.node = node || null
-  highlightNodes.clear()
-  highlightLinks.clear()
+  hoverNodeId = node.id
 
   // Highlight nodes and links related to this node
   highlightNodes.add(node as NodeObject)
@@ -835,6 +817,7 @@ export function highlightNode(n: NodeObject, gData: IForceGraphData) {
 }
 
 export function clearHighlights() {
+  hoverNodeId = null
   highlightNodes.clear()
   highlightLinks.clear()
 }
