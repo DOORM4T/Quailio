@@ -14,7 +14,7 @@ export const pinNode = (
   networkId: string,
   nodeId: string, // Can refer to a person ID or group ID -- groups are represented as nodes in the Force Graph and can be pinned
   isGroup: boolean,
-  pinXY: { x: number; y: number } | undefined,
+  pinXY?: { x: number; y: number },
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
@@ -32,6 +32,7 @@ export const pinNode = (
 
         // Updates JUST the pinXY field on the document
         if (pinXY === undefined) {
+          // Unpin the node -- remove their pinXY field
           await nodeDoc.ref.update({
             pinXY: firebase.firestore.FieldValue.delete(),
           })
@@ -40,7 +41,7 @@ export const pinNode = (
         }
       }
 
-      /* Action to update state with the new person content */
+      // Action to update state with the new person content
       const action: ISetNodePinAction = {
         type: NetworkActionTypes.SET_NODE_PIN,
         networkId,
@@ -51,7 +52,7 @@ export const pinNode = (
 
       return dispatch(action)
     } catch (error) {
-      /* Failed to set the person's pinXY state*/
+      // Failed to set the person's pinXY state
       dispatch(setNetworkLoading(false))
       throw error
     }
