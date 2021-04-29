@@ -153,8 +153,8 @@ export function createNetworkGraph(
 
   // Events
   Graph.onNodeHover(handleNodeHover(container))
-    .onNodeDrag(handleNodeDrag({ container }))
-    .onNodeDragEnd(handleNodeDragEnd({ container, state: currentNetwork }))
+    .onNodeDrag(handleNodeDrag(container))
+    .onNodeDragEnd(handleNodeDragEnd(container, currentNetwork))
     .onNodeClick(handleNodeClick)
     .onBackgroundRightClick(handleBackgroundRightClick(Graph, currentNetwork))
     .onNodeRightClick(handleNodeRightClick(Graph, currentNetwork))
@@ -280,14 +280,6 @@ export function setNodeNeighborsAndLinks(gData: IForceGraphData) {
 //
 // GRAPH RENDERING & INTERACTIVITY FUNCTIONS
 //
-// TODO: Remove this logic. Causes functions to need to check if the value exists, so might as well define custom signatures
-interface IGraphClosureData {
-  container?: HTMLDivElement
-  forceGraph?: ForceGraphInstance
-  gData?: IForceGraphData
-  nodeToConnect?: NodeToConnect
-  state?: ICurrentNetwork
-}
 
 // Closure function to draw a node or its pointer collision area
 const DEFAULT_NODE_COLOR_OBJECT = [
@@ -822,15 +814,15 @@ export function clearHighlights() {
   highlightLinks.clear()
 }
 
-function handleNodeDrag({ container }: IGraphClosureData) {
+function handleNodeDrag(container: HTMLDivElement) {
   return (n: NodeObject | null) => {
-    if (container) container.style.cursor = n ? "grabbing" : "grab"
+    container.style.cursor = n ? "grabbing" : "grab"
   }
 }
 
-function handleNodeDragEnd({ container, state }: IGraphClosureData) {
+function handleNodeDragEnd(container: HTMLDivElement, state: ICurrentNetwork) {
   return async (n: NodeObject | null) => {
-    if (!n || !container || !state) return
+    if (!n) return
     const node = n as IPersonNode & NodeObject
 
     // Fix the node at it's end drag position
