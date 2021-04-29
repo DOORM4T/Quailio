@@ -37,13 +37,7 @@ export interface IPersonNode extends IPerson {
   isGroupNode: boolean // A group can be represented by a PersonNode
 }
 
-export interface IArticleNode extends IPersonNode {
-  articleType: ArticleType
-  position: XYVals
-  scale: XYVals
-  articleURL?: string
-}
-type ArticleType = "image" | "externallink"
+// type ArticleType = "image" | "externallink"
 type XYVals = { x: number; y: number }
 
 type NodeToConnect = {
@@ -103,21 +97,9 @@ export function createNetworkGraph(
   currentNetwork: ICurrentNetwork,
 ) {
   const gData: IForceGraphData = {
-    nodes: [],
+    nodes: currentNetwork.people.map(createPersonNode),
     links: [],
   }
-
-  // const artNode1 = createArticleNode(
-  //   "image",
-  //   "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fwww.localsplash.com%2Fwp-content%2Fuploads%2F2013%2F05%2FGoogle-Maps.png&f=1&nofb=1",
-  //   "test",
-  //   "testID",
-  // )
-  // const articleNodes = [artNode1]
-  // gData.nodes = gData.nodes.concat(articleNodes)
-
-  const personNodes = currentNetwork.people.map(createPersonNode)
-  gData.nodes = gData.nodes.concat(personNodes)
 
   // Create group nodes
   Object.entries(currentNetwork.relationshipGroups).forEach((entry) => {
@@ -1126,33 +1108,5 @@ async function handleLinkClick(link: LinkObject) {
     highlightNodes.clear()
   } catch (error) {
     console.error(error)
-  }
-}
-
-function createArticleNode(
-  articleType: ArticleType,
-  articleURL: string,
-  name: string,
-  id: string,
-  scale: XYVals = { x: 1, y: 1 },
-  position: XYVals = { x: 0, y: 0 },
-): IArticleNode {
-  // Satisfy IPersonNode props -- most of these fields will not be used when rendering an article node
-  const personNodeProps: IPersonNode = {
-    neighbors: [],
-    relationships: {},
-    thumbnail: null,
-    id,
-    links: [],
-    name,
-    isGroupNode: false,
-  }
-
-  return {
-    ...personNodeProps,
-    articleType,
-    position,
-    scale,
-    articleURL,
   }
 }
