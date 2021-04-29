@@ -16,10 +16,9 @@ import {
   createPersonNode,
   groupAsPersonNode,
   highlightNode,
-  IForceGraphData,
-  IPersonNode,
   setNodeNeighborsAndLinks,
 } from "./NetworkGraph"
+import { IForceGraphData, IPersonNode } from "./networkGraphTypes"
 
 const ForceGraphCanvas: React.FC<IProps> = ({
   currentNetwork,

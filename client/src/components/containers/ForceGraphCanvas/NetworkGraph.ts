@@ -24,25 +24,12 @@ import {
   setPersonInFocus,
   togglePersonOverlay,
 } from "../../../store/ui/uiActions"
-
-export interface IForceGraphData {
-  nodes: (IPersonNode & NodeObject)[]
-  links: LinkObject[]
-}
-
-export interface IPersonNode extends IPerson {
-  thumbnail: HTMLImageElement | null
-  neighbors: IPersonNode[]
-  links: LinkObject[]
-  isGroupNode: boolean // A group can be represented by a PersonNode
-}
-
-// type ArticleType = "image" | "externallink"
-type XYVals = { x: number; y: number }
-
-type NodeToConnect = {
-  node: IPersonNode | null
-}
+import {
+  IForceGraphData,
+  IPersonNode,
+  NodeToConnect,
+  XYVals,
+} from "./networkGraphTypes"
 
 //
 // Global variables
@@ -82,15 +69,10 @@ const MAX_SPACE_LENGTH = 100
 
 let currentZoom = 1 // Use current zoom to scale visuals such as name tags
 
-//
-// Force Graph
-//
-
 /**
- *
- * @param container
- * @param currentNetwork
- * @param disconnected whether the graph is connected to Network state or not. Set to false for standalone demo graphs.
+ * Instantiates a network graph
+ * @param container element to mount the graph on
+ * @param currentNetwork data to render
  */
 export function createNetworkGraph(
   container: HTMLDivElement,
@@ -101,20 +83,14 @@ export function createNetworkGraph(
     links: [],
   }
 
-  // Create group nodes
-  Object.entries(currentNetwork.relationshipGroups).forEach((entry) => {
-    const [groupId, group] = entry
+  const createGroupNode = ([groupId, group]: [string, IRelationshipGroup]) => {
     addGroupNodeToForceGraph(gData, groupId, group)
-  })
+  }
+  Object.entries(currentNetwork.relationshipGroups).forEach(createGroupNode)
   addGroupNodeLinks(gData)
-
-  // Link people by their relationship fields
   currentNetwork.people.forEach(createLinksByRelationships(gData))
-
-  // Set neighbors and links for each node
   gData.links.forEach(setNodeNeighborsAndLinks(gData))
 
-  // Custom Event Listeners
   clearCustomListeners(container)
   setCustomListeners(container)
 
@@ -143,6 +119,7 @@ export function createNetworkGraph(
     .onZoom(handleZoomPan)
     .onZoomEnd(handleZoomPanEnd)
 
+  // Physics
   Graph.dagMode("td")
     .dagLevelDistance(INITIAL_DISTANCE)
     .d3Force(
@@ -158,6 +135,7 @@ export function createNetworkGraph(
     .d3Force("center", null)
     .autoPauseRedraw(false) // Keep redrawing -- or else hovering breaks
 
+  // Pointer detection
   // @ts-ignore
   Graph.nodeCanvasObject((node, ctx) =>
     nodePaint(Graph, false)(node, (node as any).__indexColor, ctx),
@@ -167,7 +145,7 @@ export function createNetworkGraph(
 }
 
 //
-// GRAPH DATA FUNCTIONS
+// #region HELPER FUNCTIONS
 //
 
 /**
@@ -1110,3 +1088,5 @@ async function handleLinkClick(link: LinkObject) {
     console.error(error)
   }
 }
+
+// #endregion HELPER FUNCTIONS
