@@ -38,7 +38,6 @@ const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 64
 const HIGHLIGHT_SIZE = NODE_SIZE * 1.2
 const INITIAL_DISTANCE = NODE_SIZE * 4
-const NAMETAG_OFFSET_SCALE = 1.5
 const DEFAULT_LINK_SIZE = 3
 
 // For highlight on hover
@@ -250,16 +249,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
   return (n: NodeObject, areaColor: string, ctx: CanvasRenderingContext2D) => {
     if (!n) return
     const node = n as NodeObject & IPersonNode
-    const {
-      thumbnail,
-      name,
-      isGroupNode,
-      pinXY,
-      id,
-      scaleXY,
-      x = 0,
-      y = 0,
-    } = node
+    const { thumbnail, name, isGroupNode, id, scaleXY, x = 0, y = 0 } = node
     const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
 
     const isConnecting = id === nodeToConnect.node?.id
@@ -277,7 +267,6 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const doHighlightNode = isHighlighting && highlightNodes.has(node)
     const isHoveredNode = node.id === hoverNodeId
     const highlightColor = isHoveredNode ? "red" : "orange"
-    const highlightSize = isHoveredNode ? HIGHLIGHT_SIZE * 1.2 : HIGHLIGHT_SIZE
 
     // Show up to 30 chars of the node's name
     const text =
@@ -288,18 +277,17 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     drawThumbnail()
     drawNameTag()
 
-    if (pinXY) drawPin()
-
     //
     // #region nodePaint: HELPERS
     //
 
     function drawNameTag() {
       // Name tag color. Group Nodes keep their color
-      if (isHighlighting && doHighlightNode && !isGroupNode) {
+      // Show only highlighted node if SHIFT key is down
+      if (isShiftDown && isHighlighting && doHighlightNode && !isGroupNode) {
         // Node is highlighted
         ctx.fillStyle = highlightColor
-      } else if (isHighlighting && !doHighlightNode) {
+      } else if (isShiftDown && isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.fillStyle = LOW_ATTENTION_COLOR
       } else {
@@ -321,22 +309,15 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       const PADDING = 32
       let nameTagWidth = ctx.measureText(text).width + PADDING
       if (nameTagWidth < NODE_SIZE) nameTagWidth = NODE_SIZE
+      const nameTagHeight = realFontSize
 
       const textX = x - nameTagWidth / 2
       const textY = y + nameTagYOffset
 
-      ctx.beginPath()
-
-      // Group nodes get bigger name tags
-      const vertNameTagPadding = isGroupNode ? PADDING * 10 : 1
-      const nameTagX = textX - PADDING / 2
-      const nameTagY = textY - vertNameTagPadding / 2
-      const nameTagHeight = realFontSize + vertNameTagPadding
-
-      ctx.fillRect(nameTagX, nameTagY, nameTagWidth, nameTagHeight)
+      ctx.fillRect(textX, textY, nameTagWidth, nameTagHeight)
 
       ctx.lineWidth = 1
-      if (isHighlighting && !doHighlightNode) {
+      if (isShiftDown && isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.strokeStyle = LOW_ATTENTION_COLOR
         ctx.fillStyle = LOW_ATTENTION_COLOR
@@ -346,14 +327,21 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
       }
 
-      ctx.strokeRect(nameTagX, nameTagY, nameTagWidth, nameTagHeight)
+      ctx.beginPath()
+      // Custom group name tag styles
+      // These are hidden when something is highlighted by this group isn't one of them + SHIFT is down
+      if (isGroupNode) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"
+        ctx.lineWidth = 2 / currentZoom
+      }
+      ctx.strokeRect(textX, textY, nameTagWidth, nameTagHeight)
       ctx.fillText(text, textX + nameTagWidth / 2, textY, nameTagWidth)
       ctx.closePath()
 
       if (isAreaPaint && areaColor) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
-        ctx.fillRect(nameTagX, nameTagY, nameTagWidth, nameTagHeight)
+        ctx.fillRect(textX, textY, nameTagWidth, nameTagHeight)
       }
     }
 
@@ -362,19 +350,14 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
       ctx.beginPath()
 
-      // Draw white background (this will be overlapped by the thumbnail, if there is one)
       const width = NODE_SIZE * xScale
       const height = NODE_SIZE * yScale
-      ctx.beginPath()
-      ctx.rect(x - width / 2, y - height / 2, width, height)
-      ctx.fillStyle = "white"
-      ctx.fill()
-      ctx.strokeStyle = "black"
-      ctx.stroke()
 
       try {
         // Draw the image (don't draw if painting area paint -- will crash)
         if (!isAreaPaint) {
+          // Hide the thumbnail if node are being highlighted and this node isn't one of them
+          if (isShiftDown && isHighlighting && !doHighlightNode) return
           ctx.drawImage(thumbnail, x - width / 2, y - height / 2, width, height)
         }
       } catch (error) {
@@ -382,48 +365,13 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.rect(x - width / 2, y - height / 2, width, height)
         ctx.fillStyle = "red"
         ctx.fill()
-        ctx.strokeStyle = "black"
-        ctx.stroke()
       }
-      ctx.closePath()
 
       if (isAreaPaint && areaColor) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
         ctx.fillRect(x - width / 2, y - height / 2, width, height)
       }
-    }
-
-    function drawPin() {
-      ctx.beginPath()
-
-      const pinStartOffset = thumbnail ? NODE_SIZE / 2.5 : BASE_FONT_SIZE / 4
-      const pinEndOffset = thumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
-      ctx.moveTo(x, y - pinStartOffset)
-      ctx.lineTo(x, y - pinEndOffset)
-
-      const MIN_LINE_WIDTH = 3
-      let lineWidth = MIN_LINE_WIDTH / currentZoom
-      if (lineWidth < MIN_LINE_WIDTH) lineWidth = MIN_LINE_WIDTH
-      ctx.lineWidth = lineWidth
-
-      ctx.lineCap = "round"
-      ctx.strokeStyle = "black"
-      ctx.stroke()
-
-      ctx.closePath()
-
-      // Pin Circle
-      const pinYOffset = thumbnail ? NODE_SIZE / 1.2 : BASE_FONT_SIZE
-
-      const MIN_PIN_RADIUS = 5
-      let pinRadius = MIN_PIN_RADIUS / currentZoom
-      if (pinRadius < MIN_PIN_RADIUS) pinRadius = MIN_PIN_RADIUS
-
-      ctx.arc(x, y - pinYOffset, pinRadius, 0, 2 * Math.PI)
-      if (isAreaPaint && areaColor) ctx.fillStyle = areaColor
-      else ctx.fillStyle = "red"
-      ctx.fill()
     }
 
     function makeGradient() {
@@ -510,7 +458,7 @@ function drawLinkObject(
   const doHighlightLink = isHighlighting && highlightLinks.has(link)
 
   ctx.setLineDash([])
-  if (isGroupConnection) dashLine()
+  if (isGroupConnection) dashLine(ctx)
 
   if (doHighlightLink) {
     ctx.strokeStyle = "yellow"
@@ -599,22 +547,22 @@ function drawLinkObject(
     }
   }
 
-  function dashLine() {
-    let segment = MIN_SEGMENT_LENGTH / currentZoom
-    let space = MIN_SPACE_LENGTH / currentZoom
-    if (segment < MIN_SEGMENT_LENGTH) segment = MIN_SEGMENT_LENGTH
-    if (segment > MAX_SEGMENT_LENGTH) segment = MAX_SEGMENT_LENGTH
-
-    if (space < MIN_SPACE_LENGTH) space = MIN_SPACE_LENGTH
-    if (space > MAX_SPACE_LENGTH) space = MAX_SPACE_LENGTH
-
-    ctx.lineCap = "square"
-    ctx.setLineDash([segment, space])
-  }
-
   //
   // #endregion drawLinkObject: HELPERS
   //
+}
+
+function dashLine(ctx: CanvasRenderingContext2D) {
+  let segment = MIN_SEGMENT_LENGTH / currentZoom
+  let space = MIN_SPACE_LENGTH / currentZoom
+  if (segment < MIN_SEGMENT_LENGTH) segment = MIN_SEGMENT_LENGTH
+  if (segment > MAX_SEGMENT_LENGTH) segment = MAX_SEGMENT_LENGTH
+
+  if (space < MIN_SPACE_LENGTH) space = MIN_SPACE_LENGTH
+  if (space > MAX_SPACE_LENGTH) space = MAX_SPACE_LENGTH
+
+  ctx.lineCap = "square"
+  ctx.setLineDash([segment, space])
 }
 
 /**
