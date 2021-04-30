@@ -38,7 +38,7 @@ const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 64
 const HIGHLIGHT_SIZE = NODE_SIZE * 1.2
 const INITIAL_DISTANCE = NODE_SIZE * 4
-const NAMETAG_OFFSET_SCALE = 1.2
+const NAMETAG_OFFSET_SCALE = 1.5
 const DEFAULT_LINK_SIZE = 3
 
 // For highlight on hover
@@ -247,20 +247,20 @@ const DEFAULT_NODE_COLOR_OBJECT = [
 ]
 
 function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
-  return (
-    node: NodeObject,
-    areaColor: string,
-    ctx: CanvasRenderingContext2D,
-  ) => {
+  return (n: NodeObject, areaColor: string, ctx: CanvasRenderingContext2D) => {
+    if (!n) return
+    const node = n as NodeObject & IPersonNode
     const {
       thumbnail,
-      x = 0,
-      y = 0,
       name,
       isGroupNode,
       pinXY,
       id,
-    } = node as NodeObject & IPersonNode
+      scaleXY,
+      x = 0,
+      y = 0,
+    } = node
+    const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
 
     const isConnecting = id === nodeToConnect.node?.id
     if (isConnecting && isMouseOver && !isPanningOrZooming && !isAreaPaint)
@@ -295,27 +295,6 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     //
 
     function drawNameTag() {
-      ctx.textAlign = "center"
-      ctx.textBaseline = "top"
-
-      // Scale font size based on the current zoom level
-      let realFontSize = BASE_FONT_SIZE / currentZoom
-      if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
-
-      ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
-
-      // Name tag width is the text width. Minimum width equals the NODE_SIZE
-      const nameTagYOffset = thumbnail ? NODE_SIZE / NAMETAG_OFFSET_SCALE : 0
-      let nameTagWidth = ctx.measureText(text).width
-      if (nameTagWidth < NODE_SIZE) nameTagWidth = NODE_SIZE
-
-      const PADDING = 32
-
-      const textX = x - nameTagWidth / 2
-      const textY = y - BASE_FONT_SIZE / 2 + nameTagYOffset
-
-      ctx.beginPath()
-
       // Name tag color. Group Nodes keep their color
       if (isHighlighting && doHighlightNode && !isGroupNode) {
         // Node is highlighted
@@ -328,13 +307,33 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fillStyle = fillColor
       }
 
+      ctx.textAlign = "center"
+      ctx.textBaseline = "top"
+
+      // Scale font size based on the current zoom level
+      let realFontSize = BASE_FONT_SIZE * yScale
+      if (yScale === 1) realFontSize /= currentZoom
+      if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
+      ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
+
+      // Name tag width is the text width. Minimum width equals the NODE_SIZE
+      const nameTagYOffset = thumbnail ? (NODE_SIZE * yScale) / 2 : 0
+      const PADDING = 32
+      let nameTagWidth = ctx.measureText(text).width + PADDING
+      if (nameTagWidth < NODE_SIZE) nameTagWidth = NODE_SIZE
+
+      const textX = x - nameTagWidth / 2
+      const textY = y + nameTagYOffset
+
+      ctx.beginPath()
+
       // Group nodes get bigger name tags
       const vertNameTagPadding = isGroupNode ? PADDING * 10 : 1
       const nameTagX = textX - PADDING / 2
       const nameTagY = textY - vertNameTagPadding / 2
       const nameTagHeight = realFontSize + vertNameTagPadding
 
-      ctx.fillRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
+      ctx.fillRect(nameTagX, nameTagY, nameTagWidth, nameTagHeight)
 
       ctx.lineWidth = 1
       if (isHighlighting && !doHighlightNode) {
@@ -347,14 +346,14 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
       }
 
-      ctx.strokeRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
+      ctx.strokeRect(nameTagX, nameTagY, nameTagWidth, nameTagHeight)
       ctx.fillText(text, textX + nameTagWidth / 2, textY, nameTagWidth)
       ctx.closePath()
 
       if (isAreaPaint && areaColor) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
-        ctx.fillRect(nameTagX, nameTagY, nameTagWidth + PADDING, nameTagHeight)
+        ctx.fillRect(nameTagX, nameTagY, nameTagWidth, nameTagHeight)
       }
     }
 
@@ -363,41 +362,24 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
       ctx.beginPath()
 
-      // Draw border-color rectangle
-      ctx.fillStyle = "white"
-      ctx.strokeStyle = "black"
-      ctx.lineWidth = 1
-      ctx.rect(
-        x - highlightSize / 2,
-        y - highlightSize / 2,
-        highlightSize,
-        highlightSize * NAMETAG_OFFSET_SCALE,
-      )
-      ctx.fill()
-      ctx.stroke()
-      ctx.closePath()
-
       // Draw white background (this will be overlapped by the thumbnail, if there is one)
+      const width = NODE_SIZE * xScale
+      const height = NODE_SIZE * yScale
       ctx.beginPath()
-      ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+      ctx.rect(x - width / 2, y - height / 2, width, height)
       ctx.fillStyle = "white"
       ctx.fill()
+      ctx.strokeStyle = "black"
       ctx.stroke()
 
       try {
         // Draw the image (don't draw if painting area paint -- will crash)
         if (!isAreaPaint) {
-          ctx.drawImage(
-            thumbnail,
-            x - NODE_SIZE / 2,
-            y - NODE_SIZE / 2,
-            NODE_SIZE,
-            NODE_SIZE,
-          )
+          ctx.drawImage(thumbnail, x - width / 2, y - height / 2, width, height)
         }
       } catch (error) {
         // Missing image
-        ctx.rect(x - NODE_SIZE / 2, y - NODE_SIZE / 2, NODE_SIZE, NODE_SIZE)
+        ctx.rect(x - width / 2, y - height / 2, width, height)
         ctx.fillStyle = "red"
         ctx.fill()
         ctx.strokeStyle = "black"
@@ -408,12 +390,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       if (isAreaPaint && areaColor) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
-        ctx.fillRect(
-          x - highlightSize / 2,
-          y - highlightSize / 2,
-          highlightSize,
-          highlightSize * NAMETAG_OFFSET_SCALE,
-        )
+        ctx.fillRect(x - width / 2, y - height / 2, width, height)
       }
     }
 

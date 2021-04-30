@@ -8,6 +8,7 @@ import {
   deletePerson as deletePersonById,
   disconnectPeople,
   pinNode,
+  scalePerson,
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import { IRelationships } from "../../../store/networks/networkTypes"
@@ -56,6 +57,9 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const isPersonPinned = Boolean(
     currentNetworkPeople.find((p) => p.id === currentPersonId)?.pinXY,
   )
+  const personScaleXY = currentNetworkPeople.find(
+    (p) => p.id === currentPersonId,
+  )?.scaleXY || { x: 1, y: 1 }
 
   // Connection drop-button ref -- used to trigger a click to close the menu
   const connectPeopleDropButtonRef = React.useRef<any>()
@@ -315,6 +319,30 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       onClick={handleUnpinPerson}
     />
   )
+
+  const handleScalePerson = async () => {
+    const x = Number(window.prompt("x", String(personScaleXY.x)))
+    if (!x) return
+
+    const y = Number(window.prompt("y", String(personScaleXY.y)))
+    if (!y) return
+
+    try {
+      await dispatch(scalePerson(currentNetworkId, currentPersonId, { x, y }))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const scalePersonButton: React.ReactNode = (
+    <ToolTipButton
+      tooltip="Resize in graph"
+      id="scale-person-button"
+      icon={<Icons.Expand color="accent-3" />}
+      onClick={handleScalePerson}
+    />
+  )
+
   return (
     <Box direction="row">
       {props.isEditing ? (
@@ -323,6 +351,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
           {viewModeButton}
           {ConnectPeopleDropButton}
           {ManageGroupsDropButton}
+          {scalePersonButton}
           {deleteCurrentPersonButton}
           {isPersonPinned && unpinPersonButton}
         </React.Fragment>

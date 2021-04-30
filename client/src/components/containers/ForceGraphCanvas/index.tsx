@@ -3,7 +3,7 @@ import { ForceGraphInstance, LinkObject } from "force-graph"
 import React, { CSSProperties } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import { ICurrentNetwork } from "../../../store/networks/networkTypes"
+import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { IApplicationState } from "../../../store/store"
 import { zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
@@ -130,6 +130,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       // Pin nodes at a delay -- Force-Graph seems to reset fx and fy for data upon re-render
       const pinNodes = () => {
         forceGraph.graphData().nodes.forEach((n, index) => {
+          if (!n) return
           n.fx = updatedGraphData.nodes[index].pinXY?.x
           n.fy = updatedGraphData.nodes[index].pinXY?.y
         })
@@ -211,12 +212,16 @@ const ForceGraphCanvas: React.FC<IProps> = ({
         // Check whether the node's pinXY changed or not
         const didPinChange = !deepEqual(nodeFromProps.pinXY, n.pinXY)
 
+        // Check whether the node's scaleXY changed or not
+        const didScaleChange = !deepEqual(nodeFromProps.scaleXY, n.scaleXY)
+
         // Get the updated node
         if (
           didRelationshipsChange ||
           didThumbnailChange ||
           didNameChange ||
-          didPinChange
+          didPinChange ||
+          didScaleChange
         ) {
           // Merge the new node and previous node. New node properties override existing ones!
           const mergedNode = { ...n, ...nodeFromProps }
@@ -373,22 +378,18 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
   const prevCurrentNetwork = prevProps.currentNetwork
   const nextCurrentNetwork = nextProps.currentNetwork
 
-  // Rerender if the "people" names, relationships, or thumbnail changed
+  // Rerender if the "people" names, relationships, thumbnail, pinXY, or scaleXY changed
+  const toCheckParams = (p: IPerson) => ({
+    id: p.id,
+    name: p.name,
+    relationships: p.relationships,
+    thumbnail: p.thumbnailUrl,
+    pinXY: p.pinXY,
+    scaleXY: p.scaleXY,
+  })
   const arePeopleSame = deepEqual(
-    prevCurrentNetwork?.people.map((p) => ({
-      id: p.id,
-      name: p.name,
-      relationships: p.relationships,
-      thumbnail: p.thumbnailUrl,
-      pinXY: p.pinXY,
-    })),
-    nextCurrentNetwork?.people.map((p) => ({
-      id: p.id,
-      name: p.name,
-      relationships: p.relationships,
-      thumbnail: p.thumbnailUrl,
-      pinXY: p.pinXY,
-    })),
+    prevCurrentNetwork?.people.map(toCheckParams),
+    nextCurrentNetwork?.people.map(toCheckParams),
   )
 
   // ...or if groups changed

@@ -23,6 +23,7 @@ import {
   IRenameNetworkAction,
   ISetNetworkAction,
   ISetNodePinAction,
+  ISetNodeScaleAction,
   ISetPersonThumbnailAction,
   ISetRelationshipShape,
   ISharedNetworkProperties,
@@ -139,9 +140,44 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     // OTHER
     case NetworkActionTypes.SET_NODE_PIN:
       return getPinNodeState(state, action)
+    case NetworkActionTypes.SET_PERSON_NODE_SCALE:
+      return getScaleNodeState(state, action)
 
     default:
       return state
+  }
+}
+
+function getScaleNodeState(
+  state: INetworksState,
+  action: ISetNodeScaleAction,
+): INetworksState {
+  if (state.currentNetwork?.id !== action.networkId) return state
+
+  // 1. Find the person
+  const personIndex = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.personId,
+  )
+
+  if (personIndex === -1) return state
+
+  // 2. Update the person's scale state
+  const updatedPerson = { ...state.currentNetwork.people[personIndex] }
+  updatedPerson.scaleXY = action.scaleXY
+
+  // 3. Update current network
+  const updatedPeople = [...state.currentNetwork.people]
+  updatedPeople[personIndex] = updatedPerson
+
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 

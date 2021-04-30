@@ -1,3 +1,4 @@
+import { XYVals } from "../../components/containers/ForceGraphCanvas/networkGraphTypes"
 import { GroupColorField } from "./actions/changeGroupBackgroundColor"
 
 // -== STATE TYPES ==- //
@@ -34,7 +35,8 @@ export interface IPerson {
   relationships: IRelationships
   thumbnailUrl?: string
   content?: string
-  pinXY?: { x: number; y: number }
+  pinXY?: XYVals
+  scaleXY?: XYVals
 }
 
 // A person's Relationships object maps a relationship to another person by their ID
@@ -58,7 +60,7 @@ export type IRelationshipGroup = {
   textColor: string
 
   // The Force Graph node created for a group can be pinned
-  pinXY?: { x: number; y: number }
+  pinXY?: XYVals
 }
 
 // -== ACTION TYPES ==- //
@@ -94,6 +96,7 @@ export enum NetworkActionTypes {
   SET_NODE_PIN = "NETWORK/SET_NODE_PIN",
 
   SET_RELATIONSHIP_SHAPE = "NETWORK/SET_RELATIONSHIP_SHAPE",
+  SET_PERSON_NODE_SCALE = "NETWORK/SET_PERSON_NODE_SCALE",
 }
 
 export interface INetworkLoadingAction {
@@ -244,7 +247,7 @@ export interface ISetNodePinAction {
   networkId: string
   nodeId: string
   isGroup: boolean
-  pinXY: { x: number; y: number } | undefined
+  pinXY?: XYVals
 }
 
 export interface ISetRelationshipShape {
@@ -253,6 +256,13 @@ export interface ISetRelationshipShape {
   personId: string
   relationshipId: string
   shape: ConnectionShape
+}
+
+export interface ISetNodeScaleAction {
+  type: NetworkActionTypes.SET_PERSON_NODE_SCALE
+  networkId: string
+  personId: string
+  scaleXY?: XYVals
 }
 
 /* Action types used by the networks reducer */
@@ -282,3 +292,4 @@ export type NetworksActions =
   | IUnshareNetworkAction
   | ISetNodePinAction
   | ISetRelationshipShape
+  | ISetNodeScaleAction
