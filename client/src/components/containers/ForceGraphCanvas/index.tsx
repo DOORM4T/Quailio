@@ -17,6 +17,7 @@ import {
   groupAsPersonNode,
   highlightNode,
   setNodeNeighborsAndLinks,
+  sortNodesBySize,
 } from "./NetworkGraph"
 import { IForceGraphData, IPersonNode } from "./networkGraphTypes"
 
@@ -114,6 +115,8 @@ const ForceGraphCanvas: React.FC<IProps> = ({
 
     // Reusable function to update the graph using the updatedGraphData object
     const updateGraph = () => {
+      sortNodesBySize(updatedGraphData)
+
       people.forEach(createLinksByRelationships(updatedGraphData))
       addGroupNodeLinks(updatedGraphData)
 
@@ -202,33 +205,28 @@ const ForceGraphCanvas: React.FC<IProps> = ({
           n.relationships,
         )
 
-        // Check whether the node's thumbnail changed or not
         const didThumbnailChange =
           nodeFromProps.thumbnail?.src !== n.thumbnail?.src
-
-        // Check whether the node's name changed or not
         const didNameChange = nodeFromProps.name !== n.name
-
-        // Check whether the node's pinXY changed or not
         const didPinChange = !deepEqual(nodeFromProps.pinXY, n.pinXY)
-
-        // Check whether the node's scaleXY changed or not
         const didScaleChange = !deepEqual(nodeFromProps.scaleXY, n.scaleXY)
+        const didBackgroundToggle =
+          nodeFromProps.isBackground !== n.isBackground
 
-        // Get the updated node
-        if (
+        const doUpdate =
           didRelationshipsChange ||
           didThumbnailChange ||
           didNameChange ||
           didPinChange ||
-          didScaleChange
-        ) {
-          // Merge the new node and previous node. New node properties override existing ones!
-          const mergedNode = { ...n, ...nodeFromProps }
+          didScaleChange ||
+          didBackgroundToggle
+        if (!doUpdate) return null
 
-          // Map to the updated node
-          return mergedNode
-        } else return null
+        // Merge the new node and previous node. New node properties override existing ones!
+        const mergedNode = { ...n, ...nodeFromProps }
+
+        // Map to the updated node
+        return mergedNode
       }
 
       function replaceUpdatedInGraph(n: IPersonNode) {
@@ -386,6 +384,7 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
     thumbnail: p.thumbnailUrl,
     pinXY: p.pinXY,
     scaleXY: p.scaleXY,
+    isBackground: p.isBackground,
   })
   const arePeopleSame = deepEqual(
     prevCurrentNetwork?.people.map(toCheckParams),

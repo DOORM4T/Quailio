@@ -37,6 +37,7 @@ export interface IPerson {
   content?: string
   pinXY?: XYVals
   scaleXY?: XYVals
+  isBackground?: boolean
 }
 
 // A person's Relationships object maps a relationship to another person by their ID
@@ -97,6 +98,7 @@ export enum NetworkActionTypes {
 
   SET_RELATIONSHIP_SHAPE = "NETWORK/SET_RELATIONSHIP_SHAPE",
   SET_PERSON_NODE_SCALE = "NETWORK/SET_PERSON_NODE_SCALE",
+  SET_PERSON_AS_BACKGROUND_NODE = "NETWORK/SET_PERSON_AS_BACKGROUND_NODE",
 }
 
 export interface INetworkLoadingAction {
@@ -265,6 +267,13 @@ export interface ISetNodeScaleAction {
   scaleXY?: XYVals
 }
 
+export interface ISetPersonAsBackgroundNodeAction {
+  type: NetworkActionTypes.SET_PERSON_AS_BACKGROUND_NODE
+  networkId: string
+  personId: string
+  isBackground: boolean
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -293,3 +302,4 @@ export type NetworksActions =
   | ISetNodePinAction
   | ISetRelationshipShape
   | ISetNodeScaleAction
+  | ISetPersonAsBackgroundNodeAction

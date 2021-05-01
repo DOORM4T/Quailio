@@ -86,6 +86,8 @@ export function createNetworkGraph(
     addGroupNodeToForceGraph(gData, groupId, group)
   }
   Object.entries(currentNetwork.relationshipGroups).forEach(createGroupNode)
+  gData.nodes = sortNodesBySize(gData)
+
   addGroupNodeLinks(gData)
   currentNetwork.people.forEach(createLinksByRelationships(gData))
   gData.links.forEach(setNodeNeighborsAndLinks(gData))
@@ -117,6 +119,7 @@ export function createNetworkGraph(
     .onNodeRightClick(handleNodeRightClick(Graph, currentNetwork))
     .onZoom(handleZoomPan)
     .onZoomEnd(handleZoomPanEnd)
+    .minZoom(0.0001)
 
   // Physics
   Graph.dagMode("td")
@@ -164,6 +167,7 @@ export function createPersonNode(person: IPerson): IPersonNode & NodeObject {
     neighbors: [],
     links: [],
     isGroupNode: false,
+    isBackground: person.isBackground || false, // If this is undefined, the node isn't a background node
   }
 }
 
@@ -183,6 +187,7 @@ export function groupAsPersonNode(
     links: [],
     relationships: {},
     isGroupNode: true,
+    isBackground: false,
 
     // Pin position (if the node has a pinXY property)
     pinXY: group.pinXY,
@@ -248,9 +253,11 @@ const DEFAULT_NODE_COLOR_OBJECT = [
 function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
   return (n: NodeObject, areaColor: string, ctx: CanvasRenderingContext2D) => {
     if (!n) return
+
     const node = n as NodeObject & IPersonNode
     const { thumbnail, name, isGroupNode, id, scaleXY, x = 0, y = 0 } = node
     const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
+    const doPointerDetection = isAreaPaint && node.isBackground === false // Explicitly check for false since true and undefined mean a node IS NOT a background node
 
     const isConnecting = id === nodeToConnect.node?.id
     if (isConnecting && isMouseOver && !isPanningOrZooming && !isAreaPaint)
@@ -338,7 +345,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.fillText(text, textX + nameTagWidth / 2, textY, nameTagWidth)
       ctx.closePath()
 
-      if (isAreaPaint && areaColor) {
+      if (doPointerDetection) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
         ctx.fillRect(textX, textY, nameTagWidth, nameTagHeight)
@@ -367,7 +374,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fill()
       }
 
-      if (isAreaPaint && areaColor) {
+      if (doPointerDetection) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
         ctx.fillRect(x - width / 2, y - height / 2, width, height)
@@ -1012,6 +1019,15 @@ async function handleLinkClick(link: LinkObject) {
   } catch (error) {
     console.error(error)
   }
+}
+
+// Bigger nodes will render first, with smallern nodes appearing on top of them
+export function sortNodesBySize(gData: IForceGraphData) {
+  return gData.nodes.sort((a, b) => {
+    const sizeA = a.scaleXY ? a.scaleXY.x * a.scaleXY.y : 1
+    const sizeB = b.scaleXY ? b.scaleXY.x * b.scaleXY.y : 1
+    return sizeB - sizeA
+  })
 }
 
 // #endregion HELPER FUNCTIONS

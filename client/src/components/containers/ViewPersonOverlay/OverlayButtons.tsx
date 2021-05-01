@@ -9,6 +9,7 @@ import {
   disconnectPeople,
   pinNode,
   scalePerson,
+  toggleBackgroundNode,
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import { IRelationships } from "../../../store/networks/networkTypes"
@@ -54,12 +55,12 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     id: entry[0],
   }))
 
-  const isPersonPinned = Boolean(
-    currentNetworkPeople.find((p) => p.id === currentPersonId)?.pinXY,
-  )
-  const personScaleXY = currentNetworkPeople.find(
+  const currentPerson = currentNetworkPeople.find(
     (p) => p.id === currentPersonId,
-  )?.scaleXY || { x: 1, y: 1 }
+  )
+  const isPersonPinned = Boolean(currentPerson?.pinXY)
+  const personScaleXY = currentPerson?.scaleXY || { x: 1, y: 1 }
+  const isPersonABackgroundNode = currentPerson?.isBackground || false
 
   // Connection drop-button ref -- used to trigger a click to close the menu
   const connectPeopleDropButtonRef = React.useRef<any>()
@@ -343,6 +344,39 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
+  const togglePersonAsBackground = async () => {
+    try {
+      await dispatch(
+        toggleBackgroundNode(
+          currentNetworkId,
+          currentPersonId,
+          !isPersonABackgroundNode,
+        ),
+      )
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const toggleBackgroundNodeButton: React.ReactNode = (
+    <ToolTipButton
+      tooltip={
+        isPersonABackgroundNode
+          ? "Turn into normal node"
+          : "Turn into background node"
+      }
+      id="toggle-background-node-button"
+      icon={
+        isPersonABackgroundNode ? (
+          <Icons.DocumentImage color="accent-4" />
+        ) : (
+          <Icons.DocumentUser color="accent-4" />
+        )
+      }
+      onClick={togglePersonAsBackground}
+    />
+  )
+
   return (
     <Box direction="row">
       {props.isEditing ? (
@@ -352,6 +386,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
           {ConnectPeopleDropButton}
           {ManageGroupsDropButton}
           {scalePersonButton}
+          {toggleBackgroundNodeButton}
           {deleteCurrentPersonButton}
           {isPersonPinned && unpinPersonButton}
         </React.Fragment>

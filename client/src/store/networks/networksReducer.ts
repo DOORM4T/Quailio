@@ -24,6 +24,7 @@ import {
   ISetNetworkAction,
   ISetNodePinAction,
   ISetNodeScaleAction,
+  ISetPersonAsBackgroundNodeAction,
   ISetPersonThumbnailAction,
   ISetRelationshipShape,
   ISharedNetworkProperties,
@@ -142,9 +143,44 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
       return getPinNodeState(state, action)
     case NetworkActionTypes.SET_PERSON_NODE_SCALE:
       return getScaleNodeState(state, action)
+    case NetworkActionTypes.SET_PERSON_AS_BACKGROUND_NODE:
+      return getToggleNodeBackgroundState(state, action)
 
     default:
       return state
+  }
+}
+
+function getToggleNodeBackgroundState(
+  state: INetworksState,
+  action: ISetPersonAsBackgroundNodeAction,
+): INetworksState {
+  if (state.currentNetwork?.id !== action.networkId) return state
+
+  // 1. Find the person
+  const personIndex = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.personId,
+  )
+
+  if (personIndex === -1) return state
+
+  // 2. Update the person's isBackground state
+  const updatedPerson = { ...state.currentNetwork.people[personIndex] }
+  updatedPerson.isBackground = action.isBackground
+
+  // 3. Update current network
+  const updatedPeople = [...state.currentNetwork.people]
+  updatedPeople[personIndex] = updatedPerson
+
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 
