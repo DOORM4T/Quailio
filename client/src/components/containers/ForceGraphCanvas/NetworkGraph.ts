@@ -102,7 +102,6 @@ export function createNetworkGraph(
     .nodeLabel(() => {
       return ""
     })
-    .nodeAutoColorBy("id")
     .linkDirectionalParticles(0)
     .onLinkHover(handleLinkHover(container))
     .onLinkClick(handleLinkClick)
@@ -139,11 +138,28 @@ export function createNetworkGraph(
 
   // Pointer detection
   // @ts-ignore
-  Graph.nodeCanvasObject((node, ctx) =>
-    nodePaint(Graph, false)(node, (node as any).__indexColor, ctx),
-  ).nodePointerAreaPaint(nodePaint(Graph, true))
+  Graph.onRenderFramePre(drawBackgroundNodes(Graph))
+    .nodeCanvasObject(drawNodeNormally(Graph))
+    .nodePointerAreaPaint(nodePaint(Graph, true))
 
   return Graph
+}
+
+function drawBackgroundNodes(Graph: ForceGraphInstance) {
+  return (ctx: CanvasRenderingContext2D) => {
+    Graph.graphData().nodes.forEach((n) => {
+      if (!(n as IPersonNode).isBackground) return
+      nodePaint(Graph, false)(n, "", ctx)
+    })
+  }
+}
+
+function drawNodeNormally(Graph: ForceGraphInstance) {
+  return (node: NodeObject, ctx: CanvasRenderingContext2D) => {
+    if ((node as IPersonNode).isBackground) return // Do not render background nodes here. They are rendered before normal node rendering.
+    const areaPaintColor = (node as any).__indexColor // Unique  color used for pointer detection. This color does not actually show.
+    nodePaint(Graph, false)(node, areaPaintColor, ctx)
+  }
 }
 
 //
@@ -306,13 +322,14 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.textBaseline = "top"
 
       // Scale font size based on the current zoom level
-      let realFontSize = BASE_FONT_SIZE * yScale
-      if (yScale === 1) realFontSize /= currentZoom
+      let realFontSize = BASE_FONT_SIZE / currentZoom
       if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
       ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
 
       // Name tag width is the text width. Minimum width equals the NODE_SIZE
-      const nameTagYOffset = thumbnail ? (NODE_SIZE * yScale) / 2 : 0
+      const nameTagYOffset = thumbnail
+        ? (thumbnail.naturalHeight * yScale) / 2
+        : 0
       const PADDING = 32
       let nameTagWidth = ctx.measureText(text).width + PADDING
       if (nameTagWidth < NODE_SIZE) nameTagWidth = NODE_SIZE
@@ -345,7 +362,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.fillText(text, textX + nameTagWidth / 2, textY, nameTagWidth)
       ctx.closePath()
 
-      if (doPointerDetection) {
+      if (isAreaPaint) {
+        // ALL nodes including background nodes can be interacted with via their name tag
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
         ctx.fillRect(textX, textY, nameTagWidth, nameTagHeight)
@@ -357,19 +375,22 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
       ctx.beginPath()
 
-      const width = NODE_SIZE * xScale
-      const height = NODE_SIZE * yScale
+      const { naturalWidth, naturalHeight } = thumbnail
+      const width = naturalWidth * xScale
+      const height = naturalHeight * yScale
+      const thumbnailX = x - width / 2
+      const thumbnailY = y - height / 2
 
       try {
         // Draw the image (don't draw if painting area paint -- will crash)
         if (!isAreaPaint) {
           // Hide the thumbnail if node are being highlighted and this node isn't one of them
           if (isShiftDown && isHighlighting && !doHighlightNode) return
-          ctx.drawImage(thumbnail, x - width / 2, y - height / 2, width, height)
+          ctx.drawImage(thumbnail, thumbnailX, thumbnailY, width, height)
         }
       } catch (error) {
         // Missing image
-        ctx.rect(x - width / 2, y - height / 2, width, height)
+        ctx.rect(thumbnailX, thumbnailY, width, height)
         ctx.fillStyle = "red"
         ctx.fill()
       }
@@ -377,7 +398,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       if (doPointerDetection) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
-        ctx.fillRect(x - width / 2, y - height / 2, width, height)
+        ctx.fillRect(thumbnailX, thumbnailY, width, height)
       }
     }
 

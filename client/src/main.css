@@ -31,3 +31,7 @@ body {
   visibility: hidden;
   overflow: hidden;
 }
+
+img {
+  object-fit: contain;
+}

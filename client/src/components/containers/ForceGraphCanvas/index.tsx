@@ -134,8 +134,12 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       const pinNodes = () => {
         forceGraph.graphData().nodes.forEach((n, index) => {
           if (!n) return
-          n.fx = updatedGraphData.nodes[index].pinXY?.x
-          n.fy = updatedGraphData.nodes[index].pinXY?.y
+
+          const pin = updatedGraphData.nodes[index]?.pinXY
+          if (!pin) return
+
+          n.fx = pin.x
+          n.fy = pin.y
         })
       }
       setTimeout(pinNodes, 10)
@@ -173,8 +177,10 @@ const ForceGraphCanvas: React.FC<IProps> = ({
 
       const keepIfExisting = (n: IPersonNode) =>
         !deletedPeopleIds.includes(n.id)
-      const nodeWithoutRemoved = nodes.filter(keepIfExisting)
-      updatedGraphData.nodes = nodeWithoutRemoved
+      console.log(deletedPeopleIds)
+
+      const nodesWithoutRemoved = nodes.filter(keepIfExisting)
+      updatedGraphData.nodes = nodesWithoutRemoved
 
       // Update the graph
       updateGraph()

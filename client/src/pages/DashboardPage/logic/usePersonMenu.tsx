@@ -226,7 +226,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
           filter: isSelected ? "brightness(200%)" : undefined,
         }}
       >
-        <Box background="brand" fill align="center" justify="center">
+        <Box background="light-1" fill align="center" justify="center">
           {item.thumbnailUrl ? (
             <Image src={item.thumbnailUrl} height="64px" width="64px" />
           ) : (
