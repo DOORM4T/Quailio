@@ -1045,8 +1045,12 @@ async function handleLinkClick(link: LinkObject) {
 // Bigger nodes will render first, with smallern nodes appearing on top of them
 export function sortNodesBySize(gData: IForceGraphData) {
   return gData.nodes.sort((a, b) => {
-    const sizeA = a.scaleXY ? a.scaleXY.x * a.scaleXY.y : 1
-    const sizeB = b.scaleXY ? b.scaleXY.x * b.scaleXY.y : 1
+    const sizeA = a.thumbnail
+      ? a.thumbnail.naturalWidth * a.thumbnail.naturalHeight
+      : 0
+    const sizeB = b.thumbnail
+      ? b.thumbnail.naturalWidth * b.thumbnail.naturalHeight
+      : 0
     return sizeB - sizeA
   })
 }
