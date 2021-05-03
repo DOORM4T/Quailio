@@ -66,7 +66,6 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
 
             // Render Accordion Panels for each group
             .map((entry, index) => {
-              // Destructure the key (groupId) and value (group content) from the entry
               const [groupId, group] = entry
               const groupAccordionKey = `group-${group.name}-${index}`
               const accordionContent = getGroupAccordionContent({

@@ -4,12 +4,12 @@ import {
   IFocusOnPersonAction,
   IInitializePersonGroupList,
   IPersonIDWithActiveGroups,
+  ISetNodeVisibilityAction,
   ISetUILoadingAction,
   ISetViewingSharedAction,
   IToggleGroupFilterAction,
   ITogglePersonOverlay,
   IToggleShareOverlayAction,
-  IToggleShowNodesWithoutGroupsAction,
   IZoomToPersonAction,
   UserInterfaceActionTypes,
 } from "./uiTypes"
@@ -84,14 +84,6 @@ export const toggleGroupFilter: ActionCreator<IToggleGroupFilterAction> = (
   doShow,
 })
 
-// Set the state determining whether the force-graph shows nodes without groups or not
-export const toggleShowNodesWithoutGroups: ActionCreator<IToggleShowNodesWithoutGroupsAction> = (
-  doShow: boolean,
-) => ({
-  type: UserInterfaceActionTypes.TOGGLE_SHOW_NODES_WITHOUT_GROUPS,
-  doShow,
-})
-
 // Open/close the network sharing overlay
 export const toggleShareOverlay: ActionCreator<IToggleShareOverlayAction> = (
   isOpen: boolean,
@@ -106,4 +98,14 @@ export const setViewingShared: ActionCreator<ISetViewingSharedAction> = (
 ) => ({
   type: UserInterfaceActionTypes.SET_VIEWING_SHARED,
   isViewingShared,
+})
+
+// Toggle a person's visibility
+export const togglePersonVisibility = (
+  personId: string,
+  doShow: boolean,
+): ISetNodeVisibilityAction => ({
+  type: UserInterfaceActionTypes.SET_NODE_VISIBILITY,
+  nodeId: personId,
+  isVisible: doShow,
 })

@@ -1,4 +1,4 @@
-import { Box, Button } from "grommet"
+import { Box } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import SearchAndCheckMenu from "../../../components/SearchAndCheckMenu"
@@ -50,13 +50,6 @@ const getGroupAccordionContent = ({
 
   // VARS | If the group isn't set in global state yet, show it by default
   if (isGroupShowing === undefined) isGroupShowing = true
-
-  // VARS | Icons to show if this group is showing or hiding
-  const toggleFilterIcon = isGroupShowing ? (
-    <Icons.FormView color="accent-1" />
-  ) : (
-    <Icons.FormViewHide color="accent-1" />
-  )
 
   // DO NOT render this accordion if the user this group doesn't contain the search value
   const noSearchResults = isEmpty && searchAddInput !== ""
@@ -174,6 +167,26 @@ const getGroupAccordionContent = ({
         : undefined,
   } // END | groupAccordionStyles
 
+  const toggleGroupVisibilityTooltip = isGroupShowing
+    ? "Click to hide group"
+    : "Click to show group"
+
+  const toggleGroupVisibilityIcon = isGroupShowing ? (
+    <Icons.Folder color="accent-1" />
+  ) : (
+    <Icons.Folder color="accent-1" />
+  )
+
+  const GroupVisibilityToggle = (
+    <Box margin={{ left: "auto" }}>
+      <ToolTipButton
+        tooltip={toggleGroupVisibilityTooltip}
+        onClick={handleToggleGroupFilter}
+        icon={toggleGroupVisibilityIcon}
+      />
+    </Box>
+  )
+
   // UI | Label component for this group's Accordion
   const GroupAccordionLabel: React.ReactNode = (
     <Box direction="row" align="center" justify="start" fill>
@@ -181,15 +194,7 @@ const getGroupAccordionContent = ({
       <span style={{ marginLeft: "1rem" }}>{group.name}</span>
       {
         // Show the "show/hide" button IFF there are members in the group
-        !isEmpty && (
-          <Button
-            onClick={handleToggleGroupFilter}
-            icon={toggleFilterIcon}
-            color="dark-1"
-            margin={{ left: "auto" }}
-            hoverIndicator
-          />
-        )
+        !isEmpty && GroupVisibilityToggle
       }
     </Box>
   ) // END | GroupAccordionLabel

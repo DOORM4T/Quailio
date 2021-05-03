@@ -17,13 +17,13 @@ import { IPerson } from "../../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
 import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
-import { getShowNodesWithoutGroups } from "../../../store/selectors/ui/getShowNodesWithoutGroups"
+import { IApplicationState } from "../../../store/store"
 import {
   cachePersonGroupList,
   setPersonInFocus,
   toggleGroupFilter,
   togglePersonOverlay,
-  toggleShowNodesWithoutGroups,
+  togglePersonVisibility,
   zoomToPerson,
 } from "../../../store/ui/uiActions"
 import { IPersonIDWithActiveGroups } from "../../../store/ui/uiTypes"
@@ -40,18 +40,10 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
   // REDUX SELECTOR | Map of groups to show/hide
   const filterGroups = useSelector(getFilterGroups)
 
-  // REDUX SELECTOR | Map of visible groups IDs by person ID
-  const showNodesWithoutGroups = useSelector(getShowNodesWithoutGroups)
-
-  // VARS | Icon and ToolTip text to show based on "showNodesWithoutGroups" global state
-  const showNodesWithoutGroupsIcon = (
-    <Icons.AppsRounded
-      color={showNodesWithoutGroups ? "status-ok" : "status-critical"}
-    />
+  // REDUX SELECTOR | Map of groups to show/hide
+  const nodeVisibilityMap = useSelector(
+    (state: IApplicationState) => state.ui.personNodeVisibility,
   )
-  const showNodesWithoutGroupsToolTip = showNodesWithoutGroups
-    ? "Click to hide nodes without groups"
-    : "Click to show nodes without groups"
 
   // VARS | Derived from current network; Track whether there are groups or not
   const groups = currentNetwork?.relationshipGroups
@@ -81,9 +73,9 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
 
   // VARS | Icon and ToolTip text to show based on "isShowingAllGroups" state
   const showHideAllIcon = isShowingAllGroups ? (
-    <Icons.FormView color="status-ok" size="medium" />
+    <Icons.Folder color="status-ok" size="medium" />
   ) : (
-    <Icons.Hide color="status-critical" size="medium" />
+    <Icons.Folder color="status-critical" size="medium" />
   )
   const showHideAllToolTip = isShowingAllGroups
     ? "Click to hide all groups"
@@ -167,7 +159,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     if (isViewingShared) return
 
     try {
-      await dispatch(toggleShowNodesWithoutGroups(true))
       await dispatch(addPerson(currentNetwork.id, searchAddInput)) // Add the person in global state
       setSearchAddInput("") // Clear the search/add input
     } catch (error) {
@@ -205,15 +196,18 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
    * @param canSearch whether the search item can be highlighted or not (this will only be enabled for the "ALL" list). Closure data for the created function.
    * @returns UI for the item
    */
-  const renderItem = (canSearch: boolean) => (item: IPerson, index: number) => {
+  const renderItem = (canSearch: boolean) => (
+    person: IPerson,
+    index: number,
+  ) => {
     const isSelected = canSearch && searchIndex === index
 
     const PersonIconBox: React.ReactNode = (
       <Box
-        onClick={viewPerson(item.id)} // Open the person overlay when clicked
+        onClick={viewPerson(person.id)} // Open the person overlay when clicked
         // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
         onMouseEnter={() => {
-          dispatch(zoomToPerson(item.id))
+          dispatch(zoomToPerson(person.id))
         }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
         onMouseLeave={resetZoomedPerson}
         aria-label="Select person"
@@ -227,8 +221,8 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
         }}
       >
         <Box background="light-1" fill align="center" justify="center">
-          {item.thumbnailUrl ? (
-            <Image src={item.thumbnailUrl} height="64px" width="64px" />
+          {person.thumbnailUrl ? (
+            <Image src={person.thumbnailUrl} height="64px" width="64px" />
           ) : (
             <Icons.User width="100%" />
           )}
@@ -245,16 +239,30 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
             maxWidth: "20ch",
           }}
         >
-          {item.name.length > NAME_CHAR_LIMIT
-            ? `${item.name.slice(0, NAME_CHAR_LIMIT)}...`
-            : item.name}
+          {person.name.length > NAME_CHAR_LIMIT
+            ? `${person.name.slice(0, NAME_CHAR_LIMIT)}...`
+            : person.name}
         </Text>
       </Box>
     )
 
+    const isVisible = nodeVisibilityMap[person.id] !== false // undefined and true mean the node is visible
+    const VisibilityIcon: Icons.Icon = isVisible
+      ? Icons.FormView
+      : Icons.FormViewHide
+
+    const toggleVisibility = async () => {
+      console.log(!isVisible)
+      dispatch(togglePersonVisibility(person.id, !isVisible))
+    }
+
+    const VisibilityToggle: React.ReactNode = (
+      <Button icon={<VisibilityIcon />} onClick={toggleVisibility} />
+    )
+
     return (
       <Box
-        key={`${item.id}-${index}`}
+        key={`${person.id}-${index}`}
         direction="row"
         align="center"
         justify="start"
@@ -265,6 +273,8 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
 
         {/* Name to the right of the Icon Box */}
         {PersonNameBox}
+
+        <Box margin={{ left: "auto" }}>{VisibilityToggle}</Box>
       </Box>
     )
   } // END renderItem
@@ -315,14 +325,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
       setShowingAllGroups(true)
     }
   } // END | toggleHideShowAllGroups
-
-  // FUNCTION | Toggle showing/hiding of nodes without groups -- true means the force-graph will show nodes without groups
-  const toggleShowNodesWithoutGroupsFunc = (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) => {
-    e.stopPropagation() // Prevent the button click from propagating to the accordion (to avoid unintentional closing/opening of the accordion)
-    dispatch(toggleShowNodesWithoutGroups(!showNodesWithoutGroups)) // Toggle the global UI state
-  } // END | toggleShowNodesWithoutGroupsFunc
 
   // FUNCTION | Clear search state
   const handleClearSearch = () => {
@@ -414,11 +416,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
           {!isSearching && hasGroups && (
             // Show these option buttons if there are groups in the network
             <React.Fragment>
-              <ToolTipButton
-                onClick={toggleShowNodesWithoutGroupsFunc}
-                icon={showNodesWithoutGroupsIcon}
-                tooltip={showNodesWithoutGroupsToolTip}
-              />
               <ToolTipButton
                 onClick={toggleHideShowAllGroups}
                 icon={showHideAllIcon}

@@ -2,14 +2,14 @@ import * as d3 from "d3-force"
 import ForceGraph, {
   ForceGraphInstance,
   LinkObject,
-  NodeObject,
+  NodeObject
 } from "force-graph"
 import {
   addPerson,
   connectPeople,
   disconnectPeople,
   pinNode,
-  updateRelationshipReason,
+  updateRelationshipReason
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
@@ -17,18 +17,18 @@ import {
   ICurrentNetwork,
   IPerson,
   IRelationship,
-  IRelationshipGroup,
+  IRelationshipGroup
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
 import {
   setPersonInFocus,
-  togglePersonOverlay,
+  togglePersonOverlay
 } from "../../../store/ui/uiActions"
 import {
   IForceGraphData,
   IPersonNode,
   NodeToConnect,
-  XYVals,
+  XYVals
 } from "./networkGraphTypes"
 
 //
@@ -275,6 +275,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
     const doPointerDetection = isAreaPaint && node.isBackground === false // Explicitly check for false since true and undefined mean a node IS NOT a background node
 
+    if (isGroupNode && store.getState().ui.filteredGroups[id] === false) return // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
+
     const isConnecting = id === nodeToConnect.node?.id
     if (isConnecting && isMouseOver && !isPanningOrZooming && !isAreaPaint)
       drawLineToMouse(ctx, x, y)
@@ -458,6 +460,10 @@ function drawLinkObject(
   if (!x1 || !y1 || !x2 || !y2) return null
 
   const isGroupConnection = srcNode.isGroupNode || targetNode.isGroupNode
+  
+  // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
+  if (srcNode.isGroupNode && store.getState().ui.filteredGroups[srcId] === false) return
+  if (targetNode.isGroupNode && store.getState().ui.filteredGroups[targetId] === false) return
 
   const centerX = (x1 + x2) / 2
   const centerY = (y1 + y2) / 2

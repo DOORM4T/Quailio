@@ -6,9 +6,9 @@ export interface IUserInterfaceState {
   readonly personInZoom: string | null
   readonly activeGroupsByPersonId: IActiveGroupsByPersonId // Map tracking the active/showing groups a person is part of
   readonly filteredGroups: { [groupId: string]: boolean } // "Showing" state for each group
-  readonly doShowNodesWithoutGroups: boolean
   readonly isShareMenuOpen: boolean // State for showing the share menu
   readonly isViewingShared: boolean // Whether the user is viewing a shared network or not
+  readonly personNodeVisibility: { [personId: string]: boolean }
 }
 
 export interface IActiveGroupsByPersonId {
@@ -23,11 +23,9 @@ export enum UserInterfaceActionTypes {
   ZOOM_TO_PERSON = "UI/ZOOM_TO_PERSON",
   INIT_PERSON_ACTIVE_GROUPS = "UI/INIT_PERSON_ACTIVE_GROUPS",
   TOGGLE_GROUP_FILTER = "UI/TOGGLE_GROUP_FILTER",
-  TOGGLE_SHOW_NODES_WITHOUT_GROUPS = "UI/TOGGLE_SHOW_NODES_WITHOUT_GROUPS",
-
   TOGGLE_SHARE_OVERLAY = "UI/TOGGLE_SHARE_OVERLAY",
-
   SET_VIEWING_SHARED = "UI/SET_VIEWING_SHARED",
+  SET_NODE_VISIBILITY = "UI/SET_NODE_VISIBILITY",
 }
 
 export interface ISetUILoadingAction {
@@ -66,11 +64,6 @@ export interface IToggleGroupFilterAction {
   doShow: boolean
 }
 
-export interface IToggleShowNodesWithoutGroupsAction {
-  type: UserInterfaceActionTypes.TOGGLE_SHOW_NODES_WITHOUT_GROUPS
-  doShow: boolean
-}
-
 export interface IToggleShareOverlayAction {
   type: UserInterfaceActionTypes.TOGGLE_SHARE_OVERLAY
   isOpen: boolean
@@ -81,6 +74,12 @@ export interface ISetViewingSharedAction {
   isViewingShared: boolean
 }
 
+export interface ISetNodeVisibilityAction {
+  type: UserInterfaceActionTypes.SET_NODE_VISIBILITY
+  nodeId: string
+  isVisible: boolean
+}
+
 /* action types used by the networks reducer */
 export type UserInterfaceActions =
   | ISetUILoadingAction
@@ -89,6 +88,6 @@ export type UserInterfaceActions =
   | IZoomToPersonAction
   | IInitializePersonGroupList
   | IToggleGroupFilterAction
-  | IToggleShowNodesWithoutGroupsAction
   | IToggleShareOverlayAction
   | ISetViewingSharedAction
+  | ISetNodeVisibilityAction

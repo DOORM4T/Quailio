@@ -1,45 +1,43 @@
 import { Box } from "grommet"
 import React from "react"
 import { Helmet } from "react-helmet"
+import { useSelector } from "react-redux"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
+import { IApplicationState } from "../../store/store"
 import useDashboard from "./logic/useDashboard"
 import HeaderMenu from "./MenuHeader"
 import PersonMenu from "./PersonMenu"
 
 const DashboardPage: React.FC = () => {
-  // CUSTOM HOOK | Use dashboard states and other hooks
   const {
     currentNetwork,
-    doShowNodesWithoutGroups,
     doShowPersonMenu,
-    groupIdsByPersonId,
     isSmall,
     isZeroLoginMode,
     isAuthenticated,
     isViewingShared,
     networks,
     setShowPersonMenu,
+    groupsByPersonId,
+    groupVisibility,
   } = useDashboard()
 
-  // VARS | Will only show nodes that have at least one active group
-  const networkWithActiveNodes: ICurrentNetwork | null = currentNetwork
+  const visibleNodes = useSelector(
+    (state: IApplicationState) => state.ui.personNodeVisibility,
+  )
+
+  const networkWithVisibleNodes: ICurrentNetwork | null = currentNetwork
     ? {
         ...currentNetwork,
-        people: doShowNodesWithoutGroups
-          ? currentNetwork.people // Show all people if showing nodes without groups
-          : currentNetwork.people.filter((person) => {
-              // Show just people with groups if NOT showing nodes without groups
-              // Hide the node if none of its groups are active
-              const groupIds = groupIdsByPersonId[person.id]
-              const doHideNode = groupIds && groupIds.length === 0
-              return !doHideNode
-            }),
+        people: currentNetwork.people.filter(
+          (p) => visibleNodes[p.id] !== false, // True and undefined mean the node is visible
+        ),
       }
-    : null // END | networkWithActiveNodes
+    : null // networkWithActiveNodes
 
-  // UI | Wrapper for a Person Menu. Hidden if doShowPersonMenu state is false
+  // Wrapper for a Person Menu. Hidden if doShowPersonMenu state is false
   const PersonMenuWrapper: React.ReactNode = doShowPersonMenu ? (
     <Box
       direction="column"
@@ -58,7 +56,7 @@ const DashboardPage: React.FC = () => {
         }
       />
     </Box>
-  ) : null // END | PersonMenuWrapper
+  ) : null // PersonMenuWrapper
 
   return (
     <React.Fragment>
@@ -95,7 +93,7 @@ const DashboardPage: React.FC = () => {
             {PersonMenuWrapper}
             <ForceGraphCanvas
               id="network-sketch"
-              currentNetwork={networkWithActiveNodes}
+              currentNetwork={networkWithVisibleNodes}
               style={{ overflow: "hidden", backgroundColor: "#DDD" }}
             />
           </React.Fragment>

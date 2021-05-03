@@ -13,11 +13,9 @@ const initialState: IUserInterfaceState = {
   personInZoom: null,
   filteredGroups: {},
   activeGroupsByPersonId: {},
-  doShowNodesWithoutGroups: true,
-
   isShareMenuOpen: false,
-
   isViewingShared: false,
+  personNodeVisibility: {},
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -78,14 +76,6 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       }
     }
 
-    // State for determining whether to show nodes without groups or not
-    case UserInterfaceActionTypes.TOGGLE_SHOW_NODES_WITHOUT_GROUPS: {
-      return {
-        ...state,
-        doShowNodesWithoutGroups: action.doShow,
-      }
-    }
-
     case UserInterfaceActionTypes.TOGGLE_SHARE_OVERLAY: {
       return {
         ...state,
@@ -97,6 +87,16 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         isViewingShared: action.isViewingShared,
+      }
+    }
+
+    case UserInterfaceActionTypes.SET_NODE_VISIBILITY: {
+      return {
+        ...state,
+        personNodeVisibility: {
+          ...state.personNodeVisibility,
+          [action.nodeId]: action.isVisible,
+        },
       }
     }
 

@@ -13,9 +13,9 @@ import {
 } from "../../../store/networks/actions"
 import { getAllNetworkData } from "../../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
+import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
 import { getGroupIdsByPersonId } from "../../../store/selectors/ui/getGroupIdsByPersonId"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
-import { getShowNodesWithoutGroups } from "../../../store/selectors/ui/getShowNodesWithoutGroups"
 import {
   setViewingShared,
   togglePersonOverlay,
@@ -41,9 +41,9 @@ export default function useDashboard() {
   // REDUX SELECTORS | Global state selectors
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
-  const groupIdsByPersonId = useSelector(getGroupIdsByPersonId) // Map of nodes and their groups
-  const doShowNodesWithoutGroups = useSelector(getShowNodesWithoutGroups) // Global state to show/hide nodes without groups
-  const isViewingShared = useSelector(getIsViewingShared) // Viewing a shared network?
+  const isViewingShared = useSelector(getIsViewingShared)
+  const groupsByPersonId = useSelector(getGroupIdsByPersonId)
+  const groupVisibility = useSelector(getFilterGroups)
 
   // Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes
   usePageExitConfirmation(isViewingShared) // Doesn't set an "unsaved change" confirmation when viewing a shared network
@@ -129,14 +129,14 @@ export default function useDashboard() {
   // RETURN | All the hook values that will be used by the Dashboard page
   return {
     currentNetwork,
-    doShowNodesWithoutGroups,
     doShowPersonMenu,
-    groupIdsByPersonId,
     isSmall,
     isZeroLoginMode,
     isAuthenticated,
     isViewingShared,
     networks,
     setShowPersonMenu,
+    groupsByPersonId,
+    groupVisibility,
   }
 }
