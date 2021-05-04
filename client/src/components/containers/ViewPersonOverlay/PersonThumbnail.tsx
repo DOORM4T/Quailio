@@ -126,7 +126,6 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
       setThumbnailsOverlayOpen(true)
 
       dispatch(setNetworkLoading(false))
-      console.log(thumbnails)
     } catch (error) {
       dispatch(setNetworkLoading(false))
       console.error(error)

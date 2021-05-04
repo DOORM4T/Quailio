@@ -177,8 +177,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
 
       const keepIfExisting = (n: IPersonNode) =>
         !deletedPeopleIds.includes(n.id)
-      console.log(deletedPeopleIds)
-
       const nodesWithoutRemoved = nodes.filter(keepIfExisting)
       updatedGraphData.nodes = nodesWithoutRemoved
 
