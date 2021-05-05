@@ -13,8 +13,6 @@ import {
 } from "../../../store/networks/actions"
 import { getAllNetworkData } from "../../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
-import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
-import { getGroupIdsByPersonId } from "../../../store/selectors/ui/getGroupIdsByPersonId"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import {
   setViewingShared,
@@ -23,27 +21,17 @@ import {
 } from "../../../store/ui/uiActions"
 
 export default function useDashboard() {
-  // REDUX DISPATCH | For dispatching custom Redux actions
   const dispatch = useDispatch()
-
-  // HISTORY | For redirecting to differnt paths
   const history = useHistory()
-
-  // Responsive breakpoint
   const isSmall = useSmallBreakpoint()
 
-  // Check if the user is authenticated -- if not, use zero-login features
-  const { isAuthenticated } = useAuth()
-
-  // Variable for checking whether we're in zero-login mode or not
-  const isZeroLoginMode = !isAuthenticated
-
-  // REDUX SELECTORS | Global state selectors
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
   const isViewingShared = useSelector(getIsViewingShared)
-  const groupsByPersonId = useSelector(getGroupIdsByPersonId)
-  const groupVisibility = useSelector(getFilterGroups)
+
+  // Check if the user is authenticated -- if not, use zero-login features
+  const { isAuthenticated } = useAuth()
+  const isZeroLoginMode = !isAuthenticated
 
   // Ask the user to confirm when trying to navigate away from the page -- in case of unsaved changes
   usePageExitConfirmation(isViewingShared) // Doesn't set an "unsaved change" confirmation when viewing a shared network

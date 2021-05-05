@@ -15,6 +15,7 @@ import {
   IPerson,
   NetworkActionTypes,
 } from "../networkTypes"
+import { resetLocalNetworks } from "./resetLocalNetworks"
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
@@ -32,6 +33,7 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
 
       const uid = getState().auth.userId
       if (uid) await importToFirestore(uid, currentNetworkCopy)
+      if (!uid) dispatch(resetLocalNetworks()) // Clears array of networks in global state -- offline users can't use this since they only have IDs whose data cannot be fetched
 
       const action: IImportNetworkAction = {
         type: NetworkActionTypes.IMPORT_NETWORK,

@@ -330,7 +330,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     }
   }, [
     currentNetwork?.people,
-    currentNetwork?.people.length,
     currentNetwork?.relationshipGroups,
     currentNetwork?.groupIds,
   ])

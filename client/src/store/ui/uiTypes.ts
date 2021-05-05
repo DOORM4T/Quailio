@@ -26,6 +26,7 @@ export enum UserInterfaceActionTypes {
   TOGGLE_SHARE_OVERLAY = "UI/TOGGLE_SHARE_OVERLAY",
   SET_VIEWING_SHARED = "UI/SET_VIEWING_SHARED",
   SET_NODE_VISIBILITY = "UI/SET_NODE_VISIBILITY",
+  RESET_UI = "UI/RESET_UI",
 }
 
 export interface ISetUILoadingAction {
@@ -80,6 +81,10 @@ export interface ISetNodeVisibilityAction {
   isVisible: boolean
 }
 
+export interface IResetUIAction {
+  type: UserInterfaceActionTypes.RESET_UI
+}
+
 /* action types used by the networks reducer */
 export type UserInterfaceActions =
   | ISetUILoadingAction
@@ -91,3 +96,4 @@ export type UserInterfaceActions =
   | IToggleShareOverlayAction
   | ISetViewingSharedAction
   | ISetNodeVisibilityAction
+  | IResetUIAction

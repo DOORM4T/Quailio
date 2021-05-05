@@ -250,7 +250,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
       : Icons.FormViewHide
 
     const toggleVisibility = async () => {
-      console.log(!isVisible)
       dispatch(togglePersonVisibility(person.id, !isVisible))
     }
 
@@ -391,7 +390,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     e.preventDefault()
     e.stopPropagation()
 
-    const togglePromise = people.map(({ id }) =>
+    const togglePromise = filterablePeople.map(({ id }) =>
       Promise.resolve(dispatch(togglePersonVisibility(id, !doShowAll))),
     )
     await Promise.all(togglePromise)
@@ -432,13 +431,13 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
                 icon={showHideAllIcon}
                 tooltip={showHideAllToolTip}
               />
-              <ToolTipButton
-                onClick={toggleAllNodeVisibility}
-                icon={doShowAll ? <Icons.FormView /> : <Icons.FormViewHide />}
-                tooltip={doShowAll ? "Click to hide all" : "Click to show all"}
-              />
             </React.Fragment>
           )}
+          <ToolTipButton
+            onClick={toggleAllNodeVisibility}
+            icon={doShowAll ? <Icons.FormView /> : <Icons.FormViewHide />}
+            tooltip={doShowAll ? "Click to hide all" : "Click to show all"}
+          />
         </Box>
       }
     >

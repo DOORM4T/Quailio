@@ -100,6 +100,10 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       }
     }
 
+    case UserInterfaceActionTypes.RESET_UI: {
+      return initialState
+    }
+
     default:
       return state
   }

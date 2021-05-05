@@ -1,16 +1,19 @@
 import { Box } from "grommet"
-import React from "react"
+import React, { useEffect } from "react"
 import { Helmet } from "react-helmet"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
+import { Dispatch } from "redux"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
+import { resetUI } from "../../store/ui/uiActions"
 import useDashboard from "./logic/useDashboard"
 import HeaderMenu from "./MenuHeader"
 import PersonMenu from "./PersonMenu"
 
 const DashboardPage: React.FC = () => {
+  const dispatch: Dispatch<any> = useDispatch()
   const {
     currentNetwork,
     doShowPersonMenu,
@@ -21,6 +24,13 @@ const DashboardPage: React.FC = () => {
     networks,
     setShowPersonMenu,
   } = useDashboard()
+
+  // Reset UI state on unmount
+  useEffect(() => {
+    return () => {
+      dispatch(resetUI())
+    }
+  }, [])
 
   const visibleNodes = useSelector(
     (state: IApplicationState) => state.ui.personNodeVisibility,

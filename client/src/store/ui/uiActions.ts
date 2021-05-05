@@ -4,6 +4,7 @@ import {
   IFocusOnPersonAction,
   IInitializePersonGroupList,
   IPersonIDWithActiveGroups,
+  IResetUIAction,
   ISetNodeVisibilityAction,
   ISetUILoadingAction,
   ISetViewingSharedAction,
@@ -108,4 +109,9 @@ export const togglePersonVisibility = (
   type: UserInterfaceActionTypes.SET_NODE_VISIBILITY,
   nodeId: personId,
   isVisible: doShow,
+})
+
+// Clear all UI global state
+export const resetUI = (): IResetUIAction => ({
+  type: UserInterfaceActionTypes.RESET_UI,
 })

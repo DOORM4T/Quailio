@@ -200,7 +200,7 @@ const GroupAccordion: React.FC<IProps> = ({
     )
     await Promise.all(togglePromise)
 
-    setShowAll(!doShowAll)
+    setShowAll((latestShowAll) => !latestShowAll)
   } // toggleNodes
 
   const NodesVisibilityToggle = (
