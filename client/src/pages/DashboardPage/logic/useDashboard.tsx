@@ -136,7 +136,5 @@ export default function useDashboard() {
     isViewingShared,
     networks,
     setShowPersonMenu,
-    groupsByPersonId,
-    groupVisibility,
   }
 }

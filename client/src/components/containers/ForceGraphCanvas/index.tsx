@@ -330,6 +330,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     }
   }, [
     currentNetwork?.people,
+    currentNetwork?.people.length,
     currentNetwork?.relationshipGroups,
     currentNetwork?.groupIds,
   ])
@@ -361,14 +362,11 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       dispatch(zoomToPerson(null))
       return
     } else {
-      // Ensure x and y exist
       const { x, y } = nodeToZoom
       if (x === undefined || y === undefined) return
 
-      // Zoom into the node's coordinates!
       forceGraph.centerAt(x, y, 250).zoomToFit(500)
-
-      // Highlight the node
+      clearHighlights()
       highlightNode(nodeToZoom)
     }
   }, [personIdToZoom])
@@ -379,6 +377,10 @@ const ForceGraphCanvas: React.FC<IProps> = ({
 export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
   const prevCurrentNetwork = prevProps.currentNetwork
   const nextCurrentNetwork = nextProps.currentNetwork
+
+  const areNumPeopleSame =
+    prevCurrentNetwork?.personIds.length ===
+    nextCurrentNetwork?.personIds.length
 
   // Rerender if the "people" names, relationships, thumbnail, pinXY, or scaleXY changed
   const toCheckParams = (p: IPerson) => ({
@@ -403,7 +405,7 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
     ) &&
     prevCurrentNetwork?.groupIds.length === nextCurrentNetwork?.groupIds.length
 
-  const skipRerender = arePeopleSame && areGroupsSame
+  const skipRerender = areNumPeopleSame && arePeopleSame && areGroupsSame
   return skipRerender
 })
 

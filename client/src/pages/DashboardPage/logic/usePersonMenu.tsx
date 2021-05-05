@@ -9,8 +9,9 @@ import {
   TextInput,
 } from "grommet"
 import * as Icons from "grommet-icons"
-import React, { Dispatch } from "react"
+import React, { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { Dispatch } from "redux"
 import ToolTipButton from "../../../components/ToolTipButton"
 import { addPerson } from "../../../store/networks/actions"
 import { IPerson } from "../../../store/networks/networkTypes"
@@ -33,14 +34,10 @@ const NAME_CHAR_LIMIT = 30
 
 export default function usePersonMenu({ people }: IPersonMenuProps) {
   const dispatch: Dispatch<any> = useDispatch()
+  const [doShowAll, setShowAll] = useState(true)
 
-  // REDUX SELECTOR | Current network state
   const currentNetwork = useSelector(getCurrentNetwork)
-
-  // REDUX SELECTOR | Map of groups to show/hide
-  const filterGroups = useSelector(getFilterGroups)
-
-  // REDUX SELECTOR | Map of groups to show/hide
+  const filterGroupsMap = useSelector(getFilterGroups)
   const nodeVisibilityMap = useSelector(
     (state: IApplicationState) => state.ui.personNodeVisibility,
   )
@@ -131,7 +128,8 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
       // Keep only the active groups the person is in
       const activeGroupIds = groupsWithThisPerson.filter(
         (groupId) =>
-          filterGroups[groupId] === true || filterGroups[groupId] === undefined, // Treat a group's undefined "showing" state as true -- show by default
+          filterGroupsMap[groupId] === true ||
+          filterGroupsMap[groupId] === undefined, // Treat a group's undefined "showing" state as true -- show by default
       )
 
       const data: IPersonIDWithActiveGroups = {
@@ -143,7 +141,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
 
     // Pass the array to a custom Redux action that will result in this information being cached in global state
     dispatch(cachePersonGroupList(groupsByPersonIds))
-  }, [currentNetwork?.people, groups, filterGroups]) // ACTIVATES | When the people list, groups, or filterGroups change
+  }, [currentNetwork?.people, groups, filterGroupsMap]) // ACTIVATES | When the people list, groups, or filterGroups change
 
   // FUNCTION | Set search/add input state when an input value changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -388,6 +386,19 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
   ) // END | SearchAddInputNode
 
   // UI | Accordion Panel for the "All" people list
+
+  const toggleAllNodeVisibility = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const togglePromise = people.map(({ id }) =>
+      Promise.resolve(dispatch(togglePersonVisibility(id, !doShowAll))),
+    )
+    await Promise.all(togglePromise)
+
+    setShowAll(!doShowAll)
+  } // toggleAllNodeVisibility
+
   const AllPeopleGroup: React.ReactNode = (
     <AccordionPanel
       key="group-all"
@@ -421,6 +432,11 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
                 icon={showHideAllIcon}
                 tooltip={showHideAllToolTip}
               />
+              <ToolTipButton
+                onClick={toggleAllNodeVisibility}
+                icon={doShowAll ? <Icons.FormView /> : <Icons.FormViewHide />}
+                tooltip={doShowAll ? "Click to hide all" : "Click to show all"}
+              />
             </React.Fragment>
           )}
         </Box>
@@ -444,9 +460,8 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     AllPeopleGroup,
     allGroupButtonLabelRef,
     currentNetwork,
-    dispatch,
     filterablePeople,
-    filterGroups,
+    filterGroups: filterGroupsMap,
     isSearching,
     isViewingShared,
     renderItem,

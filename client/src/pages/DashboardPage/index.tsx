@@ -20,8 +20,6 @@ const DashboardPage: React.FC = () => {
     isViewingShared,
     networks,
     setShowPersonMenu,
-    groupsByPersonId,
-    groupVisibility,
   } = useDashboard()
 
   const visibleNodes = useSelector(

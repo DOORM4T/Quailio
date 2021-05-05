@@ -1,69 +1,67 @@
-import { Box } from "grommet"
+import { AccordionPanel, Box, List, Tab, Tabs } from "grommet"
 import * as Icons from "grommet-icons"
-import React from "react"
-import SearchAndCheckMenu from "../../../components/SearchAndCheckMenu"
-import ToolTipButton from "../../../components/ToolTipButton"
-import { deleteGroup } from "../../../store/networks/actions"
+import React, { useState } from "react"
+import { useDispatch } from "react-redux"
+import { Dispatch } from "redux"
+import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
+import ToolTipButton from "../../components/ToolTipButton"
+import { deleteGroup } from "../../store/networks/actions"
 import {
   changeGroupColor,
   GroupColorField,
-} from "../../../store/networks/actions/changeGroupBackgroundColor"
-import { renameGroup } from "../../../store/networks/actions/renameGroup"
-import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
+} from "../../store/networks/actions/changeGroupBackgroundColor"
+import { renameGroup } from "../../store/networks/actions/renameGroup"
+import { togglePersonInGroup } from "../../store/networks/actions/togglePersonInGroup"
 import {
   ICurrentNetwork,
   IPerson,
   IRelationshipGroup,
-} from "../../../store/networks/networkTypes"
-import { toggleGroupFilter } from "../../../store/ui/uiActions"
+} from "../../store/networks/networkTypes"
+import {
+  toggleGroupFilter,
+  togglePersonVisibility,
+} from "../../store/ui/uiActions"
 
 interface IProps {
+  key: string
   currentNetwork: ICurrentNetwork
-  dispatch: React.Dispatch<any>
   group: IRelationshipGroup
   groupId: string
   filterablePeople: IPerson[]
   filterGroups: {
     [groupId: string]: boolean
   }
-  searchAddInput: string
+  isViewingShared: boolean
+  renderItem: (
+    canSearch: boolean,
+  ) => (person: IPerson, index: number) => React.ReactNode
 }
 
-// NOT a custom hook -- just processes data to create accordion content
-const getGroupAccordionContent = ({
+const GroupAccordion: React.FC<IProps> = ({
+  key,
   currentNetwork,
-  dispatch,
   group,
   groupId,
   filterablePeople,
   filterGroups,
-  searchAddInput,
+  isViewingShared,
+  renderItem,
 }: IProps) => {
-  // VARS | Filter in people in the group
-  const peopleInGroup = filterablePeople.filter((person) =>
-    group.personIds.includes(person.id),
-  )
+  const dispatch: Dispatch<any> = useDispatch()
+  const [doShowAll, setShowAll] = useState(true)
+
+  const hasPerson = (person: IPerson) => group.personIds.includes(person.id)
+  const peopleInGroup = filterablePeople.filter(hasPerson)
   const isEmpty = peopleInGroup.length === 0
+  let doShowGroup = filterGroups[groupId]
+  if (doShowGroup === undefined) doShowGroup = true // Undefined showing state also means the group should show
 
-  // VARS | Check in global filter groups state to see if this group is showing
-  let isGroupShowing = filterGroups[groupId]
-
-  // VARS | If the group isn't set in global state yet, show it by default
-  if (isGroupShowing === undefined) isGroupShowing = true
-
-  // DO NOT render this accordion if the user this group doesn't contain the search value
-  const noSearchResults = isEmpty && searchAddInput !== ""
-  if (noSearchResults) return null
-
-  // FUNCTION | Creates a closure function to toggle a person in the group
-  const togglePersonInGroupClosure = (
+  const handleTogglePersonInGroup = (
     personId: string,
     isInGroup: boolean,
   ) => async () => {
-    // Toggle the boolean
     const doAdd = !isInGroup
 
-    // Toggle the person in the group's global state through a custom Redux action
     try {
       await dispatch(
         togglePersonInGroup(currentNetwork.id, groupId, personId, doAdd),
@@ -71,9 +69,8 @@ const getGroupAccordionContent = ({
     } catch (error) {
       console.error(error)
     }
-  } // END | togglePersonInGroupCLosure
+  } // handleTogglePersonInGroup
 
-  // FUNCTION | Function to rename this group
   const handleRenameGroup = async () => {
     try {
       const newName = window.prompt(`Rename [${group.name}] to:`)
@@ -86,10 +83,9 @@ const getGroupAccordionContent = ({
     } catch (error) {
       console.error(error)
     }
-  } // END | handleDeleteGroup
+  } //  handleDeleteGroup
 
-  // FUNCTION | Change the group's background or text color
-  const changeGroupColorClosure = (field: GroupColorField) => async () => {
+  const changeGroupColorByField = (field: GroupColorField) => async () => {
     // Create a color picker input
     const colorInput = document.createElement("input")
     colorInput.type = "color"
@@ -121,9 +117,8 @@ const getGroupAccordionContent = ({
     } catch (error) {
       console.error(error)
     }
-  }
+  } // changeGroupColorByField
 
-  // FUNCTION | Function to delete this group
   const handleDeleteGroup = async () => {
     try {
       const doDelete = window.confirm(
@@ -138,10 +133,9 @@ const getGroupAccordionContent = ({
     } catch (error) {
       console.error(error)
     }
-  } // END | handleDeleteGroup
+  } // handleDeleteGroup
 
-  // FUNCTION | Toggle show/hide for this group
-  const handleToggleGroupFilter = async (
+  const toggleGroupVisibility = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
     // Stop event propagation -- this prevents the accordion from being clicked when the user clicks on the toggle button
@@ -149,29 +143,28 @@ const getGroupAccordionContent = ({
 
     try {
       // Toggle the groups "showing" state
-      await dispatch(toggleGroupFilter(groupId, !isGroupShowing))
+      await dispatch(toggleGroupFilter(groupId, !doShowGroup))
     } catch (error) {
       console.error(error)
     }
-  } // END | handleToggleGroupFilter
+  } // toggleGroupVisibility
 
-  // STYLE | Styles for the group Accordion
   const groupAccordionStyles: React.CSSProperties = {
     height: "48px",
     width: "100%",
     backgroundColor: group.backgroundColor,
     color: group.textColor,
     filter:
-      isEmpty || !isGroupShowing // Dim the group accordion if it's empty or if it's hiding its nodes
+      isEmpty || !doShowGroup // Dim the group accordion if it's empty or if it's hiding its nodes
         ? "brightness(50%) saturate(50%)"
         : undefined,
-  } // END | groupAccordionStyles
+  } // groupAccordionStyles
 
-  const toggleGroupVisibilityTooltip = isGroupShowing
+  const toggleGroupVisibilityTooltip = doShowGroup
     ? "Click to hide group"
     : "Click to show group"
 
-  const toggleGroupVisibilityIcon = isGroupShowing ? (
+  const toggleGroupVisibilityIcon = doShowGroup ? (
     <Icons.Folder color="accent-1" />
   ) : (
     <Icons.Folder color="accent-1" />
@@ -181,8 +174,41 @@ const getGroupAccordionContent = ({
     <Box margin={{ left: "auto" }}>
       <ToolTipButton
         tooltip={toggleGroupVisibilityTooltip}
-        onClick={handleToggleGroupFilter}
+        onClick={toggleGroupVisibility}
         icon={toggleGroupVisibilityIcon}
+      />
+    </Box>
+  )
+
+  const toggleNodesIcon = doShowAll ? (
+    <Icons.FormView color="accent-1" />
+  ) : (
+    <Icons.FormViewHide color="accent-1" />
+  )
+
+  const toggleNodesTooltip = doShowAll
+    ? "Hide all in group"
+    : "Show all in group"
+
+  // Show or hide all nodes in the group
+  const toggleNodes = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const togglePromise = peopleInGroup.map(({ id }) =>
+      Promise.resolve(dispatch(togglePersonVisibility(id, !doShowAll))),
+    )
+    await Promise.all(togglePromise)
+
+    setShowAll(!doShowAll)
+  } // toggleNodes
+
+  const NodesVisibilityToggle = (
+    <Box margin={{ left: "auto" }}>
+      <ToolTipButton
+        tooltip={toggleNodesTooltip}
+        onClick={toggleNodes}
+        icon={toggleNodesIcon}
       />
     </Box>
   )
@@ -194,7 +220,12 @@ const getGroupAccordionContent = ({
       <span style={{ marginLeft: "1rem" }}>{group.name}</span>
       {
         // Show the "show/hide" button IFF there are members in the group
-        !isEmpty && GroupVisibilityToggle
+        !isEmpty && (
+          <Box direction="row" margin={{ left: "auto" }}>
+            {GroupVisibilityToggle}
+            {NodesVisibilityToggle}
+          </Box>
+        )
       }
     </Box>
   ) // END | GroupAccordionLabel
@@ -211,12 +242,12 @@ const getGroupAccordionContent = ({
         />
         <ToolTipButton
           tooltip="Change group background color"
-          onClick={changeGroupColorClosure("backgroundColor")}
+          onClick={changeGroupColorByField("backgroundColor")}
           icon={<Icons.Paint color={group.backgroundColor} />}
         />
         <ToolTipButton
           tooltip="Change group text color"
-          onClick={changeGroupColorClosure("textColor")}
+          onClick={changeGroupColorByField("textColor")}
           icon={<Icons.TextAlignFull color={group.textColor} />}
         />
         <ToolTipButton
@@ -232,18 +263,29 @@ const getGroupAccordionContent = ({
           idField="id"
           nameField="name"
           isCheckedFunction={(arg: IPerson) => group.personIds.includes(arg.id)}
-          toggleOption={togglePersonInGroupClosure}
+          toggleOption={handleTogglePersonInGroup}
         />
       </Box>
     </Box>
   ) // END | ManageGroupBox
 
-  return {
-    GroupAccordionLabel,
-    ManageGroupBox,
-    groupAccordionStyles,
-    peopleInGroup,
-  }
+  return (
+    <AccordionPanel
+      key={key}
+      style={groupAccordionStyles}
+      label={GroupAccordionLabel}
+    >
+      <Box pad="medium">
+        <Tabs>
+          <Tab title="View">
+            <List data={peopleInGroup} children={renderItem(false)} />
+          </Tab>
+
+          {!isViewingShared && <Tab title="Manage">{ManageGroupBox}</Tab>}
+        </Tabs>
+      </Box>
+    </AccordionPanel>
+  )
 }
 
-export default getGroupAccordionContent
+export default GroupAccordion

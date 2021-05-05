@@ -1,7 +1,7 @@
-import { Accordion, AccordionPanel, Box, List, Tab, Tabs } from "grommet"
+import { Accordion, Box } from "grommet"
 import React from "react"
 import { IPerson } from "../../store/networks/networkTypes"
-import getGroupAccordionContent from "./logic/getGroupAccordionContent"
+import GroupAccordion from "./GroupAccordion"
 import usePersonMenu from "./logic/usePersonMenu"
 
 export interface IPersonMenuProps {
@@ -13,14 +13,12 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
     AllPeopleGroup,
     allGroupButtonLabelRef,
     currentNetwork,
-    dispatch,
     filterablePeople,
     filterGroups,
     isSearching,
     isViewingShared,
 
     renderItem,
-    searchAddInput,
     SearchAddInputNode,
   } = usePersonMenu(props)
 
@@ -67,46 +65,19 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
             // Render Accordion Panels for each group
             .map((entry, index) => {
               const [groupId, group] = entry
-              const groupAccordionKey = `group-${group.name}-${index}`
-              const accordionContent = getGroupAccordionContent({
-                currentNetwork,
-                dispatch,
-                group,
-                groupId,
-                filterablePeople,
-                filterGroups,
-                searchAddInput,
-              })
-
-              if (!accordionContent) return null
-              const {
-                GroupAccordionLabel,
-                ManageGroupBox,
-                groupAccordionStyles,
-                peopleInGroup,
-              } = accordionContent
+              const key = `group-${group.name}-${index}`
 
               return (
-                <AccordionPanel
-                  key={groupAccordionKey}
-                  style={groupAccordionStyles}
-                  label={GroupAccordionLabel}
-                >
-                  <Box pad="medium">
-                    <Tabs>
-                      <Tab title="View">
-                        <List
-                          data={peopleInGroup}
-                          children={renderItem(false)}
-                        />
-                      </Tab>
-
-                      {!isViewingShared && (
-                        <Tab title="Manage">{ManageGroupBox}</Tab>
-                      )}
-                    </Tabs>
-                  </Box>
-                </AccordionPanel>
+                <GroupAccordion
+                  key={key}
+                  currentNetwork={currentNetwork}
+                  group={group}
+                  groupId={groupId}
+                  filterablePeople={filterablePeople}
+                  filterGroups={filterGroups}
+                  isViewingShared={isViewingShared}
+                  renderItem={renderItem}
+                />
               )
             })}
       </Accordion>
