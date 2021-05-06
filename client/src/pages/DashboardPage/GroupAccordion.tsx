@@ -1,7 +1,7 @@
 import { AccordionPanel, Box, List, Tab, Tabs } from "grommet"
 import * as Icons from "grommet-icons"
-import React, { useState } from "react"
-import { useDispatch } from "react-redux"
+import React, { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
 import ToolTipButton from "../../components/ToolTipButton"
@@ -17,6 +17,7 @@ import {
   IPerson,
   IRelationshipGroup,
 } from "../../store/networks/networkTypes"
+import { IApplicationState } from "../../store/store"
 import {
   toggleGroupFilter,
   togglePersonVisibility,
@@ -55,6 +56,35 @@ const GroupAccordion: React.FC<IProps> = ({
   const isEmpty = peopleInGroup.length === 0
   let doShowGroup = filterGroups[groupId]
   if (doShowGroup === undefined) doShowGroup = true // Undefined showing state also means the group should show
+
+  const visibilityMap = useSelector(
+    (state: IApplicationState) => state.ui.personNodeVisibility,
+  )
+  const numPeopleVisible = peopleInGroup.reduce((count, person) => {
+    const doCount = visibilityMap[person.id] !== false
+    const toAdd = doCount ? 1 : 0
+    return count + toAdd
+  }, 0)
+
+  // Update show all state whenever all the people in the group are hidden or showing
+  // This keeps the visibility icon updated for the group
+  useEffect(() => {
+    const allInGroupHidden = peopleInGroup.every(
+      (p) => visibilityMap[p.id] === false,
+    )
+
+    if (!allInGroupHidden) return
+    setShowAll(false)
+  }, [visibilityMap])
+
+  useEffect(() => {
+    const allInGroupVisible = peopleInGroup.every(
+      (p) => visibilityMap[p.id] !== false,
+    )
+
+    if (!allInGroupVisible) return
+    setShowAll(true)
+  }, [visibilityMap])
 
   const handleTogglePersonInGroup = (
     personId: string,
@@ -214,14 +244,21 @@ const GroupAccordion: React.FC<IProps> = ({
   )
 
   // UI | Label component for this group's Accordion
+  const personCountLabel =
+    "[" +
+    (peopleInGroup.length > 0
+      ? `${numPeopleVisible}/${peopleInGroup.length}`
+      : "EMPTY") +
+    "]"
+
   const GroupAccordionLabel: React.ReactNode = (
     <Box direction="row" align="center" justify="start" fill>
-      <span style={{ marginLeft: "1rem" }}>[{peopleInGroup.length}]</span>
       <span style={{ marginLeft: "1rem" }}>{group.name}</span>
       {
         // Show the "show/hide" button IFF there are members in the group
         !isEmpty && (
-          <Box direction="row" margin={{ left: "auto" }}>
+          <Box direction="row" margin={{ left: "auto" }} align="center">
+            <span>{personCountLabel}</span>
             {GroupVisibilityToggle}
             {NodesVisibilityToggle}
           </Box>
