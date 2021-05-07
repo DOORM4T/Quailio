@@ -6,6 +6,7 @@ import { ActionCreator, AnyAction } from "redux"
 import { HEADER_HEIGHT } from "../../../components/containers/AppHeader"
 import ToolTipButton from "../../../components/ToolTipButton"
 import { getCurrentNetworkJSON } from "../../../helpers/getNetworkJSON"
+import { importJSONAsNetwork } from "../../../helpers/importJSONAsNetwork"
 import useAuth from "../../../hooks/auth/useAuth"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
 import {
@@ -13,7 +14,6 @@ import {
   createGroup,
   createNetwork,
   deleteNetwork,
-  importNetwork,
   renameNetwork,
   setNetwork,
   setNetworkLoading,
@@ -224,29 +224,8 @@ export default function useMenuHeader({
     fileInput.accept = ".json"
     fileInput.click()
 
-    /* Wait for the user to upload JSON files */
-    fileInput.onchange = async () => {
-      if (fileInput.files) {
-        try {
-          /* Get JSON data from each file */
-          const files = Object.values(fileInput.files)
-          const getParsedJSON = files.map(async (file) => {
-            return JSON.parse(await file.text())
-          })
-
-          const data = await Promise.all(getParsedJSON)
-
-          // Import the JSON to global state
-          const dispatchImportFunctions = data.map(async (parsedJSON) => {
-            return await dispatch(importNetwork(parsedJSON))
-          })
-
-          await Promise.all(dispatchImportFunctions)
-        } catch (error) {
-          console.error(error)
-        }
-      }
-    }
+    // Wait for the user to upload JSON files
+    fileInput.onchange = () => importJSONAsNetwork(fileInput.files)
   }
 
   const handleCreateGroup = async () => {

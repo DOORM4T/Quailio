@@ -20,6 +20,12 @@ const customTheme: ThemeType = {
       background: "dark-1",
     },
   },
+  fileInput: {
+    label: {
+      size: "xlarge",
+    },
+    pad: "xlarge",
+  },
 }
 
 function App() {

@@ -1,10 +1,11 @@
-import { Box } from "grommet"
+import { Box, FileInput, Text } from "grommet"
 import React, { useEffect } from "react"
 import { Helmet } from "react-helmet"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
+import { importJSONAsNetwork } from "../../helpers/importJSONAsNetwork"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import { resetUI } from "../../store/ui/uiActions"
@@ -107,7 +108,15 @@ const DashboardPage: React.FC = () => {
           </React.Fragment>
         ) : (
           <Box margin={{ top: "xlarge", horizontal: "auto" }}>
-            Create{isAuthenticated && ", select, "} or import a network!
+            <Text textAlign="center" margin={{ bottom: "small" }}>
+              Create{isAuthenticated && ", select, "} or import a network!
+            </Text>
+            <FileInput
+              accept="application/json"
+              onChange={(e) => {
+                importJSONAsNetwork(e.target.files)
+              }}
+            />
           </Box>
         )}
       </Box>
