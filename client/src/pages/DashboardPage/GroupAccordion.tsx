@@ -184,10 +184,9 @@ const GroupAccordion: React.FC<IProps> = ({
     width: "100%",
     backgroundColor: group.backgroundColor,
     color: group.textColor,
-    filter:
-      isEmpty || !doShowGroup // Dim the group accordion if it's empty or if it's hiding its nodes
-        ? "brightness(50%) saturate(50%)"
-        : undefined,
+    filter: !doShowGroup // Dim the group accordion if it's empty or if it's hiding its nodes
+      ? "brightness(0.5)"
+      : undefined,
   } // groupAccordionStyles
 
   const toggleGroupVisibilityTooltip = doShowGroup
@@ -255,14 +254,11 @@ const GroupAccordion: React.FC<IProps> = ({
     <Box direction="row" align="center" justify="start" fill>
       <span style={{ marginLeft: "1rem" }}>{group.name}</span>
       {
-        // Show the "show/hide" button IFF there are members in the group
-        !isEmpty && (
-          <Box direction="row" margin={{ left: "auto" }} align="center">
-            <span>{personCountLabel}</span>
-            {GroupVisibilityToggle}
-            {NodesVisibilityToggle}
-          </Box>
-        )
+        <Box direction="row" margin={{ left: "auto" }} align="center">
+          <span>{personCountLabel}</span>
+          {GroupVisibilityToggle}
+          {NodesVisibilityToggle}
+        </Box>
       }
     </Box>
   ) // END | GroupAccordionLabel
@@ -306,6 +302,13 @@ const GroupAccordion: React.FC<IProps> = ({
     </Box>
   ) // END | ManageGroupBox
 
+  const visiblePeople = peopleInGroup.filter(
+    (p) => visibilityMap[p.id] !== false,
+  )
+  const hiddenPeople = peopleInGroup.filter(
+    (p) => visibilityMap[p.id] === false,
+  )
+
   return (
     <AccordionPanel
       key={key}
@@ -314,8 +317,24 @@ const GroupAccordion: React.FC<IProps> = ({
     >
       <Box pad="medium">
         <Tabs>
-          <Tab title="View">
+          <Tab
+            title={`All (${peopleInGroup.length})`}
+            disabled={peopleInGroup.length === 0}
+          >
             <List data={peopleInGroup} children={renderItem(false)} />
+          </Tab>
+          <Tab
+            title={`Visible (${visiblePeople.length})`}
+            disabled={visiblePeople.length === 0}
+          >
+            <List data={visiblePeople} children={renderItem(false)} />
+          </Tab>
+
+          <Tab
+            title={`Hidden (${hiddenPeople.length})`}
+            disabled={hiddenPeople.length === 0}
+          >
+            <List data={hiddenPeople} children={renderItem(false)} />
           </Tab>
 
           {!isViewingShared && <Tab title="Manage">{ManageGroupBox}</Tab>}

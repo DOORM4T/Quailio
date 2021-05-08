@@ -5,6 +5,8 @@ import {
   Image,
   List,
   Stack,
+  Tab,
+  Tabs,
   Text,
   TextInput,
 } from "grommet"
@@ -38,7 +40,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
 
   const currentNetwork = useSelector(getCurrentNetwork)
   const filterGroupsMap = useSelector(getFilterGroups)
-  const nodeVisibilityMap = useSelector(
+  const visibilityMap = useSelector(
     (state: IApplicationState) => state.ui.personNodeVisibility,
   )
 
@@ -244,7 +246,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
       </Box>
     )
 
-    const isVisible = nodeVisibilityMap[person.id] !== false // undefined and true mean the node is visible
+    const isVisible = visibilityMap[person.id] !== false // undefined and true mean the node is visible
     const VisibilityIcon: Icons.Icon = isVisible
       ? Icons.FormView
       : Icons.FormViewHide
@@ -264,6 +266,9 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
         align="center"
         justify="start"
         gap="small"
+        style={{
+          filter: isVisible ? undefined : "brightness(0.5)",
+        }}
       >
         {/* Icon Box on left */}
         {PersonIconBox}
@@ -398,6 +403,13 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     setShowAll(!doShowAll)
   } // toggleAllNodeVisibility
 
+  const visiblePeople = filterablePeople.filter(
+    (p) => visibilityMap[p.id] !== false,
+  )
+  const hiddenPeople = filterablePeople.filter(
+    (p) => visibilityMap[p.id] === false,
+  )
+
   const AllPeopleGroup: React.ReactNode = (
     <AccordionPanel
       key="group-all"
@@ -417,11 +429,11 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
           style={{ fontWeight: "bold" }}
           fill
         >
-          <span style={{ marginLeft: "1rem" }}>
-            [{filterablePeople.length}]
-          </span>
           <span style={{ marginLeft: "1rem", marginRight: "auto" }}>
             {isSearching ? `Search: ${searchAddInput}` : "All"}
+          </span>
+          <span>
+            [{visiblePeople.length}/{filterablePeople.length}]
           </span>
           {!isSearching && hasGroups && (
             // Show these option buttons if there are groups in the network
@@ -442,11 +454,28 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
       }
     >
       {filterablePeople.length > 0 ? (
-        <List
-          data={filterablePeople}
-          children={renderItem(true)}
-          ref={(el: any) => (listRef.current = el)}
-        />
+        <Tabs>
+          <Tab title={`All (${filterablePeople.length})`}>
+            <List
+              data={filterablePeople}
+              children={renderItem(true)}
+              ref={(el: any) => (listRef.current = el)}
+            />
+          </Tab>
+          <Tab
+            title={`Visible (${visiblePeople.length})`}
+            disabled={visiblePeople.length === 0}
+          >
+            <List data={visiblePeople} children={renderItem(false)} />
+          </Tab>
+
+          <Tab
+            title={`Hidden (${hiddenPeople.length})`}
+            disabled={hiddenPeople.length === 0}
+          >
+            <List data={hiddenPeople} children={renderItem(false)} />
+          </Tab>
+        </Tabs>
       ) : (
         <Box pad="medium">
           <Text textAlign="center">Nothing here... yet!</Text>
