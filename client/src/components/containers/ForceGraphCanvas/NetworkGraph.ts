@@ -363,10 +363,10 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     function drawNameTag() {
       // Name tag color. Group Nodes keep their color
       // Show only highlighted node if SHIFT key is down
-      if (isShiftDown && isHighlighting && doHighlightNode && !isGroupNode) {
+      if (isHighlighting && doHighlightNode && !isGroupNode) {
         // Node is highlighted
         ctx.fillStyle = highlightColor
-      } else if (isShiftDown && isHighlighting && !doHighlightNode) {
+      } else if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.fillStyle = LOW_ATTENTION_COLOR
       } else {
@@ -397,7 +397,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.fillRect(textX, textY, nameTagWidth, nameTagHeight)
 
       ctx.lineWidth = 1
-      if (isShiftDown && isHighlighting && !doHighlightNode) {
+      if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.strokeStyle = LOW_ATTENTION_COLOR
         ctx.fillStyle = LOW_ATTENTION_COLOR
@@ -444,8 +444,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         // Draw the image (don't draw if painting area paint -- will crash)
         if (!isAreaPaint) {
           // Hide the thumbnail if node are being highlighted and this node isn't one of them
-          if (isShiftDown && isHighlighting && !doHighlightNode)
-            return defaultReturnVal
+          if (isHighlighting && !doHighlightNode) return defaultReturnVal
           ctx.drawImage(thumbnail, thumbnailX, thumbnailY, width, height)
         }
       } catch (error) {
