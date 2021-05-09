@@ -2,14 +2,14 @@ import * as d3 from "d3-force"
 import ForceGraph, {
   ForceGraphInstance,
   LinkObject,
-  NodeObject
+  NodeObject,
 } from "force-graph"
 import {
   addPerson,
   connectPeople,
   disconnectPeople,
   pinNode,
-  updateRelationshipReason
+  updateRelationshipReason,
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
@@ -17,18 +17,18 @@ import {
   ICurrentNetwork,
   IPerson,
   IRelationship,
-  IRelationshipGroup
+  IRelationshipGroup,
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
 import {
   setPersonInFocus,
-  togglePersonOverlay
+  togglePersonOverlay,
 } from "../../../store/ui/uiActions"
 import {
   IForceGraphData,
   IPersonNode,
   NodeToConnect,
-  XYVals
+  XYVals,
 } from "./networkGraphTypes"
 
 //
@@ -59,6 +59,7 @@ const DEFAULT_LINK_COLOR = "black"
 const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/links for non-highlighted nodes when something is being highlighted
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
+const BADGE_FONT_SIZE = BASE_FONT_SIZE / 4
 
 // Line dash constants
 const MIN_SEGMENT_LENGTH = 5
@@ -299,12 +300,65 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
         : name
 
-    drawThumbnail()
-    drawNameTag()
+    const { height: thumbnailHeight } = drawThumbnail()
+    const { nameTagWidth: ntWidth, nameTagHeight: ntHeight } = drawNameTag()
+
+    // Draw group badges
+    let badgeXOffset = -ntWidth / 2
+    let badgeYOffset = thumbnailHeight / 2 + ntHeight
+    const groupIds = store.getState().ui.activeGroupsByPersonId[node.id]
+    if (!groupIds) return
+    groupIds.forEach(drawGroupBadge)
 
     //
     // #region nodePaint: HELPERS
     //
+
+    function drawGroupBadge(groupId: string) {
+      let realBadgeFontSize = (BADGE_FONT_SIZE / currentZoom) * 1.5
+      if (realBadgeFontSize < BADGE_FONT_SIZE)
+        realBadgeFontSize = BADGE_FONT_SIZE
+      ctx.font = `${realBadgeFontSize}px ${FONT_FAMILY}`
+
+      const group = store.getState().networks.currentNetwork
+        ?.relationshipGroups[groupId]
+      if (!group) return
+      const {
+        name: groupName,
+        backgroundColor: badgeColor,
+        textColor: badgeTextColor,
+      } = group
+      const badgeWidth = ctx.measureText(`  ${groupName}  `).width
+
+      ctx.fillStyle = badgeColor || "white"
+      ctx.fillRect(
+        x + badgeXOffset,
+        y + badgeYOffset,
+        badgeWidth,
+        realBadgeFontSize,
+      )
+
+      ctx.strokeStyle = "black"
+      ctx.lineWidth = 1
+      ctx.strokeRect(
+        x + badgeXOffset,
+        y + badgeYOffset,
+        badgeWidth,
+        realBadgeFontSize,
+      )
+
+      ctx.fillStyle = badgeTextColor || "black"
+      ctx.fillText(
+        groupName,
+        x + badgeXOffset + badgeWidth / 2,
+        y + badgeYOffset,
+      )
+
+      badgeXOffset += badgeWidth
+      if (badgeXOffset + ntWidth / 2 + badgeWidth < ntWidth) return
+      badgeYOffset += realBadgeFontSize
+      badgeXOffset = -ntWidth / 2
+    }
 
     function drawNameTag() {
       // Name tag color. Group Nodes keep their color
@@ -370,10 +424,13 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fillStyle = areaColor
         ctx.fillRect(textX, textY, nameTagWidth, nameTagHeight)
       }
+
+      return { nameTagWidth, nameTagHeight }
     }
 
     function drawThumbnail() {
-      if (!thumbnail) return
+      const defaultReturnVal = { height: 0 }
+      if (!thumbnail) return defaultReturnVal
 
       ctx.beginPath()
 
@@ -387,7 +444,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         // Draw the image (don't draw if painting area paint -- will crash)
         if (!isAreaPaint) {
           // Hide the thumbnail if node are being highlighted and this node isn't one of them
-          if (isShiftDown && isHighlighting && !doHighlightNode) return
+          if (isShiftDown && isHighlighting && !doHighlightNode)
+            return defaultReturnVal
           ctx.drawImage(thumbnail, thumbnailX, thumbnailY, width, height)
         }
       } catch (error) {
@@ -402,6 +460,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fillStyle = areaColor
         ctx.fillRect(thumbnailX, thumbnailY, width, height)
       }
+
+      return { height }
     }
 
     function makeGradient() {
@@ -460,10 +520,18 @@ function drawLinkObject(
   if (!x1 || !y1 || !x2 || !y2) return null
 
   const isGroupConnection = srcNode.isGroupNode || targetNode.isGroupNode
-  
+
   // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
-  if (srcNode.isGroupNode && store.getState().ui.filteredGroups[srcId] === false) return
-  if (targetNode.isGroupNode && store.getState().ui.filteredGroups[targetId] === false) return
+  if (
+    srcNode.isGroupNode &&
+    store.getState().ui.filteredGroups[srcId] === false
+  )
+    return
+  if (
+    targetNode.isGroupNode &&
+    store.getState().ui.filteredGroups[targetId] === false
+  )
+    return
 
   const centerX = (x1 + x2) / 2
   const centerY = (y1 + y2) / 2
