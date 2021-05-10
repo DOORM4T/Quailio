@@ -34,11 +34,10 @@ import {
 //
 // Global variables
 //
-const CHAR_DISPLAY_LIMIT = 30
 const NODE_SIZE = 64
-const HIGHLIGHT_SIZE = NODE_SIZE * 1.2
 const INITIAL_DISTANCE = NODE_SIZE * 4
 const DEFAULT_LINK_SIZE = 3
+const FAR_ZOOM_THRESHOLD = 0.3
 
 // For highlight on hover
 const highlightNodes = new Set<NodeObject>()
@@ -59,7 +58,7 @@ const DEFAULT_LINK_COLOR = "black"
 const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/links for non-highlighted nodes when something is being highlighted
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
-const BADGE_FONT_SIZE = BASE_FONT_SIZE / 4
+const BADGE_FONT_SIZE = BASE_FONT_SIZE / 1.5
 
 // Line dash constants
 const MIN_SEGMENT_LENGTH = 5
@@ -119,7 +118,8 @@ export function createNetworkGraph(
     .onNodeRightClick(handleNodeRightClick(Graph, currentNetwork))
     .onZoom(handleZoomPan)
     .onZoomEnd(handleZoomPanEnd)
-    .minZoom(0.0001)
+    .minZoom(0.001)
+    .maxZoom(300)
 
   // Physics
   Graph.dagMode("td")
@@ -272,9 +272,18 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     if (!n) return
 
     const node = n as NodeObject & IPersonNode
-    const { thumbnail, name, isGroupNode, id, scaleXY, x = 0, y = 0 } = node
+    const {
+      thumbnail,
+      name,
+      isGroupNode,
+      id,
+      scaleXY,
+      x = 0,
+      y = 0,
+      isBackground,
+    } = node
     const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
-    const doPointerDetection = isAreaPaint && node.isBackground === false // Explicitly check for false since true and undefined mean a node IS NOT a background node
+    const doPointerDetection = isAreaPaint && isBackground === false // Explicitly check for false since true and undefined mean a node IS NOT a background node
 
     if (isGroupNode && store.getState().ui.filteredGroups[id] === false) return // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
 
@@ -294,13 +303,14 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const isHoveredNode = node.id === hoverNodeId
     const highlightColor = isHoveredNode ? "red" : "orange"
 
-    // Show up to 30 chars of the node's name
-    const text =
-      name.length > CHAR_DISPLAY_LIMIT
-        ? `${name.slice(0, CHAR_DISPLAY_LIMIT)}...`
-        : name
+    if (currentZoom < FAR_ZOOM_THRESHOLD && !isBackground) {
+      drawSmallNode()
+      return
+    }
 
     const { height: thumbnailHeight } = drawThumbnail()
+
+    if (currentZoom < FAR_ZOOM_THRESHOLD) return
     const { nameTagWidth: ntWidth, nameTagHeight: ntHeight } = drawNameTag()
 
     // Draw group badges
@@ -308,20 +318,64 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     let badgeYOffset = thumbnailHeight / 2 + ntHeight
     const groupIds = store.getState().ui.activeGroupsByPersonId[node.id]
     if (!groupIds) return
+    if (isHighlighting && !doHighlightNode) return
     groupIds.forEach(drawGroupBadge)
 
     //
     // #region nodePaint: HELPERS
     //
 
+    function drawSmallNode() {
+      ctx.beginPath()
+      const largerScale = xScale > yScale ? xScale : yScale
+      const radius = 50 * largerScale
+      ctx.arc(x, y, radius, 0, 2 * Math.PI)
+
+      if (doPointerDetection) {
+        ctx.fillStyle = areaColor
+      } else if (doHighlightNode) {
+        ctx.fillStyle = highlightColor
+        ctx.strokeStyle = highlightColor
+      } else if (isHighlighting && !doHighlightNode) {
+        ctx.fillStyle = LOW_ATTENTION_COLOR
+        ctx.strokeStyle = LOW_ATTENTION_COLOR
+      } else {
+        ctx.fillStyle = fillColor
+      }
+      ctx.fill()
+      ctx.lineWidth = 10
+      ctx.strokeStyle = "black"
+      ctx.stroke()
+
+      if (isHighlighting && !doHighlightNode) {
+        ctx.closePath()
+        return
+      }
+
+      let realFontSize = BASE_FONT_SIZE / currentZoom / 1.5
+      if (realFontSize > BASE_FONT_SIZE * 6) realFontSize = BASE_FONT_SIZE * 6
+      ctx.font = `${realFontSize}px ${FONT_FAMILY}`
+      ctx.fillText(name, x, y + radius)
+      ctx.strokeStyle = "white"
+      ctx.lineWidth = 0.5
+      ctx.strokeText(name, x, y + radius)
+
+      if (isGroupNode) {
+        ctx.font = `${radius}px ${FONT_FAMILY} bolder`
+        ctx.fillStyle = "black"
+        ctx.fillText("G", x, y - radius / 2)
+      }
+      ctx.closePath()
+    }
+
     function drawGroupBadge(groupId: string) {
-      let realBadgeFontSize = (BADGE_FONT_SIZE / currentZoom) * 1.5
+      let realBadgeFontSize = BADGE_FONT_SIZE / currentZoom
       if (realBadgeFontSize < BADGE_FONT_SIZE)
-        realBadgeFontSize = BADGE_FONT_SIZE
+        realBadgeFontSize = BADGE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
       ctx.font = `${realBadgeFontSize}px ${FONT_FAMILY}`
 
-      const group = store.getState().networks.currentNetwork
-        ?.relationshipGroups[groupId]
+      const group =
+        store.getState().networks.currentNetwork?.relationshipGroups[groupId]
       if (!group) return
       const {
         name: groupName,
@@ -387,7 +441,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ? (thumbnail.naturalHeight * yScale) / 2
         : 0
       const PADDING = 32
-      let nameTagWidth = ctx.measureText(text).width + PADDING
+      let nameTagWidth = ctx.measureText(name).width + PADDING
       if (nameTagWidth < NODE_SIZE) nameTagWidth = NODE_SIZE
       const nameTagHeight = realFontSize
 
@@ -415,7 +469,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.lineWidth = 2 / currentZoom
       }
       ctx.strokeRect(textX, textY, nameTagWidth, nameTagHeight)
-      ctx.fillText(text, textX + nameTagWidth / 2, textY, nameTagWidth)
+      ctx.fillText(name, textX + nameTagWidth / 2, textY, nameTagWidth)
       ctx.closePath()
 
       if (isAreaPaint) {
@@ -615,8 +669,10 @@ function drawLinkObject(
 
     function drawArrow() {
       const MIN_HEAD_LENGTH = 20
+      const MAX_HEAD_LENGTH = 50
       let headLen = MIN_HEAD_LENGTH / currentZoom
       if (headLen < MIN_HEAD_LENGTH) headLen = MIN_HEAD_LENGTH
+      if (headLen > MAX_HEAD_LENGTH) headLen = MAX_HEAD_LENGTH
 
       const ANGLE_OFFSET = Math.PI / 4
 
@@ -678,9 +734,8 @@ function getNodeGroupColors(node: IPersonNode): GroupColors[] {
 
   // The PersonNode represents a group, instead of an actual person node?
   if (node.isGroupNode && currentNetwork.relationshipGroups[node.id]) {
-    const { backgroundColor, textColor } = currentNetwork.relationshipGroups[
-      node.id
-    ]
+    const { backgroundColor, textColor } =
+      currentNetwork.relationshipGroups[node.id]
     return [{ backgroundColor, textColor }]
   }
 
@@ -918,8 +973,8 @@ function handleNodeRightClick(
         // One of the nodes is a group; add/remove it to/from the group
         const groupId = isOnlyFirstNodeAGroup ? nodeToConnect.node.id : node.id
         const personId = isOnlyFirstNodeAGroup ? node.id : nodeToConnect.node.id
-        const group = store.getState().networks.currentNetwork
-          ?.relationshipGroups[groupId]
+        const group =
+          store.getState().networks.currentNetwork?.relationshipGroups[groupId]
 
         try {
           if (!group) throw new Error("That group doesn't exist")
@@ -1000,8 +1055,8 @@ export function addGroupNodeLinks(gData: IForceGraphData) {
 
   const groupNodes = gData.nodes.filter((node) => node.isGroupNode)
 
-  const relationshipGroups = store.getState().networks.currentNetwork
-    ?.relationshipGroups
+  const relationshipGroups =
+    store.getState().networks.currentNetwork?.relationshipGroups
   if (!relationshipGroups) return
 
   groupNodes.forEach((groupNode) => {
@@ -1072,7 +1127,6 @@ function setCustomListeners(container: HTMLElement) {
 }
 
 function handleZoomPan(transform: { k: number; x: number; y: number }) {
-  // Update the currentZoom variable
   currentZoom = transform.k
 
   if (isPanningOrZooming) return
@@ -1115,16 +1169,27 @@ async function handleLinkClick(link: LinkObject) {
   }
 }
 
-// Bigger nodes will render first, with smallern nodes appearing on top of them
+// Bigger nodes will render first, with smaller nodes appearing on top of them
 export function sortNodesBySize(gData: IForceGraphData) {
   return gData.nodes.sort((a, b) => {
     const sizeA = a.thumbnail
-      ? a.thumbnail.naturalWidth * a.thumbnail.naturalHeight
+      ? a.thumbnail.naturalWidth *
+        (a.scaleXY ? a.scaleXY.x : 1) *
+        a.thumbnail.naturalHeight *
+        (a.scaleXY ? a.scaleXY.y : 1)
       : 0
     const sizeB = b.thumbnail
-      ? b.thumbnail.naturalWidth * b.thumbnail.naturalHeight
+      ? b.thumbnail.naturalWidth *
+        (b.scaleXY ? b.scaleXY.x : 1) *
+        b.thumbnail.naturalHeight *
+        (b.scaleXY ? b.scaleXY.y : 1)
       : 0
-    return sizeB - sizeA
+    if (sizeA !== sizeB) return sizeB - sizeA
+
+    // Sort by name length
+    const aLen = a.name.length
+    const bLen = b.name.length
+    return bLen - aLen
   })
 }
 

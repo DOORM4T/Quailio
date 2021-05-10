@@ -22,14 +22,12 @@ import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import { IApplicationState } from "../../../store/store"
 import {
-  cachePersonGroupList,
   setPersonInFocus,
   toggleGroupFilter,
   togglePersonOverlay,
   togglePersonVisibility,
   zoomToPerson,
 } from "../../../store/ui/uiActions"
-import { IPersonIDWithActiveGroups } from "../../../store/ui/uiTypes"
 import { IPersonMenuProps } from "../PersonMenu"
 
 const NAME_CHAR_LIMIT = 30
@@ -66,9 +64,8 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     : false
 
   // STATE | Indicates whether all groups are showing or not. Used to toggle all groups on/off.
-  const [isShowingAllGroups, setShowingAllGroups] = React.useState<boolean>(
-    true,
-  )
+  const [isShowingAllGroups, setShowingAllGroups] =
+    React.useState<boolean>(true)
 
   // VARS | Icon and ToolTip text to show based on "isShowingAllGroups" state
   const showHideAllIcon = isShowingAllGroups ? (
@@ -112,38 +109,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
       dispatch(zoomToPerson(filterablePeople[searchIndex].id))
     }
   }, [searchIndex]) // ACTIVATES | When searchIndex state changes
-
-  /* EFFECT | Cache global "groupsByPersonIds" state for people and the active/visible groups they're in 
-            |    The "groupsByPersonIds" global state is used by the force-graph 
-            |    -- setting/caching the state from this PersonMenu component saves a lot of
-            |    processing that would otherwise be inefficiently calculated during each tick of the force-graph  */
-  React.useEffect(() => {
-    // Stop if there aren't any groups in the current network -- this means there's no person-group data to cache
-    if (!groups || !hasGroups) return
-
-    // Get an array of objects containing a personId and active groups containing that person
-    const groupsByPersonIds = filterablePeople.map((person) => {
-      const groupsWithThisPerson = Object.keys(groups).filter((groupId) =>
-        groups[groupId].personIds.includes(person.id),
-      )
-
-      // Keep only the active groups the person is in
-      const activeGroupIds = groupsWithThisPerson.filter(
-        (groupId) =>
-          filterGroupsMap[groupId] === true ||
-          filterGroupsMap[groupId] === undefined, // Treat a group's undefined "showing" state as true -- show by default
-      )
-
-      const data: IPersonIDWithActiveGroups = {
-        personId: person.id,
-        activeGroupIds,
-      }
-      return data
-    })
-
-    // Pass the array to a custom Redux action that will result in this information being cached in global state
-    dispatch(cachePersonGroupList(groupsByPersonIds))
-  }, [currentNetwork?.people, groups, filterGroupsMap]) // ACTIVATES | When the people list, groups, or filterGroups change
 
   // FUNCTION | Set search/add input state when an input value changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,90 +161,88 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
    * @param canSearch whether the search item can be highlighted or not (this will only be enabled for the "ALL" list). Closure data for the created function.
    * @returns UI for the item
    */
-  const renderItem = (canSearch: boolean) => (
-    person: IPerson,
-    index: number,
-  ) => {
-    const isSelected = canSearch && searchIndex === index
+  const renderItem =
+    (canSearch: boolean) => (person: IPerson, index: number) => {
+      const isSelected = canSearch && searchIndex === index
 
-    const PersonIconBox: React.ReactNode = (
-      <Box
-        onClick={viewPerson(person.id)} // Open the person overlay when clicked
-        // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
-        onMouseEnter={() => {
-          dispatch(zoomToPerson(person.id))
-        }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
-        onMouseLeave={resetZoomedPerson}
-        aria-label="Select person"
-        width="64px"
-        height="64px"
-        align="start"
-        justify="center"
-        style={{
-          cursor: "pointer",
-          filter: isSelected ? "brightness(200%)" : undefined,
-        }}
-      >
-        <Box background="light-1" fill align="center" justify="center">
-          {person.thumbnailUrl ? (
-            <Image src={person.thumbnailUrl} height="64px" width="64px" />
-          ) : (
-            <Icons.User width="100%" />
-          )}
-        </Box>
-      </Box>
-    )
-
-    const PersonNameBox: React.ReactNode = (
-      <Box>
-        <Text
+      const PersonIconBox: React.ReactNode = (
+        <Box
+          onClick={viewPerson(person.id)} // Open the person overlay when clicked
+          // onClick={toggleSelected(item.id)} // TODO: Implement batch operations
+          onMouseEnter={() => {
+            dispatch(zoomToPerson(person.id))
+          }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
+          onMouseLeave={resetZoomedPerson}
+          aria-label="Select person"
+          width="64px"
+          height="64px"
+          align="start"
+          justify="center"
           style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "20ch",
+            cursor: "pointer",
+            filter: isSelected ? "brightness(200%)" : undefined,
           }}
         >
-          {person.name.length > NAME_CHAR_LIMIT
-            ? `${person.name.slice(0, NAME_CHAR_LIMIT)}...`
-            : person.name}
-        </Text>
-      </Box>
-    )
+          <Box background="light-1" fill align="center" justify="center">
+            {person.thumbnailUrl ? (
+              <Image src={person.thumbnailUrl} height="64px" width="64px" />
+            ) : (
+              <Icons.User width="100%" />
+            )}
+          </Box>
+        </Box>
+      )
 
-    const isVisible = visibilityMap[person.id] !== false // undefined and true mean the node is visible
-    const VisibilityIcon: Icons.Icon = isVisible
-      ? Icons.FormView
-      : Icons.FormViewHide
+      const PersonNameBox: React.ReactNode = (
+        <Box>
+          <Text
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: "20ch",
+            }}
+          >
+            {person.name.length > NAME_CHAR_LIMIT
+              ? `${person.name.slice(0, NAME_CHAR_LIMIT)}...`
+              : person.name}
+          </Text>
+        </Box>
+      )
 
-    const toggleVisibility = async () => {
-      dispatch(togglePersonVisibility(person.id, !isVisible))
-    }
+      const isVisible = visibilityMap[person.id] !== false // undefined and true mean the node is visible
+      const VisibilityIcon: Icons.Icon = isVisible
+        ? Icons.FormView
+        : Icons.FormViewHide
 
-    const VisibilityToggle: React.ReactNode = (
-      <Button icon={<VisibilityIcon />} onClick={toggleVisibility} />
-    )
+      const toggleVisibility = async () => {
+        dispatch(togglePersonVisibility(person.id, !isVisible))
+      }
 
-    return (
-      <Box
-        key={`${person.id}-${index}`}
-        direction="row"
-        align="center"
-        justify="start"
-        gap="small"
-        style={{
-          filter: isVisible ? undefined : "brightness(0.5)",
-        }}
-      >
-        {/* Icon Box on left */}
-        {PersonIconBox}
+      const VisibilityToggle: React.ReactNode = (
+        <Button icon={<VisibilityIcon />} onClick={toggleVisibility} />
+      )
 
-        {/* Name to the right of the Icon Box */}
-        {PersonNameBox}
+      return (
+        <Box
+          key={`${person.id}-${index}`}
+          direction="row"
+          align="center"
+          justify="start"
+          gap="small"
+          style={{
+            filter: isVisible ? undefined : "brightness(0.5)",
+          }}
+        >
+          {/* Icon Box on left */}
+          {PersonIconBox}
 
-        <Box margin={{ left: "auto" }}>{VisibilityToggle}</Box>
-      </Box>
-    )
-  } // END renderItem
+          {/* Name to the right of the Icon Box */}
+          {PersonNameBox}
+
+          <Box margin={{ left: "auto" }}>{VisibilityToggle}</Box>
+        </Box>
+      )
+    } // END renderItem
 
   // FUNCTION | Handles certain shortkey inputs from the add/search input
   const handleAddSearchInputShortkeys = async (

@@ -13,12 +13,15 @@ import {
 } from "../../../store/networks/actions"
 import { getAllNetworkData } from "../../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
+import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import {
+  cachePersonGroupList,
   setViewingShared,
   togglePersonOverlay,
   toggleShareOverlay,
 } from "../../../store/ui/uiActions"
+import { IPersonIDWithActiveGroups } from "../../../store/ui/uiTypes"
 
 export default function useDashboard() {
   const dispatch = useDispatch()
@@ -28,6 +31,7 @@ export default function useDashboard() {
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
   const isViewingShared = useSelector(getIsViewingShared)
+  const filterGroupsMap = useSelector(getFilterGroups)
 
   // Check if the user is authenticated -- if not, use zero-login features
   const { isAuthenticated } = useAuth()
@@ -113,6 +117,38 @@ export default function useDashboard() {
     dispatch(togglePersonOverlay(false))
     dispatch(toggleShareOverlay(false))
   }, [])
+
+  /* EFFECT | Cache global "groupsByPersonIds" state for people and the active/visible groups they're in 
+            |    The "groupsByPersonIds" global state is used by the force-graph 
+            |    -- setting/caching the state from this PersonMenu component saves a lot of
+            |    processing that would otherwise be inefficiently calculated during each tick of the force-graph  */
+  React.useEffect(() => {
+    // Stop if there aren't any groups in the current network -- this means there's no person-group data to cache
+    if (!currentNetwork || !currentNetwork.relationshipGroups) return
+
+    const groups = currentNetwork.relationshipGroups
+
+    // Get an array of objects containing a personId and active groups containing that person
+    const groupsByPersonIds = currentNetwork.people.map((person) => {
+      const groupsWithThisPerson = Object.keys(groups).filter((groupId) =>
+        groups[groupId].personIds.includes(person.id),
+      )
+
+      // Keep only the active groups the person is in
+      const activeGroupIds = groupsWithThisPerson.filter(
+        (groupId) => filterGroupsMap[groupId] !== false,
+      )
+
+      const data: IPersonIDWithActiveGroups = {
+        personId: person.id,
+        activeGroupIds,
+      }
+      return data
+    })
+
+    // Cache in global state
+    dispatch(cachePersonGroupList(groupsByPersonIds))
+  }, [currentNetwork?.relationshipGroups]) // Cache groups by person ID
 
   // RETURN | All the hook values that will be used by the Dashboard page
   return {

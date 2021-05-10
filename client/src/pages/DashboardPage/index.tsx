@@ -26,12 +26,12 @@ const DashboardPage: React.FC = () => {
     setShowPersonMenu,
   } = useDashboard()
 
-  // Reset UI state on unmount
+  // Reset certain UI state
   useEffect(() => {
     return () => {
       dispatch(resetUI())
     }
-  }, [])
+  }, [currentNetwork?.id])
 
   const visibleNodes = useSelector(
     (state: IApplicationState) => state.ui.personNodeVisibility,

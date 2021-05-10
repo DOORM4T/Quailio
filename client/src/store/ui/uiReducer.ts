@@ -101,7 +101,16 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
     }
 
     case UserInterfaceActionTypes.RESET_UI: {
-      return initialState
+      return {
+        ...state,
+        activeGroupsByPersonId: {},
+        filteredGroups: {},
+        isPersonEditMenuOpen: false,
+        isShareMenuOpen: false,
+        personNodeVisibility: {},
+        personInFocus: null,
+        personInZoom: null,
+      }
     }
 
     default:

@@ -111,7 +111,7 @@ export const togglePersonVisibility = (
   isVisible: doShow,
 })
 
-// Clear all UI global state
+// Clear UI global state
 export const resetUI = (): IResetUIAction => ({
   type: UserInterfaceActionTypes.RESET_UI,
 })
