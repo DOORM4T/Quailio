@@ -424,8 +424,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         // There are highlighted nodes but this one isn't one of them
         ctx.fillStyle = LOW_ATTENTION_COLOR
       } else {
-        // Normal fill color
-        ctx.fillStyle = fillColor
+        // Default fill color
+        ctx.fillStyle = DEFAULT_NODE_COLOR
       }
 
       ctx.textAlign = "center"
@@ -458,7 +458,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       } else {
         // Normal fill color
         ctx.strokeStyle = "black"
-        ctx.fillStyle = colors.length > 0 ? colors[0].textColor : "black"
+        ctx.fillStyle = "black"
       }
 
       ctx.beginPath()
