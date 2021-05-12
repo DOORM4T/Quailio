@@ -125,11 +125,15 @@ const PersonHeader: React.FC<IProps> = (props) => {
         <TextInput
           value={personName}
           textAlign="center"
-          onClick={(e) => e.currentTarget.select()}
+          onClick={(e) => {
+            e.currentTarget.select()
+          }}
           onChange={handleNameChange}
           onKeyDown={(e) => {
-            /* Trigger save when Escape or Enter are pressed */
-            if (/(Enter|Escape)/.test(e.key)) e.currentTarget.blur()
+            // Trigger save when Escape or Enter are pressed
+            // Use target instead of current target since currentTarget might be the document, which doesn't have a .blur() method
+            if (/(Enter|Escape)/.test(e.key))
+              (e.target as HTMLInputElement).blur()
           }}
           onBlur={handleUpdateName}
         />
