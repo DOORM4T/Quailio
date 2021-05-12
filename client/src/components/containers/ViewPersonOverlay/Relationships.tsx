@@ -1,4 +1,4 @@
-import { Anchor, Box, Button, Heading, List, Text, TextInput } from "grommet"
+import { Anchor, Box, Button, Heading, List, Text, TextArea } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -75,37 +75,36 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
   // #region Relationships List
   //
   // Handle updates to individual relationship reasons
-  const handleReasonChange = (personId: string) => (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const updatedRelatedPeople = getUpdatedRelatedPeople()
-    if (!updatedRelatedPeople) return
+  const handleReasonChange =
+    (personId: string) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const updatedRelatedPeople = getUpdatedRelatedPeople()
+      if (!updatedRelatedPeople) return
 
-    setRelatedPeopleData(updatedRelatedPeople)
-    setDidChangeReason(true)
+      setRelatedPeopleData(updatedRelatedPeople)
+      setDidChangeReason(true)
 
-    // #region handleReasonChange: HELPERS
-    function getUpdatedRelatedPeople(): IRelatedPersonData[] | null {
-      const personToUpdateIndex = relatedPeopleData.findIndex(
-        (p) => p.id === personId,
-      )
-      if (personToUpdateIndex === -1) return null
+      // #region handleReasonChange: HELPERS
+      function getUpdatedRelatedPeople(): IRelatedPersonData[] | null {
+        const personToUpdateIndex = relatedPeopleData.findIndex(
+          (p) => p.id === personId,
+        )
+        if (personToUpdateIndex === -1) return null
 
-      const personToUpdate = relatedPeopleData[personToUpdateIndex]
-      const updatedPerson: IRelatedPersonData = {
-        ...personToUpdate,
-        reason: e.currentTarget.value,
+        const personToUpdate = relatedPeopleData[personToUpdateIndex]
+        const updatedPerson: IRelatedPersonData = {
+          ...personToUpdate,
+          reason: e.currentTarget.value,
+        }
+
+        /* Update the relatedPeople array */
+        const updatedPeople = [...relatedPeopleData]
+        updatedPeople[personToUpdateIndex] = updatedPerson
+
+        return updatedPeople
       }
 
-      /* Update the relatedPeople array */
-      const updatedPeople = [...relatedPeopleData]
-      updatedPeople[personToUpdateIndex] = updatedPerson
-
-      return updatedPeople
+      // #endregion handleReasonChange: HELPERS
     }
-
-    // #endregion handleReasonChange: HELPERS
-  }
 
   const renderListItem = (person: IRelatedPersonData, index: number) => {
     const navigateToRelatedPerson = async () => {
@@ -121,11 +120,9 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
       }
     }
 
-    const blurOnEnterOrEsc = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (/(Enter|Escape)/.test(e.key)) e.currentTarget.blur()
-    }
-
-    const updateRelReason = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const updateRelReason = async (
+      e: React.FocusEvent<HTMLTextAreaElement>,
+    ) => {
       if (!didChangeReason) return
 
       try {
@@ -143,15 +140,15 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
     }
 
     const relationshipReasonEditor = (
-      <TextInput
+      <TextArea
+        resize={false}
         style={{
-          padding: "0 1rem",
+          width: "100%",
           border: "none",
           borderBottom: "1px solid black",
         }}
         value={person.reason}
         onChange={handleReasonChange(person.id)}
-        onKeyPress={blurOnEnterOrEsc}
         onBlur={updateRelReason}
       />
     )
@@ -161,6 +158,8 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
         size="medium"
         style={{
           fontStyle: "italic",
+          wordWrap: "break-word",
+          whiteSpace: "break-spaces",
         }}
       >
         {person.reason || "-"}
