@@ -115,7 +115,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
 
     // Reusable function to update the graph using the updatedGraphData object
     const updateGraph = () => {
-      updatedGraphData.nodes = sortNodesBySize(updatedGraphData)
+      sortNodesBySize(updatedGraphData)
 
       people.forEach(createLinksByRelationships(updatedGraphData))
       addGroupNodeLinks(updatedGraphData)

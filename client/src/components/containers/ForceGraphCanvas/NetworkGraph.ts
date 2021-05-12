@@ -58,7 +58,9 @@ const DEFAULT_LINK_COLOR = "black"
 const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/links for non-highlighted nodes when something is being highlighted
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
+const MAX_FONT_SIZE = BASE_FONT_SIZE * 3
 const BADGE_FONT_SIZE = BASE_FONT_SIZE / 1.5
+const MAX_BADGE_SIZE = BADGE_FONT_SIZE * 3
 
 // Line dash constants
 const MIN_SEGMENT_LENGTH = 5
@@ -86,7 +88,6 @@ export function createNetworkGraph(
     addGroupNodeToForceGraph(gData, groupId, group)
   }
   Object.entries(currentNetwork.relationshipGroups).forEach(createGroupNode)
-  gData.nodes = sortNodesBySize(gData)
 
   addGroupNodeLinks(gData)
   currentNetwork.people.forEach(createLinksByRelationships(gData))
@@ -142,6 +143,13 @@ export function createNetworkGraph(
   Graph.onRenderFramePre(drawBackgroundNodes(Graph))
     .nodeCanvasObject(drawNodeNormally(Graph))
     .nodePointerAreaPaint(nodePaint(Graph, true))
+
+  // Immediately sorting nodes causes some large background nodes to overlap smaller backgorund nodes
+  // -- possibly because of image load times?
+  // Sorting after 1 second works though
+  setTimeout(() => {
+    sortNodesBySize(Graph.graphData() as IForceGraphData)
+  }, 1000)
 
   return Graph
 }
@@ -309,10 +317,11 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
     const { height: thumbnailHeight } = drawThumbnail()
 
-    if (currentZoom < FAR_ZOOM_THRESHOLD) return
+    if (!isBackground && currentZoom < FAR_ZOOM_THRESHOLD) return
     const { nameTagWidth: ntWidth, nameTagHeight: ntHeight } = drawNameTag()
 
     // Draw group badges
+    if (isGroupNode) return // Group nodes aren't part of other groups
     let badgeXOffset = -ntWidth / 2
     let badgeYOffset = thumbnailHeight / 2 + ntHeight
     const groupIds = store.getState().ui.activeGroupsByPersonId[node.id]
@@ -371,6 +380,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       let realBadgeFontSize = BADGE_FONT_SIZE / currentZoom
       if (realBadgeFontSize < BADGE_FONT_SIZE)
         realBadgeFontSize = BADGE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
+      if (realBadgeFontSize > MAX_BADGE_SIZE) realBadgeFontSize = MAX_BADGE_SIZE
       ctx.font = `${realBadgeFontSize}px ${FONT_FAMILY}`
 
       const group =
@@ -433,6 +443,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       // Scale font size based on the current zoom level
       let realFontSize = BASE_FONT_SIZE / currentZoom
       if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
+      if (realFontSize > MAX_FONT_SIZE) realFontSize = MAX_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
       ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
 
       // Name tag width is the text width. Minimum width equals the NODE_SIZE
@@ -1170,7 +1181,7 @@ async function handleLinkClick(link: LinkObject) {
 
 // Bigger nodes will render first, with smaller nodes appearing on top of them
 export function sortNodesBySize(gData: IForceGraphData) {
-  return gData.nodes.sort((a, b) => {
+  gData.nodes.sort((a, b) => {
     const sizeA = a.thumbnail
       ? a.thumbnail.naturalWidth *
         (a.scaleXY ? a.scaleXY.x : 1) *
@@ -1183,12 +1194,9 @@ export function sortNodesBySize(gData: IForceGraphData) {
         b.thumbnail.naturalHeight *
         (b.scaleXY ? b.scaleXY.y : 1)
       : 0
-    if (sizeA !== sizeB) return sizeB - sizeA
 
-    // Sort by name length
-    const aLen = a.name.length
-    const bLen = b.name.length
-    return bLen - aLen
+    if (sizeA !== sizeB) return sizeB - sizeA
+    else return b.name.length - a.name.length
   })
 }
 
