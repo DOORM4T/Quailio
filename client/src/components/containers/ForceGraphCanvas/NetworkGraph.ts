@@ -295,8 +295,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     if (colors.length === 0) colors = DEFAULT_NODE_COLOR_OBJECT
 
     const gradient = makeGradient()
-    const defaultNodeBorderColor = colors[0].backgroundColor
-    const fillColor = gradient ? gradient : defaultNodeBorderColor
+    const fillColor = gradient ? gradient : colors[0].backgroundColor
 
     const isHighlighting = highlightNodes.size > 0
     const doHighlightNode = isHighlighting && highlightNodes.has(node)
@@ -416,15 +415,15 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
     function drawNameTag() {
       // Name tag color. Group Nodes keep their color
-      // Show only highlighted node if SHIFT key is down
       if (isHighlighting && doHighlightNode && !isGroupNode) {
-        // Node is highlighted
+        // This node is highlighted
         ctx.fillStyle = highlightColor
       } else if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.fillStyle = LOW_ATTENTION_COLOR
+      } else if (isGroupNode) {
+        ctx.fillStyle = fillColor
       } else {
-        // Default fill color
         ctx.fillStyle = DEFAULT_NODE_COLOR
       }
 
