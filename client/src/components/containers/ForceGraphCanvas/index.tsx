@@ -61,7 +61,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     }
   }
 
-  // Re-creates the force graph when the window resizes
   function handleResize() {
     const currentForceGraph = forceGraphRef.current
     const currentCanvasContainer = canvasRef.current
@@ -70,13 +69,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     const { width, height } = currentCanvasContainer.getBoundingClientRect()
 
     currentForceGraph.width(width).height(height)
-
-    const fitToScreen = () => {
-      if (!forceGraphRef.current) return
-
-      forceGraphRef.current.zoomToFit(500)
-    }
-    setTimeout(fitToScreen, 100)
   }
 
   // Destroy the graph and related listeners to prevent memory leaks
@@ -160,7 +152,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       //
 
       updateGraph()
-
       // If a node was added, highlight it
       if (newPersonNodes.length === 1) {
         clearHighlights()
@@ -335,18 +326,8 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     currentNetwork?.groupIds,
   ])
 
-  // When a new force graph is created...
-  React.useEffect(() => {
-    // Zoom the entire graph into view
-    setTimeout(() => {
-      if (!forceGraphRef.current) return
-      forceGraphRef.current.zoomToFit(500)
-    }, 500)
-  }, [forceGraphRef])
-
   // Zoom in on a person node
   React.useEffect(() => {
-    // Stop if null or if there's no force-graph
     if (!personIdToZoom || !forceGraphRef.current) {
       clearHighlights()
       return
@@ -365,7 +346,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       const { x, y } = nodeToZoom
       if (x === undefined || y === undefined) return
 
-      forceGraph.centerAt(x, y, 250).zoomToFit(500)
+      forceGraph.centerAt(x, y, 250)
       clearHighlights()
       highlightNode(nodeToZoom)
     }
