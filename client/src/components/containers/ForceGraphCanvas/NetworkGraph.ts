@@ -1196,22 +1196,22 @@ async function handleLinkClick(link: LinkObject) {
 
 // Bigger nodes will render first, with smaller nodes appearing on top of them
 export function sortNodesBySize(gData: IForceGraphData) {
-  // gData.nodes.sort((a, b) => {
-  //   const sizeA = a.thumbnail
-  //     ? a.thumbnail.naturalWidth *
-  //       (a.scaleXY ? a.scaleXY.x : 1) *
-  //       a.thumbnail.naturalHeight *
-  //       (a.scaleXY ? a.scaleXY.y : 1)
-  //     : 0
-  //   const sizeB = b.thumbnail
-  //     ? b.thumbnail.naturalWidth *
-  //       (b.scaleXY ? b.scaleXY.x : 1) *
-  //       b.thumbnail.naturalHeight *
-  //       (b.scaleXY ? b.scaleXY.y : 1)
-  //     : 0
-  //   if (sizeA !== sizeB) return sizeB - sizeA
-  //   else return b.name.length - a.name.length
-  // })
+  gData.nodes.sort((a, b) => {
+    const sizeA = a.thumbnail
+      ? a.thumbnail.naturalWidth *
+        (a.scaleXY ? a.scaleXY.x : 1) *
+        a.thumbnail.naturalHeight *
+        (a.scaleXY ? a.scaleXY.y : 1)
+      : 0
+    const sizeB = b.thumbnail
+      ? b.thumbnail.naturalWidth *
+        (b.scaleXY ? b.scaleXY.x : 1) *
+        b.thumbnail.naturalHeight *
+        (b.scaleXY ? b.scaleXY.y : 1)
+      : 0
+    if (sizeA !== sizeB) return sizeB - sizeA
+    else return b.name.length - a.name.length
+  })
 }
 
 // #endregion HELPER FUNCTIONS
