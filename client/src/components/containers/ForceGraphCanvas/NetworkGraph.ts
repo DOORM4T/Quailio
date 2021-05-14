@@ -123,7 +123,7 @@ export function createNetworkGraph(
     .maxZoom(300)
 
   // Physics
-  Graph.dagMode("td")
+  Graph.dagMode("radialin")
     .dagLevelDistance(INITIAL_DISTANCE)
     .d3Force(
       "collide",
@@ -573,14 +573,23 @@ function drawLinkObject(
   link: LinkObject | null,
   ctx: CanvasRenderingContext2D,
 ) {
-  if (!link || !link.source || !link.target) return null
+  if (!link || !link.source || !link.target) {
+    return null
+  }
 
   const srcNode = link.source as NodeObject & IPersonNode
   const targetNode = link.target as NodeObject & IPersonNode
 
   const { x: x1, y: y1, relationships: srcRels, id: srcId } = srcNode
   const { x: x2, y: y2, relationships: targetRels, id: targetId } = targetNode
-  if (!x1 || !y1 || !x2 || !y2) return null
+  if (
+    x1 === undefined ||
+    y1 === undefined ||
+    x2 === undefined ||
+    y2 === undefined
+  ) {
+    return null
+  }
 
   const isGroupConnection = srcNode.isGroupNode || targetNode.isGroupNode
 
@@ -664,7 +673,13 @@ function drawLinkObject(
   //
 
   function drawLineEndShape(shape: ConnectionShape, at: "target" | "source") {
-    if (!x1 || !x2 || !y1 || !y2) return
+    if (
+      x1 === undefined ||
+      x2 === undefined ||
+      y1 === undefined ||
+      y2 === undefined
+    )
+      return
     const toX = at === "target" ? x2 : x1
     const toY = at === "target" ? y2 : y1
     const fromX = at === "target" ? x1 : x2
@@ -1181,23 +1196,22 @@ async function handleLinkClick(link: LinkObject) {
 
 // Bigger nodes will render first, with smaller nodes appearing on top of them
 export function sortNodesBySize(gData: IForceGraphData) {
-  gData.nodes.sort((a, b) => {
-    const sizeA = a.thumbnail
-      ? a.thumbnail.naturalWidth *
-        (a.scaleXY ? a.scaleXY.x : 1) *
-        a.thumbnail.naturalHeight *
-        (a.scaleXY ? a.scaleXY.y : 1)
-      : 0
-    const sizeB = b.thumbnail
-      ? b.thumbnail.naturalWidth *
-        (b.scaleXY ? b.scaleXY.x : 1) *
-        b.thumbnail.naturalHeight *
-        (b.scaleXY ? b.scaleXY.y : 1)
-      : 0
-
-    if (sizeA !== sizeB) return sizeB - sizeA
-    else return b.name.length - a.name.length
-  })
+  // gData.nodes.sort((a, b) => {
+  //   const sizeA = a.thumbnail
+  //     ? a.thumbnail.naturalWidth *
+  //       (a.scaleXY ? a.scaleXY.x : 1) *
+  //       a.thumbnail.naturalHeight *
+  //       (a.scaleXY ? a.scaleXY.y : 1)
+  //     : 0
+  //   const sizeB = b.thumbnail
+  //     ? b.thumbnail.naturalWidth *
+  //       (b.scaleXY ? b.scaleXY.x : 1) *
+  //       b.thumbnail.naturalHeight *
+  //       (b.scaleXY ? b.scaleXY.y : 1)
+  //     : 0
+  //   if (sizeA !== sizeB) return sizeB - sizeA
+  //   else return b.name.length - a.name.length
+  // })
 }
 
 // #endregion HELPER FUNCTIONS
