@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
+import NetworkGraphToolbar from "../../components/containers/NetworkGraphToolbar"
 import { importJSONAsNetwork } from "../../helpers/importJSONAsNetwork"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
@@ -96,6 +97,7 @@ const DashboardPage: React.FC = () => {
         background="dark-1"
         style={{ height: `calc(100vh - ${HEADER_HEIGHT}px)` }}
         fill
+        overflow="hidden"
       >
         {currentNetwork ? (
           <React.Fragment>
@@ -105,6 +107,7 @@ const DashboardPage: React.FC = () => {
               currentNetwork={networkWithVisibleNodes}
               style={{ overflow: "hidden", backgroundColor: "#DDD" }}
             />
+            <NetworkGraphToolbar />
           </React.Fragment>
         ) : (
           <Box margin={{ top: "xlarge", horizontal: "auto" }}>
