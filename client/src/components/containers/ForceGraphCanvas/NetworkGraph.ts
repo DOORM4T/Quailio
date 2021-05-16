@@ -790,6 +790,10 @@ function getNodeGroupColors(node: IPersonNode): GroupColors[] {
 
 function handleLinkHover(container: HTMLDivElement) {
   return (link: LinkObject | null) => {
+    const currentToolbarAction = store.getState().ui.toolbarAction
+    const canView = currentToolbarAction === "VIEW"
+    if (!canView) return
+
     clearHighlights()
     container.style.cursor = link ? "pointer" : "grab"
     if (!link || hoverNodeId) return
@@ -805,6 +809,10 @@ function handleLinkHover(container: HTMLDivElement) {
 }
 function getLinkLabel(link: LinkObject | null) {
   if (!link || !link.source || !link.target) return ""
+
+  const currentToolbarAction = store.getState().ui.toolbarAction
+  const canView = currentToolbarAction === "VIEW"
+  if (!canView) return ""
 
   const sourceNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
@@ -859,7 +867,10 @@ function handleNodeHover(container: HTMLDivElement) {
     clearHighlights()
     container.style.cursor = n ? "pointer" : "grab"
 
-    if (!n) return
+    // Can only highlight in VIEW mode
+    const currentToolbarAction = store.getState().ui.toolbarAction
+    const canHighlight = currentToolbarAction === "VIEW"
+    if (!n || !canHighlight) return
     highlightNode(n)
   }
 }
@@ -916,6 +927,13 @@ async function handleNodeClick(n: NodeObject | null) {
 
   // TODO: Clicking a group node does nothing... for now
   if (node.isGroupNode) return
+
+  // TODO: Select node in SELECT mode
+
+  // View if in VIEW mode
+  const currentToolbarAction = store.getState().ui.toolbarAction
+  const canView = currentToolbarAction === "VIEW"
+  if (!canView) return
 
   try {
     // Focus on the clicked person & show their details
@@ -1164,6 +1182,10 @@ function handleZoomPanEnd(transform: { k: number; x: number; y: number }) {
 }
 
 async function handleLinkClick(link: LinkObject) {
+  const currentToolbarAction = store.getState().ui.toolbarAction
+  const canView = currentToolbarAction === "VIEW"
+  if (!canView) return
+
   // DO NOT allow right click events if in sharing mode
   if (store.getState().ui.isViewingShared) return
 
