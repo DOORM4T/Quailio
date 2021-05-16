@@ -6,12 +6,14 @@ import {
   IPersonIDWithActiveGroups,
   IResetUIAction,
   ISetNodeVisibilityAction,
+  ISetToolbarAction,
   ISetUILoadingAction,
   ISetViewingSharedAction,
   IToggleGroupFilterAction,
   ITogglePersonOverlay,
   IToggleShareOverlayAction,
   IZoomToPersonAction,
+  ToolbarAction,
   UserInterfaceActionTypes,
 } from "./uiTypes"
 
@@ -114,4 +116,11 @@ export const togglePersonVisibility = (
 // Clear UI global state
 export const resetUI = (): IResetUIAction => ({
   type: UserInterfaceActionTypes.RESET_UI,
+})
+
+export const setToolbarAction = (
+  toolbarAction: ToolbarAction,
+): ISetToolbarAction => ({
+  type: UserInterfaceActionTypes.SET_TOOLBAR_ACTION,
+  toolbarAction,
 })

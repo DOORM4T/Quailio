@@ -16,6 +16,7 @@ const initialState: IUserInterfaceState = {
   isShareMenuOpen: false,
   isViewingShared: false,
   personNodeVisibility: {},
+  toolbarAction: "VIEW",
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -110,6 +111,13 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
         personNodeVisibility: {},
         personInFocus: null,
         personInZoom: null,
+      }
+    }
+
+    case UserInterfaceActionTypes.SET_TOOLBAR_ACTION: {
+      return {
+        ...state,
+        toolbarAction: action.toolbarAction,
       }
     }
 

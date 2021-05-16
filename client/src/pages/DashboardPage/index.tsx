@@ -47,14 +47,14 @@ const DashboardPage: React.FC = () => {
       }
     : null // networkWithActiveNodes
 
-  // Wrapper for a Person Menu. Hidden if doShowPersonMenu state is false
-  const PersonMenuWrapper: React.ReactNode = doShowPersonMenu ? (
+  const PersonMenuWrapper: React.ReactNode = (
     <Box
       direction="column"
       justify="start"
       align="stretch"
       width="large"
       height={isSmall ? "50%" : "100%"}
+      style={{ display: doShowPersonMenu ? "block" : "none" }}
     >
       <PersonMenu
         people={
@@ -66,24 +66,26 @@ const DashboardPage: React.FC = () => {
         }
       />
     </Box>
-  ) : null // PersonMenuWrapper
+  )
+
+  const HelmetTitle =
+    isViewingShared && currentNetwork ? (
+      <Helmet>
+        <title>{currentNetwork.name} (Shared Network)</title>
+        <meta
+          name="description"
+          content={`${currentNetwork.name} on Quailio`}
+        />
+      </Helmet>
+    ) : (
+      <Helmet>
+        <title>Dashboard</title>
+      </Helmet>
+    )
 
   return (
     <React.Fragment>
-      {/* Set the page title to the network */}
-      {isViewingShared && currentNetwork ? (
-        <Helmet>
-          <title>{currentNetwork.name} (Shared Network)</title>
-          <meta
-            name="description"
-            content={`${currentNetwork.name} on Quailio`}
-          />
-        </Helmet>
-      ) : (
-        <Helmet>
-          <title>Dashboard</title>
-        </Helmet>
-      )}
+      {HelmetTitle}
 
       <HeaderMenu
         networks={networks}
@@ -92,6 +94,7 @@ const DashboardPage: React.FC = () => {
         doShowPersonMenu={doShowPersonMenu}
         setShowPersonMenu={setShowPersonMenu} // HeaderMenu includes a button that will toggle showPersonState
       />
+
       <Box
         direction={isSmall ? "column" : "row"}
         background="dark-1"
