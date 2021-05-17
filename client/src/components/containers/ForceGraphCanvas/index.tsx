@@ -1,6 +1,6 @@
 import deepEqual from "deep-equal"
 import { ForceGraphInstance, LinkObject } from "force-graph"
-import React, { CSSProperties } from "react"
+import React, { CSSProperties, useEffect, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
@@ -27,9 +27,9 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   style,
 }) => {
   // create a ref for forwarding to the Canvas presentational component
-  const canvasRef = React.useRef<HTMLDivElement>()
-  const forceGraphRef = React.useRef<ForceGraphInstance | undefined>()
-  const existingPeopleIdsRef = React.useRef<Set<string>>(new Set<string>())
+  const canvasRef = useRef<HTMLDivElement>()
+  const forceGraphRef = useRef<ForceGraphInstance | undefined>()
+  const existingPeopleIdsRef = useRef<Set<string>>(new Set<string>())
   const existingPeopleIds = existingPeopleIdsRef.current
 
   // Global state tracking a person to zoom-in on
@@ -37,6 +37,27 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   const personIdToZoom = useSelector(
     (state: IApplicationState) => state.ui.personInZoom,
   )
+  const toolbarAction = useSelector(
+    (state: IApplicationState) => state.ui.toolbarAction,
+  )
+
+  useEffect(() => {
+    const Graph = forceGraphRef.current
+    if (!Graph) return
+
+    switch (toolbarAction) {
+      case "MOVE": {
+        Graph.enablePointerInteraction(true)
+        Graph.enableNodeDrag(true)
+        break
+      }
+
+      default: {
+        Graph.enablePointerInteraction(true)
+        Graph.enableNodeDrag(false)
+      }
+    }
+  }, [toolbarAction, forceGraphRef])
 
   // ==- Instantiate the Force Graph -== //
   const renderForceGraph = () => {
@@ -85,10 +106,10 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   }
 
   // Render force graph on container mount or when we switch to a different network
-  React.useEffect(renderForceGraph, [canvasRef, currentNetwork?.id])
+  useEffect(renderForceGraph, [canvasRef, currentNetwork?.id])
 
   // Update the existing force graph when people or groups change
-  React.useEffect(() => {
+  useEffect(() => {
     if (!forceGraphRef.current || !currentNetwork) return
     const forceGraph = forceGraphRef.current
     const people = currentNetwork.people
@@ -330,7 +351,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   ])
 
   // Zoom in on a person node
-  React.useEffect(() => {
+  useEffect(() => {
     if (!personIdToZoom || !forceGraphRef.current) {
       clearHighlights()
       return

@@ -36,10 +36,9 @@ import {
 //
 const NODE_SIZE = 64
 const INITIAL_DISTANCE = NODE_SIZE * 4
-const DEFAULT_LINK_SIZE = 3
-const FAR_ZOOM_THRESHOLD = 0.3
+const DEFAULT_LINK_SIZE = 1.5
 
-// For highlight on hover
+const selectedNodeIds = new Set<string>()
 const highlightNodes = new Set<NodeObject>()
 const highlightLinks = new Set<LinkObject>()
 let hoverNodeId: string | null = null
@@ -143,6 +142,8 @@ export function createNetworkGraph(
   Graph.onRenderFramePre(drawBackgroundNodes(Graph))
     .nodeCanvasObject(drawNodeNormally(Graph))
     .nodePointerAreaPaint(nodePaint(Graph, true))
+    .enablePointerInteraction(true)
+    .enableNodeDrag(false)
 
   // Immediately sorting nodes causes some large background nodes to overlap smaller backgorund nodes
   // -- possibly because of image load times?
@@ -310,6 +311,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const isHoveredNode = node.id === hoverNodeId
     const highlightColor = isHoveredNode ? "red" : "orange"
 
+    const isSelected = selectedNodeIds.has(id) // Node is selected in SELECT mode
+
     const { isSmallMode } = store.getState().ui
 
     if (isSmallMode && !isBackground) {
@@ -426,9 +429,11 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     }
 
     function drawNameTag() {
+      const doHighlightNameTag =
+        isHighlighting && doHighlightNode && !isGroupNode
       // Name tag color. Group Nodes keep their color
-      if (isHighlighting && doHighlightNode && !isGroupNode) {
-        // This node is highlighted
+      if (doHighlightNameTag || isSelected) {
+        // This node is highlighted or selected
         ctx.fillStyle = highlightColor
       } else if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
@@ -652,6 +657,7 @@ function drawLinkObject(
   if (lineWidth < DEFAULT_LINK_SIZE) lineWidth = DEFAULT_LINK_SIZE
   if (doHighlightLink && lineWidth < DEFAULT_LINK_SIZE * 2)
     lineWidth = DEFAULT_LINK_SIZE * 2
+  if (store.getState().ui.isSmallMode) lineWidth /= 2
   ctx.lineWidth = lineWidth
 
   // Draw the relationship line
@@ -930,10 +936,18 @@ async function handleNodeClick(n: NodeObject | null) {
   // TODO: Clicking a group node does nothing... for now
   if (node.isGroupNode) return
 
-  // TODO: Select node in SELECT mode
+  const currentToolbarAction = store.getState().ui.toolbarAction
+  // Select node in SELECT mode
+  const canSelect = currentToolbarAction === "SELECT"
+  if (canSelect) {
+    if (selectedNodeIds.has(node.id)) {
+      selectedNodeIds.delete(node.id)
+    } else {
+      selectedNodeIds.add(node.id)
+    }
+  }
 
   // View if in VIEW mode
-  const currentToolbarAction = store.getState().ui.toolbarAction
   const canView = currentToolbarAction === "VIEW"
   if (!canView) return
 
@@ -951,6 +965,15 @@ function handleBackgroundRightClick(
   currentNetwork: ICurrentNetwork,
 ) {
   return async (e: MouseEvent) => {
+    const isSelectMode = store.getState().ui.toolbarAction === "SELECT"
+    if (isSelectMode) {
+      const doClear = window.confirm("Clear selected nodes?")
+      if (!doClear) return
+
+      selectedNodeIds.clear()
+      return
+    }
+
     const { x, y } = graph.screen2GraphCoords(e.offsetX, e.offsetY)
 
     // DO NOT allow right click events if in sharing mode
