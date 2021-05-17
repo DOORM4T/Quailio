@@ -4,7 +4,7 @@ import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { IApplicationState } from "../../store/store"
-import { setToolbarAction } from "../../store/ui/uiActions"
+import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
 import { ToolbarAction } from "../../store/ui/uiTypes"
 import ToolTipButton from "../ToolTipButton"
 
@@ -23,6 +23,28 @@ const NetworkGraphToolbar: React.FC = () => {
 
   const accentIfSelected = (action: ToolbarAction) =>
     currentAction === action ? "accent-1" : "light-1"
+
+  const isSmallMode = useSelector(
+    (state: IApplicationState) => state.ui.isSmallMode,
+  )
+
+  const toggleSmallMode = () => {
+    dispatch(setSmallMode(!isSmallMode))
+  }
+  const toggleSmallModeButton = (
+    <ToolTipButton
+      tooltip={`${isSmallMode ? "Exit simple view" : "Enter simple view"}`}
+      icon={
+        isSmallMode ? (
+          <Icons.EmptyCircle color="accent-2" />
+        ) : (
+          <Icons.Image color="accent-2" />
+        )
+      }
+      dropProps={dropProps}
+      onClick={toggleSmallMode}
+    />
+  )
 
   return (
     <Box
@@ -63,12 +85,7 @@ const NetworkGraphToolbar: React.FC = () => {
         dropProps={dropProps}
         onClick={setAction("LINK")}
       />
-      <ToolTipButton
-        tooltip="Toggle Small Mode"
-        icon={<Icons.Contract color={accentIfSelected("SMALL")} />}
-        dropProps={dropProps}
-        onClick={setAction("SMALL")}
-      />
+
       <ToolTipButton
         tooltip="Resize"
         icon={<Icons.Expand color={accentIfSelected("RESIZE")} />}
@@ -81,6 +98,7 @@ const NetworkGraphToolbar: React.FC = () => {
         dropProps={dropProps}
         onClick={setAction("PIN")}
       />
+      {toggleSmallModeButton}
     </Box>
   )
 }

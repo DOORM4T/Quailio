@@ -6,6 +6,7 @@ import {
   IPersonIDWithActiveGroups,
   IResetUIAction,
   ISetNodeVisibilityAction,
+  ISetSmallModeAction,
   ISetToolbarAction,
   ISetUILoadingAction,
   ISetViewingSharedAction,
@@ -123,4 +124,9 @@ export const setToolbarAction = (
 ): ISetToolbarAction => ({
   type: UserInterfaceActionTypes.SET_TOOLBAR_ACTION,
   toolbarAction,
+})
+
+export const setSmallMode = (isSmall: boolean): ISetSmallModeAction => ({
+  type: UserInterfaceActionTypes.SET_SMALL_MODE,
+  isSmall,
 })

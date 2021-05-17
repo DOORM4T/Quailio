@@ -58,7 +58,7 @@ const DEFAULT_LINK_COLOR = "black"
 const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/links for non-highlighted nodes when something is being highlighted
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
-const MAX_FONT_SIZE = BASE_FONT_SIZE * 3
+const MAX_FONT_SIZE = BASE_FONT_SIZE * 10
 const BADGE_FONT_SIZE = BASE_FONT_SIZE / 1.5
 const MAX_BADGE_SIZE = BADGE_FONT_SIZE * 3
 
@@ -310,14 +310,16 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const isHoveredNode = node.id === hoverNodeId
     const highlightColor = isHoveredNode ? "red" : "orange"
 
-    if (currentZoom < FAR_ZOOM_THRESHOLD && !isBackground) {
+    const { isSmallMode } = store.getState().ui
+
+    if (isSmallMode && !isBackground) {
       drawSmallNode()
       return
     }
 
     const { height: thumbnailHeight } = drawThumbnail()
 
-    if (!isBackground && currentZoom < FAR_ZOOM_THRESHOLD) return
+    if (isSmallMode && !isBackground) return
     const { nameTagWidth: ntWidth, nameTagHeight: ntHeight } = drawNameTag()
 
     // Draw group badges

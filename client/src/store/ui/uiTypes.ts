@@ -9,7 +9,9 @@ export interface IUserInterfaceState {
   readonly isShareMenuOpen: boolean // State for showing the share menu
   readonly isViewingShared: boolean // Whether the user is viewing a shared network or not
   readonly personNodeVisibility: { [personId: string]: boolean }
+
   readonly toolbarAction: ToolbarAction
+  readonly isSmallMode: boolean
 }
 
 export type ToolbarAction =
@@ -18,7 +20,6 @@ export type ToolbarAction =
   | "CREATE"
   | "MOVE"
   | "LINK"
-  | "SMALL"
   | "RESIZE"
   | "PIN"
 
@@ -39,6 +40,7 @@ export enum UserInterfaceActionTypes {
   SET_NODE_VISIBILITY = "UI/SET_NODE_VISIBILITY",
   RESET_UI = "UI/RESET_UI",
   SET_TOOLBAR_ACTION = "UI/SET_TOOLBAR_ACTION",
+  SET_SMALL_MODE = "UI/SET_SMALL_MODE",
 }
 
 export interface ISetUILoadingAction {
@@ -101,7 +103,13 @@ export interface ISetToolbarAction {
   type: UserInterfaceActionTypes.SET_TOOLBAR_ACTION
   toolbarAction: ToolbarAction
 }
-/* action types used by the networks reducer */
+
+export interface ISetSmallModeAction {
+  type: UserInterfaceActionTypes.SET_SMALL_MODE
+  isSmall: boolean
+}
+
+// action types used by the networks reducer
 export type UserInterfaceActions =
   | ISetUILoadingAction
   | IFocusOnPersonAction
@@ -114,3 +122,4 @@ export type UserInterfaceActions =
   | ISetNodeVisibilityAction
   | IResetUIAction
   | ISetToolbarAction
+  | ISetSmallModeAction

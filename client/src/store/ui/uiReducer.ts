@@ -17,6 +17,7 @@ const initialState: IUserInterfaceState = {
   isViewingShared: false,
   personNodeVisibility: {},
   toolbarAction: "VIEW",
+  isSmallMode: false,
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -118,6 +119,13 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         toolbarAction: action.toolbarAction,
+      }
+    }
+
+    case UserInterfaceActionTypes.SET_SMALL_MODE: {
+      return {
+        ...state,
+        isSmallMode: action.isSmall,
       }
     }
 
