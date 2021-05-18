@@ -61,23 +61,16 @@ const NetworkGraphToolbar: React.FC = () => {
         onClick={setAction("VIEW")}
       />
       <ToolTipButton
-        tooltip="Select"
-        icon={<Icons.Select color={accentIfSelected("SELECT")} />}
-        dropProps={dropProps}
-        onClick={setAction("SELECT")}
-      />
-
-      <ToolTipButton
-        tooltip="Create"
-        icon={<Icons.AddCircle color={accentIfSelected("CREATE")} />}
-        dropProps={dropProps}
-        onClick={setAction("CREATE")}
-      />
-      <ToolTipButton
         tooltip="Move"
         icon={<Icons.Pan color={accentIfSelected("MOVE")} />}
         dropProps={dropProps}
         onClick={setAction("MOVE")}
+      />
+      {/* <ToolTipButton
+        tooltip="Create"
+        icon={<Icons.AddCircle color={accentIfSelected("CREATE")} />}
+        dropProps={dropProps}
+        onClick={setAction("CREATE")}
       />
       <ToolTipButton
         tooltip="Link"
@@ -97,7 +90,7 @@ const NetworkGraphToolbar: React.FC = () => {
         icon={<Icons.Pin color={accentIfSelected("PIN")} />}
         dropProps={dropProps}
         onClick={setAction("PIN")}
-      />
+      /> */}
       {toggleSmallModeButton}
     </Box>
   )

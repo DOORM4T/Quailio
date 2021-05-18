@@ -16,7 +16,6 @@ export interface IUserInterfaceState {
 
 export type ToolbarAction =
   | "VIEW"
-  | "SELECT"
   | "CREATE"
   | "MOVE"
   | "LINK"

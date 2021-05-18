@@ -111,8 +111,8 @@ export function createNetworkGraph(
 
   // Events
   Graph.onNodeHover(handleNodeHover(container))
-    .onNodeDrag(handleNodeDrag(container))
-    .onNodeDragEnd(handleNodeDragEnd(container, currentNetwork))
+    .onNodeDrag(handleNodeDrag(container, Graph))
+    .onNodeDragEnd(handleNodeDragEnd(container, currentNetwork, Graph))
     .onNodeClick(handleNodeClick)
     .onBackgroundRightClick(handleBackgroundRightClick(Graph, currentNetwork))
     .onNodeRightClick(handleNodeRightClick(Graph, currentNetwork))
@@ -311,7 +311,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const isHoveredNode = node.id === hoverNodeId
     const highlightColor = isHoveredNode ? "red" : "orange"
 
-    const isSelected = selectedNodeIds.has(id) // Node is selected in SELECT mode
+    const isSelected = selectedNodeIds.has(id)
 
     const { isSmallMode } = store.getState().ui
 
@@ -346,7 +346,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
       if (doPointerDetection) {
         ctx.fillStyle = areaColor
-      } else if (doHighlightNode) {
+      } else if (doHighlightNode || isSelected) {
         ctx.fillStyle = highlightColor
         ctx.strokeStyle = highlightColor
       } else if (isHighlighting && !doHighlightNode) {
@@ -899,65 +899,139 @@ export function clearHighlights() {
   highlightLinks.clear()
 }
 
-function handleNodeDrag(container: HTMLDivElement) {
-  return (n: NodeObject | null) => {
+function handleNodeDrag(container: HTMLDivElement, Graph: ForceGraphInstance) {
+  return (n: NodeObject | null, translate: XYVals) => {
     container.style.cursor = n ? "grabbing" : "grab"
+    if (!n) return
+
+    // MUST get latest node data -- otherwise changes to the graph won't be up to date
+    const gDataNodes = Graph.graphData().nodes
+    const id = n.id as string
+    const selectedNodesToMove = getOtherSelectedNodes(id, gDataNodes)
+    if (selectedNodesToMove === null) return
+
+    selectedNodesToMove.forEach(translateSelected)
+
+    // #region handleNodeDrag Helper Functions
+    function translateSelected(selNode: NodeObject) {
+      const { x, y, fx, fy } = selNode
+      console.log(x, y, fx, fy)
+
+      const xCoord = fx !== undefined ? fx : x!
+      const yCoord = fy !== undefined ? fy : y!
+      selNode.fx = xCoord + translate.x
+      selNode.fy = yCoord + translate.y
+    }
+    // #endregion handleNodeDrag Helper Functions
   }
 }
 
-function handleNodeDragEnd(container: HTMLDivElement, state: ICurrentNetwork) {
+function getOtherSelectedNodes(currentId: string, gDataNodes: NodeObject[]) {
+  if (selectedNodeIds.has(currentId)) {
+    return Array.from(selectedNodeIds)
+      .filter((selId) => selId !== currentId)
+      .map((selId) => gDataNodes.find((node) => node.id === selId))
+      .filter((node) => node !== undefined) as (NodeObject & IPersonNode)[]
+  }
+
+  return null
+}
+
+function handleNodeDragEnd(
+  container: HTMLDivElement,
+  state: ICurrentNetwork,
+  Graph: ForceGraphInstance,
+) {
   return async (n: NodeObject | null) => {
     if (!n) return
+    const gDataNodes = Graph.graphData().nodes
     const node = n as IPersonNode & NodeObject
 
-    // Fix the node at it's end drag position
-    n.fx = n.x
-    n.fy = n.y
+    const id = n.id as string
+    const otherSelectedNodes = getOtherSelectedNodes(id, gDataNodes)
+    const selNodes = otherSelectedNodes ? [node, ...otherSelectedNodes] : [node]
 
-    // Update the person's pinXY in global state using a custom Redux action
-    if (n.fx && n.fy) {
-      try {
-        await store.dispatch<any>(
-          pinNode(state.id, node.id, node.isGroupNode, { x: n.fx, y: n.fy }),
-        )
-      } catch (error) {
-        console.error(error)
-      }
-    }
+    const fixNodePromises = selNodes.map((nodeToFix) => fixNode(nodeToFix))
+    await Promise.all(fixNodePromises)
 
     container.style.cursor = "grab"
+
+    async function fixNode(toFix: NodeObject & IPersonNode) {
+      // Fix the node at it's end drag position
+      toFix.fx = toFix.x
+      toFix.fy = toFix.y
+
+      // Update the person's pinXY in global state using a custom Redux action
+      if (toFix.fx && toFix.fy) {
+        try {
+          await store.dispatch<any>(
+            pinNode(state.id, toFix.id, toFix.isGroupNode, {
+              x: toFix.fx,
+              y: toFix.fy,
+            }),
+          )
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }
   }
 }
 
-async function handleNodeClick(n: NodeObject | null) {
+async function handleNodeClick(n: NodeObject | null, event: MouseEvent) {
   if (!n) return
   const node = n as NodeObject & IPersonNode
-
-  // TODO: Clicking a group node does nothing... for now
-  if (node.isGroupNode) return
-
   const currentToolbarAction = store.getState().ui.toolbarAction
-  // Select node in SELECT mode
-  const canSelect = currentToolbarAction === "SELECT"
-  if (canSelect) {
-    if (selectedNodeIds.has(node.id)) {
-      selectedNodeIds.delete(node.id)
-    } else {
-      selectedNodeIds.add(node.id)
+  const doMultiselect = event.altKey || event.ctrlKey || event.shiftKey
+
+  // Clicking a group in MOVE mode selects all nodes in the group
+  if (node.isGroupNode) {
+    if (currentToolbarAction === "MOVE") {
+      const group =
+        store.getState().networks.currentNetwork?.relationshipGroups[node.id]
+      if (!group) return
+      if (!doMultiselect) clearSelected()
+      group.personIds.forEach((id) => selectedNodeIds.add(id))
+    }
+    return
+  }
+
+  switch (currentToolbarAction) {
+    case "MOVE": {
+      handleSelect(node.id)
+      break
+    }
+
+    case "VIEW": {
+      handleNodeView(node.id)
+      break
     }
   }
 
-  // View if in VIEW mode
-  const canView = currentToolbarAction === "VIEW"
-  if (!canView) return
-
-  try {
-    // Focus on the clicked person & show their details
-    await store.dispatch<any>(setPersonInFocus(node.id))
-    store.dispatch<any>(togglePersonOverlay(true))
-  } catch (error) {
-    console.error(error)
+  // #region handleNodeClick Helper Functions
+  async function handleNodeView(nodeId: string) {
+    try {
+      await store.dispatch<any>(setPersonInFocus(nodeId))
+      store.dispatch<any>(togglePersonOverlay(true))
+    } catch (error) {
+      console.error(error)
+    }
   }
+
+  function handleSelect(nodeId: string) {
+    if (doMultiselect) {
+      if (selectedNodeIds.has(nodeId)) {
+        selectedNodeIds.delete(nodeId)
+      } else {
+        selectedNodeIds.add(nodeId)
+      }
+      return
+    }
+
+    clearSelected()
+    selectedNodeIds.add(nodeId)
+  }
+  // #endregion handleNodeClick Helper Functions
 }
 
 function handleBackgroundRightClick(
@@ -965,15 +1039,6 @@ function handleBackgroundRightClick(
   currentNetwork: ICurrentNetwork,
 ) {
   return async (e: MouseEvent) => {
-    const isSelectMode = store.getState().ui.toolbarAction === "SELECT"
-    if (isSelectMode) {
-      const doClear = window.confirm("Clear selected nodes?")
-      if (!doClear) return
-
-      selectedNodeIds.clear()
-      return
-    }
-
     const { x, y } = graph.screen2GraphCoords(e.offsetX, e.offsetY)
 
     // DO NOT allow right click events if in sharing mode
@@ -1261,4 +1326,7 @@ export function sortNodesBySize(gData: IForceGraphData) {
   })
 }
 
+export function clearSelected() {
+  selectedNodeIds.clear()
+}
 // #endregion HELPER FUNCTIONS

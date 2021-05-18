@@ -5,12 +5,13 @@ import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { IApplicationState } from "../../../store/store"
-import { zoomToPerson } from "../../../store/ui/uiActions"
+import { setToolbarAction, zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
 import {
   addGroupNodeLinks,
   clearCustomListeners,
   clearHighlights,
+  clearSelected,
   createLinksByRelationships,
   createNetworkGraph,
   createPersonNode,
@@ -106,7 +107,12 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   }
 
   // Render force graph on container mount or when we switch to a different network
-  useEffect(renderForceGraph, [canvasRef, currentNetwork?.id])
+  useEffect(() => {
+    clearSelected()
+    clearHighlights()
+    renderForceGraph()
+    dispatch(setToolbarAction("VIEW"))
+  }, [canvasRef, currentNetwork?.id])
 
   // Update the existing force graph when people or groups change
   useEffect(() => {
