@@ -915,8 +915,6 @@ function handleNodeDrag(container: HTMLDivElement, Graph: ForceGraphInstance) {
     // #region handleNodeDrag Helper Functions
     function translateSelected(selNode: NodeObject) {
       const { x, y, fx, fy } = selNode
-      console.log(x, y, fx, fy)
-
       const xCoord = fx !== undefined ? fx : x!
       const yCoord = fy !== undefined ? fy : y!
       selNode.fx = xCoord + translate.x
