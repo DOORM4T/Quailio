@@ -31,6 +31,7 @@ import {
 import { IPersonMenuProps } from "../PersonMenu"
 
 const NAME_CHAR_LIMIT = 30
+export const SEARCH_INPUT_HEIGHT = "48px"
 
 export default function usePersonMenu({ people }: IPersonMenuProps) {
   const dispatch: Dispatch<any> = useDispatch()
@@ -306,7 +307,13 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
 
   // UI | Input for searching/adding people
   const SearchAddInputNode: React.ReactNode = (
-    <Box direction="row" align="center" pad="small" gap="none">
+    <Box
+      direction="row"
+      align="center"
+      pad="small"
+      gap="none"
+      height={SEARCH_INPUT_HEIGHT}
+    >
       <Stack anchor="right" style={{ width: "100%" }}>
         <TextInput
           width={`${isViewingShared ? "100%" : "75%"}`}

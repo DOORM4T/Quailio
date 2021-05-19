@@ -2,7 +2,7 @@ import { Accordion, Box } from "grommet"
 import React from "react"
 import { IPerson } from "../../store/networks/networkTypes"
 import GroupAccordion from "./GroupAccordion"
-import usePersonMenu from "./logic/usePersonMenu"
+import usePersonMenu, { SEARCH_INPUT_HEIGHT } from "./logic/usePersonMenu"
 
 export interface IPersonMenuProps {
   people: IPerson[]
@@ -34,9 +34,8 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
       (isSearching && !isAllGroupOpen) || (!isSearching && isAllGroupOpen)
     if (!shouldToggleAllGroup) return
 
-    const allGroupButtonLabel = allGroupButtonLabelRef.current?.querySelector(
-      "button",
-    )
+    const allGroupButtonLabel =
+      allGroupButtonLabelRef.current?.querySelector("button")
     if (!allGroupButtonLabel) return
 
     allGroupButtonLabel.click()
@@ -44,7 +43,10 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
 
   // UI | Person lists by group
   const PersonListsByGroup: React.ReactNode = currentNetwork && (
-    <Box fill style={{ overflowY: "auto" }}>
+    <Box
+      height={`calc(100% - ${SEARCH_INPUT_HEIGHT})`}
+      overflow={{ vertical: "auto" }}
+    >
       <Accordion
         animate={false}
         multiple={true}
