@@ -114,7 +114,7 @@ export function createNetworkGraph(
     .onNodeDrag(handleNodeDrag(container, Graph))
     .onNodeDragEnd(handleNodeDragEnd(container, currentNetwork, Graph))
     .onNodeClick(handleNodeClick)
-    .onBackgroundRightClick(handleBackgroundRightClick(Graph, currentNetwork))
+    .onBackgroundClick(handleBackgroundClick(Graph, currentNetwork))
     .onNodeRightClick(handleNodeRightClick(Graph, currentNetwork))
     .onZoom(handleZoomPan)
     .onZoomEnd(handleZoomPanEnd)
@@ -1045,33 +1045,52 @@ async function handleNodeClick(n: NodeObject | null, event: MouseEvent) {
   // #endregion handleNodeClick Helper Functions
 }
 
-function handleBackgroundRightClick(
+function handleBackgroundClick(
   graph: ForceGraphInstance,
   currentNetwork: ICurrentNetwork,
 ) {
   return async (e: MouseEvent) => {
-    const { x, y } = graph.screen2GraphCoords(e.offsetX, e.offsetY)
-
-    // DO NOT allow right click events if in sharing mode
+    // DO NOT allow click events if in sharing mode
     if (store.getState().ui.isViewingShared) return
-
-    // Cancel connection-making action
-    if (nodeToConnect.node) {
-      nodeToConnect.node = null
-      return
-    }
-
-    try {
-      const name = prompt("Add Node:")
-      if (name === null) {
-        alert("Canceled node creation")
+    const toolbarAction = store.getState().ui.toolbarAction
+    switch (toolbarAction) {
+      case "CREATE": {
+        await addPersonToGraph()
         return
       }
 
-      await store.dispatch<any>(addPerson(currentNetwork.id, name, { x, y }))
-    } catch (error) {
-      console.error(error)
+      case "LINK": {
+        cancelLinking()
+        return
+      }
     }
+
+    // #region Background Click Helper Functions
+    async function addPersonToGraph() {
+      const { x, y } = graph.screen2GraphCoords(e.offsetX, e.offsetY)
+
+      try {
+        const name = prompt("Create Node:")
+        if (name === null) {
+          return
+        }
+
+        await store.dispatch<any>(addPerson(currentNetwork.id, name, { x, y }))
+        setTimeout(() => {
+          clearHighlights()
+        }, 10)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    function cancelLinking() {
+      if (nodeToConnect.node) {
+        nodeToConnect.node = null
+        return
+      }
+    }
+    // #endregion Background Click Helper Functions
   }
 }
 

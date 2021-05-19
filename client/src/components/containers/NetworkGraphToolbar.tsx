@@ -66,12 +66,13 @@ const NetworkGraphToolbar: React.FC = () => {
         dropProps={dropProps}
         onClick={setAction("MOVE")}
       />
-      {/* <ToolTipButton
+      <ToolTipButton
         tooltip="Create"
         icon={<Icons.AddCircle color={accentIfSelected("CREATE")} />}
         dropProps={dropProps}
         onClick={setAction("CREATE")}
       />
+      {/*
       <ToolTipButton
         tooltip="Link"
         icon={<Icons.Connect color={accentIfSelected("LINK")} />}
