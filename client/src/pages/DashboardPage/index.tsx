@@ -110,7 +110,7 @@ const DashboardPage: React.FC = () => {
               currentNetwork={networkWithVisibleNodes}
               style={{ overflow: "hidden", backgroundColor: "#DDD" }}
             />
-            <NetworkGraphToolbar />
+            <NetworkGraphToolbar isViewingShared={isViewingShared} />
           </React.Fragment>
         ) : (
           <Box margin={{ top: "xlarge", horizontal: "auto" }}>

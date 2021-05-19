@@ -8,8 +8,12 @@ import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
 import { ToolbarAction } from "../../store/ui/uiTypes"
 import ToolTipButton from "../ToolTipButton"
 
+interface IProps {
+  isViewingShared: boolean
+}
+
 const dropProps: DropProps = { align: { right: "left" } }
-const NetworkGraphToolbar: React.FC = () => {
+const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
   const dispatch = useDispatch()
   const isSmall = useSmallBreakpoint()
 
@@ -66,12 +70,15 @@ const NetworkGraphToolbar: React.FC = () => {
         dropProps={dropProps}
         onClick={setAction("MOVE")}
       />
-      <ToolTipButton
-        tooltip="Create"
-        icon={<Icons.AddCircle color={accentIfSelected("CREATE")} />}
-        dropProps={dropProps}
-        onClick={setAction("CREATE")}
-      />
+      {!isViewingShared && (
+        <ToolTipButton
+          tooltip="Create"
+          icon={<Icons.AddCircle color={accentIfSelected("CREATE")} />}
+          dropProps={dropProps}
+          onClick={setAction("CREATE")}
+          isDisabled={isViewingShared}
+        />
+      )}
       {/*
       <ToolTipButton
         tooltip="Link"
