@@ -346,12 +346,12 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
       if (doPointerDetection) {
         ctx.fillStyle = areaColor
-      } else if (doHighlightNode || isSelected) {
-        ctx.fillStyle = highlightColor
-        ctx.strokeStyle = highlightColor
       } else if (isHighlighting && !doHighlightNode) {
         ctx.fillStyle = LOW_ATTENTION_COLOR
         ctx.strokeStyle = LOW_ATTENTION_COLOR
+      } else if (doHighlightNode || isSelected) {
+        ctx.fillStyle = highlightColor
+        ctx.strokeStyle = highlightColor
       } else {
         ctx.fillStyle = fillColor
       }
@@ -432,12 +432,12 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       const doHighlightNameTag =
         isHighlighting && doHighlightNode && !isGroupNode
       // Name tag color. Group Nodes keep their color
-      if (doHighlightNameTag || isSelected) {
-        // This node is highlighted or selected
-        ctx.fillStyle = highlightColor
-      } else if (isHighlighting && !doHighlightNode) {
+      if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
         ctx.fillStyle = LOW_ATTENTION_COLOR
+      } else if (doHighlightNameTag || isSelected) {
+        // This node is highlighted or selected
+        ctx.fillStyle = highlightColor
       } else if (isGroupNode) {
         ctx.fillStyle = fillColor
       } else {
@@ -984,12 +984,21 @@ async function handleNodeClick(n: NodeObject | null, event: MouseEvent) {
   const currentToolbarAction = store.getState().ui.toolbarAction
   const doMultiselect = event.altKey || event.ctrlKey || event.shiftKey
 
-  // Clicking a group in MOVE mode selects all nodes in the group
+  // Clicking a group in MOVE mode (de)selects all nodes in the group
   if (node.isGroupNode) {
     if (currentToolbarAction === "MOVE") {
       const group =
         store.getState().networks.currentNetwork?.relationshipGroups[node.id]
       if (!group) return
+      const shouldDeselectGroup = group.personIds.every((id) =>
+        selectedNodeIds.has(id),
+      )
+
+      if (shouldDeselectGroup) {
+        group.personIds.forEach((id) => selectedNodeIds.delete(id))
+        return
+      }
+
       if (!doMultiselect) clearSelected()
       group.personIds.forEach((id) => selectedNodeIds.add(id))
     }
@@ -1020,11 +1029,13 @@ async function handleNodeClick(n: NodeObject | null, event: MouseEvent) {
 
   function handleSelect(nodeId: string) {
     if (doMultiselect) {
-      if (selectedNodeIds.has(nodeId)) {
-        selectedNodeIds.delete(nodeId)
-      } else {
-        selectedNodeIds.add(nodeId)
-      }
+      if (selectedNodeIds.has(nodeId)) selectedNodeIds.delete(nodeId)
+      else selectedNodeIds.add(nodeId)
+      return
+    }
+
+    if (selectedNodeIds.size === 1 && selectedNodeIds.has(nodeId)) {
+      selectedNodeIds.delete(nodeId)
       return
     }
 
