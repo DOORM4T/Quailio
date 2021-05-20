@@ -1,4 +1,4 @@
-import { Anchor, Box, Button, Heading, List, Text, TextArea } from "grommet"
+import { Anchor, Box, Heading, List, Text, TextArea } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -109,11 +109,11 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
   const renderListItem = (person: IRelatedPersonData, index: number) => {
     const navigateToRelatedPerson = async () => {
       try {
-        /* Ask to continue if there are unsaved changes */
+        // Ask to continue if there are unsaved changes
         const doContinue = fireUnsavedChangeEvent()
         if (!doContinue) return
 
-        /* Navigate to the selected person's details */
+        // Navigate to the selected person's details
         await dispatch(setPersonInFocus(person.id))
       } catch (error) {
         console.error(error)
@@ -144,8 +144,12 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
         resize={false}
         style={{
           width: "100%",
+          height: "auto",
           border: "none",
           borderBottom: "1px solid black",
+          fontStyle: "italic",
+          wordWrap: "break-word",
+          whiteSpace: "break-spaces",
         }}
         value={person.reason}
         onChange={handleReasonChange(person.id)}
@@ -166,17 +170,18 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
       </Text>
     )
 
-    const relatedPersonNameAnchor = (
-      <Anchor
-        className="relationship-anchor"
-        onClick={navigateToRelatedPerson}
-        label={person.name}
-      />
-    )
-
-    const relationshipContent = (
-      <Box>{isEditing ? relationshipReasonEditor : readOnlyRelReason}</Box>
-    )
+    const destroyRelationship = async () => {
+      try {
+        await dispatch(
+          disconnectPeople(currentNetworkId, {
+            p1Id: currentPersonId,
+            p2Id: person.id,
+          }),
+        )
+      } catch (error) {
+        console.error(error)
+      }
+    }
 
     const pickShape = (shape: ConnectionShape) => async () => {
       if (person.lineEndingShape === shape) return
@@ -201,6 +206,16 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
     const shapeButtons = (
       <Box direction="column">
         <ToolTipButton
+          onClick={destroyRelationship}
+          icon={<Icons.Unlink size="16px" color="status-critical" />}
+          tooltip="Destroy relationship"
+          buttonStyle={{
+            height: "16px",
+          }}
+        />
+        <hr />
+
+        <ToolTipButton
           onClick={pickShape("none")}
           icon={<Icons.Clear size="16px" color={shapeHighlight("none")} />}
           tooltip="No line ending"
@@ -224,53 +239,32 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
         border={{ side: "bottom" }}
         direction="row"
       >
-        {isEditing && shapeButtons}
         {
           <Box
             direction="column"
             style={{
-              width: "calc(100%)",
+              width: "100%",
               overflow: "hidden",
               whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-              display: "inline-block",
             }}
           >
-            {relatedPersonNameAnchor}
-            <Box pad="4px">{relationshipContent}</Box>
+            <Box direction="row">
+              <Anchor
+                className="relationship-anchor"
+                onClick={navigateToRelatedPerson}
+                label={person.name}
+              />
+            </Box>
+            <Box pad="4px">
+              {isEditing ? relationshipReasonEditor : readOnlyRelReason}
+            </Box>
           </Box>
         }
+        {isEditing && shapeButtons}
       </Box>
     )
   }
 
-  const listItemAction = (otherPerson: IRelatedPersonData) => {
-    if (!isEditing) return null
-
-    const destroyRelationship = async () => {
-      try {
-        await dispatch(
-          disconnectPeople(currentNetworkId, {
-            p1Id: currentPersonId,
-            p2Id: otherPerson.id,
-          }),
-        )
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    return (
-      <Button
-        className="delete-connection-button"
-        key={`delete-connection-${otherPerson.id}`}
-        aria-label="Delete connection"
-        icon={<Icons.Unlink color="status-critical" />}
-        hoverIndicator
-        onClick={destroyRelationship}
-      />
-    )
-  }
   //
   // #endregion Relationships List
   //
@@ -285,7 +279,6 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
         data={relatedPeopleData}
         border={false}
         children={renderListItem}
-        action={listItemAction}
       />
     </React.Fragment>
   )
