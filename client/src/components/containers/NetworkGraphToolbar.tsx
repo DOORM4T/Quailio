@@ -1,7 +1,8 @@
 import { Box, DropProps } from "grommet"
 import * as Icons from "grommet-icons"
-import React from "react"
+import React, { FC } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { IApplicationState } from "../../store/store"
 import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
@@ -53,10 +54,11 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
   return (
     <Box
       direction={isSmall ? "row" : "column"}
-      width="48px"
-      pad="1rem"
+      width={isSmall ? "100%" : "48px"}
+      height={isSmall ? "48px" : "100%"}
+      pad="2rem"
       align="center"
-      justify="start"
+      justify={isSmall ? "center" : "start"}
     >
       <ToolTipButton
         tooltip="View"
@@ -64,6 +66,7 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
         dropProps={dropProps}
         onClick={setAction("VIEW")}
       />
+      <Divider isVertical={isSmall} />
       <ToolTipButton
         tooltip="Select"
         icon={<Icons.Select color={accentIfSelected("SELECT")} />}
@@ -109,9 +112,29 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
         dropProps={dropProps}
         onClick={setAction("PIN")}
       /> */}
+      <Divider isVertical={isSmall} />
       {toggleSmallModeButton}
+      <ToolTipButton
+        tooltip="Zoom to fit"
+        icon={<Icons.Cluster color="accent-2" />}
+        dropProps={dropProps}
+        onClick={() => fireFitCanvasEvent()}
+      />
     </Box>
   )
 }
 
 export default NetworkGraphToolbar
+
+const Divider: FC<{ isVertical: boolean }> = ({ isVertical }) => {
+  return (
+    <div
+      role="divider"
+      style={{
+        backgroundColor: "white",
+        width: isVertical ? 1 : 24,
+        height: isVertical ? 24 : 1,
+      }}
+    />
+  )
+}

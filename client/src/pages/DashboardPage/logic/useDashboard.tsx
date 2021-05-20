@@ -1,7 +1,7 @@
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useHistory } from "react-router-dom"
-import { fireResizeEvent } from "../../../helpers/fireResizeEvent"
+import { fireResizeEvent } from "../../../helpers/customEvents"
 import useAuth from "../../../hooks/auth/useAuth"
 import usePageExitConfirmation from "../../../hooks/usePageExitConfirmation"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"

@@ -3,6 +3,7 @@ import { ForceGraphInstance, LinkObject } from "force-graph"
 import React, { CSSProperties, useEffect, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
+import { CUSTOM_EVENT_NAMES } from "../../../helpers/customEvents"
 import { ICurrentNetwork, IPerson } from "../../../store/networks/networkTypes"
 import { IApplicationState } from "../../../store/store"
 import { setToolbarAction, zoomToPerson } from "../../../store/ui/uiActions"
@@ -79,8 +80,11 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     ) as ForceGraphInstance
 
     handleResize()
-    window.removeEventListener("resize", handleResize)
-    window.addEventListener("resize", handleResize)
+    window.removeEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
+    window.addEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
+
+    window.removeEventListener(CUSTOM_EVENT_NAMES.fit, handleFitForceGraph)
+    window.addEventListener(CUSTOM_EVENT_NAMES.fit, handleFitForceGraph)
 
     return () => {
       destroyForceGraph()
@@ -97,12 +101,19 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     currentForceGraph.width(width).height(height)
   }
 
+  function handleFitForceGraph() {
+    const currentForceGraph = forceGraphRef.current
+    if (!currentForceGraph) return
+
+    currentForceGraph.zoomToFit(250)
+  }
+
   // Destroy the graph and related listeners to prevent memory leaks
   function destroyForceGraph() {
     if (!forceGraphRef.current) return
     forceGraphRef.current._destructor()
     forceGraphRef.current = undefined
-    window.removeEventListener("resize", handleResize)
+    window.removeEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
 
     // This does not work upon component unmount because canvasRef becomes undefined
     // BUT this works as intended when the user opens an new network, removing any previous listeners
