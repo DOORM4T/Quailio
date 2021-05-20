@@ -8,7 +8,7 @@ import {
   addPerson,
   connectPeople,
   disconnectPeople,
-  pinNode,
+  pinMultipleNodes,
   updateRelationshipReason,
 } from "../../../store/networks/actions"
 import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
@@ -949,30 +949,24 @@ function handleNodeDragEnd(
     const otherSelectedNodes = getOtherSelectedNodes(id, gDataNodes)
     const selNodes = otherSelectedNodes ? [node, ...otherSelectedNodes] : [node]
 
-    const fixNodePromises = selNodes.map((nodeToFix) => fixNode(nodeToFix))
-    await Promise.all(fixNodePromises)
+    const nodesToFix = selNodes
+      .map(({ id: nodeId, isGroupNode: isGroup, x, y }) => ({
+        nodeId,
+        isGroup,
+        pinXY: { x, y },
+      }))
+      .filter(
+        (nToFix) =>
+          nToFix.pinXY.x !== undefined && nToFix.pinXY.y !== undefined,
+      ) as { nodeId: string; isGroup: boolean; pinXY: XYVals }[]
+
+    try {
+      await store.dispatch<any>(pinMultipleNodes(state.id, nodesToFix))
+    } catch (error) {
+      console.error(error)
+    }
 
     container.style.cursor = "grab"
-
-    async function fixNode(toFix: NodeObject & IPersonNode) {
-      // Fix the node at it's end drag position
-      toFix.fx = toFix.x
-      toFix.fy = toFix.y
-
-      // Update the person's pinXY in global state using a custom Redux action
-      if (toFix.fx && toFix.fy) {
-        try {
-          await store.dispatch<any>(
-            pinNode(state.id, toFix.id, toFix.isGroupNode, {
-              x: toFix.fx,
-              y: toFix.fy,
-            }),
-          )
-        } catch (error) {
-          console.error(error)
-        }
-      }
-    }
   }
 }
 
