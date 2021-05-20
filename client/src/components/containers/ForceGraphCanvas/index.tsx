@@ -179,14 +179,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       //
 
       updateGraph()
-      // If a node was added, highlight it
-      if (newPersonNodes.length === 1) {
-        clearHighlights()
-        setTimeout(() => {
-          forceGraph.centerAt(newPersonNodes[0].x, newPersonNodes[0].y, 250)
-          highlightNode(newPersonNodes[0])
-        }, 100)
-      }
     }
 
     const removePeopleFromGraph = () => {
