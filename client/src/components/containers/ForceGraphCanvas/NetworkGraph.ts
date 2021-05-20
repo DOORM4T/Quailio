@@ -977,6 +977,7 @@ function handleNodeClick(Graph: ForceGraphInstance) {
     const doMultiselect = event.altKey || event.ctrlKey || event.shiftKey
 
     switch (currentToolbarAction) {
+      case "SELECT":
       case "MOVE": {
         if (node.isGroupNode) {
           handleGroupSelect(node.id)
@@ -1057,6 +1058,7 @@ function handleBackgroundClick(
 ) {
   return async (e: MouseEvent) => {
     cancelLinking()
+    clearSelected()
 
     // DO NOT allow click events if in sharing mode
     if (store.getState().ui.isViewingShared) return

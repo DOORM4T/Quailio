@@ -65,6 +65,12 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
         onClick={setAction("VIEW")}
       />
       <ToolTipButton
+        tooltip="Select"
+        icon={<Icons.Select color={accentIfSelected("SELECT")} />}
+        dropProps={dropProps}
+        onClick={setAction("SELECT")}
+      />
+      <ToolTipButton
         tooltip="Move"
         icon={<Icons.Pan color={accentIfSelected("MOVE")} />}
         dropProps={dropProps}
