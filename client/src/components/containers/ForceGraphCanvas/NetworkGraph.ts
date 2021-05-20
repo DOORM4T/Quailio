@@ -113,9 +113,8 @@ export function createNetworkGraph(
   Graph.onNodeHover(handleNodeHover(container))
     .onNodeDrag(handleNodeDrag(container, Graph))
     .onNodeDragEnd(handleNodeDragEnd(container, currentNetwork, Graph))
-    .onNodeClick(handleNodeClick)
+    .onNodeClick(handleNodeClick(Graph))
     .onBackgroundClick(handleBackgroundClick(Graph, currentNetwork))
-    .onNodeRightClick(handleNodeRightClick(Graph, currentNetwork))
     .onZoom(handleZoomPan)
     .onZoomEnd(handleZoomPanEnd)
     .minZoom(0.001)
@@ -970,71 +969,86 @@ function handleNodeDragEnd(
   }
 }
 
-async function handleNodeClick(n: NodeObject | null, event: MouseEvent) {
-  if (!n) return
-  const node = n as NodeObject & IPersonNode
-  const currentToolbarAction = store.getState().ui.toolbarAction
-  const doMultiselect = event.altKey || event.ctrlKey || event.shiftKey
+function handleNodeClick(Graph: ForceGraphInstance) {
+  return async (n: NodeObject | null, event: MouseEvent) => {
+    if (!n) return
+    const node = n as NodeObject & IPersonNode
+    const currentToolbarAction = store.getState().ui.toolbarAction
+    const doMultiselect = event.altKey || event.ctrlKey || event.shiftKey
 
-  // Clicking a group in MOVE mode (de)selects all nodes in the group
-  if (node.isGroupNode) {
-    if (currentToolbarAction === "MOVE") {
+    switch (currentToolbarAction) {
+      case "MOVE": {
+        if (node.isGroupNode) {
+          handleGroupSelect(node.id)
+          return
+        }
+        handleSelect(node.id)
+        return
+      }
+
+      case "VIEW": {
+        if (node.isGroupNode) return
+        handleNodeView(node.id)
+        return
+      }
+
+      case "LINK": {
+        await handleNodeLinking(Graph, node, doMultiselect)
+        return
+      }
+    }
+
+    // #region handleNodeClick Helper Functions
+    async function handleNodeView(nodeId: string) {
+      try {
+        await store.dispatch<any>(setPersonInFocus(nodeId))
+        store.dispatch<any>(togglePersonOverlay(true))
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    // Clicking a group in MOVE mode (de)selects all nodes in the group
+    function handleGroupSelect(groupNodeId: string) {
       const group =
-        store.getState().networks.currentNetwork?.relationshipGroups[node.id]
+        store.getState().networks.currentNetwork?.relationshipGroups[
+          groupNodeId
+        ]
       if (!group) return
-      const shouldDeselectGroup = group.personIds.every((id) =>
+      const entireGroupSelected = group.personIds.every((id) =>
         selectedNodeIds.has(id),
       )
+      const shouldDeselectGroup =
+        entireGroupSelected && selectedNodeIds.has(groupNodeId)
 
       if (shouldDeselectGroup) {
         group.personIds.forEach((id) => selectedNodeIds.delete(id))
+        selectedNodeIds.delete(groupNodeId)
         return
       }
 
       if (!doMultiselect) clearSelected()
       group.personIds.forEach((id) => selectedNodeIds.add(id))
+      selectedNodeIds.add(groupNodeId)
     }
-    return
+
+    function handleSelect(nodeId: string) {
+      if (doMultiselect) {
+        if (selectedNodeIds.has(nodeId)) selectedNodeIds.delete(nodeId)
+        else selectedNodeIds.add(nodeId)
+        return
+      }
+
+      if (selectedNodeIds.size === 1 && selectedNodeIds.has(nodeId)) {
+        selectedNodeIds.delete(nodeId)
+        return
+      }
+
+      clearSelected()
+      selectedNodeIds.add(nodeId)
+    }
+    // #endregion handleNodeClick Helper Functions
   }
-
-  switch (currentToolbarAction) {
-    case "MOVE": {
-      handleSelect(node.id)
-      break
-    }
-
-    case "VIEW": {
-      handleNodeView(node.id)
-      break
-    }
-  }
-
-  // #region handleNodeClick Helper Functions
-  async function handleNodeView(nodeId: string) {
-    try {
-      await store.dispatch<any>(setPersonInFocus(nodeId))
-      store.dispatch<any>(togglePersonOverlay(true))
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  function handleSelect(nodeId: string) {
-    if (doMultiselect) {
-      if (selectedNodeIds.has(nodeId)) selectedNodeIds.delete(nodeId)
-      else selectedNodeIds.add(nodeId)
-      return
-    }
-
-    if (selectedNodeIds.size === 1 && selectedNodeIds.has(nodeId)) {
-      selectedNodeIds.delete(nodeId)
-      return
-    }
-
-    clearSelected()
-    selectedNodeIds.add(nodeId)
-  }
-  // #endregion handleNodeClick Helper Functions
 }
 
 function handleBackgroundClick(
@@ -1042,17 +1056,14 @@ function handleBackgroundClick(
   currentNetwork: ICurrentNetwork,
 ) {
   return async (e: MouseEvent) => {
+    cancelLinking()
+
     // DO NOT allow click events if in sharing mode
     if (store.getState().ui.isViewingShared) return
     const toolbarAction = store.getState().ui.toolbarAction
     switch (toolbarAction) {
       case "CREATE": {
         await addPersonToGraph()
-        return
-      }
-
-      case "LINK": {
-        cancelLinking()
         return
       }
     }
@@ -1086,108 +1097,111 @@ function handleBackgroundClick(
   }
 }
 
-function handleNodeRightClick(
-  graph: ForceGraphInstance,
-  currentNetwork: ICurrentNetwork,
+async function handleNodeLinking(
+  Graph: ForceGraphInstance,
+  node: NodeObject & IPersonNode,
+  doContinue: boolean,
 ) {
-  return async (n: NodeObject | null) => {
-    // DO NOT allow right click events if in sharing mode
-    if (store.getState().ui.isViewingShared) return
+  // DO NOT allow if in sharing mode
+  if (store.getState().ui.isViewingShared) return
 
-    if (!n || !nodeToConnect) return
-    const node = n as NodeObject & IPersonNode
+  const currentNetworkId = store.getState().networks.currentNetwork?.id
+  if (!currentNetworkId) return
 
-    /* Connect two nodes right-clicked nodes
-        Valid connections are:
-          1. Person-Person
-          2. Person-Group
-          3. Group-Person
+  /* Connect two nodes right-clicked nodes
+         Valid connections are:
+           1. Person-Person
+           2. Person-Group
+           3. Group-Person
+ 
+         Users CANNOT link two groups (Group-Group)
+         Users CANNOT link a node to itself
+     */
+  if (!nodeToConnect.node) {
+    // Picked the first node to dis(connect) or toggle in a group
+    nodeToConnect.node = node as NodeObject & IPersonNode
+  } else {
+    // Picked the second node to dis(connect) or toggle in a group
 
-        Users CANNOT link two groups (Group-Group)
-        Users CANNOT link a node to itself
-    */
-    if (!nodeToConnect.node) {
-      // Picked the first node to dis(connect) or toggle in a group
-      nodeToConnect.node = node as NodeObject & IPersonNode
+    // Group-Group connections are illegal
+    if (nodeToConnect.node.isGroupNode && node.isGroupNode) return
+
+    // Self-Self connections are illegal
+    if (nodeToConnect.node.id === node.id) return
+
+    const isOnlyFirstNodeAGroup =
+      nodeToConnect.node.isGroupNode && !node.isGroupNode
+    const isOnlySecondNodeAGroup =
+      !nodeToConnect.node.isGroupNode && node.isGroupNode
+    const isOneAGroup = isOnlyFirstNodeAGroup || isOnlySecondNodeAGroup
+
+    if (isOneAGroup) {
+      // One of the nodes is a group; add/remove it to/from the group
+      const groupId = isOnlyFirstNodeAGroup ? nodeToConnect.node.id : node.id
+      const personId = isOnlyFirstNodeAGroup ? node.id : nodeToConnect.node.id
+      const group =
+        store.getState().networks.currentNetwork?.relationshipGroups[groupId]
+
+      try {
+        if (!group) throw new Error("That group doesn't exist")
+        const isPersonInGroup = group.personIds.includes(personId)
+        await store.dispatch<any>(
+          togglePersonInGroup(
+            currentNetworkId,
+            groupId,
+            personId,
+            !isPersonInGroup,
+          ),
+        )
+      } catch (error) {
+        console.error(error)
+      }
     } else {
-      // Picked the second node to dis(connect) or toggle in a group
+      // Otherwise, make each node add each other to their relationships field
 
-      // Group-Group connections are illegal
-      if (nodeToConnect.node.isGroupNode && node.isGroupNode) return
+      // Check if the node are already connected
+      const areNodesConnected = node.id in nodeToConnect.node.relationships
 
-      // Self-Self connections are illegal
-      if (nodeToConnect.node.id === node.id) return
-
-      const isOnlyFirstNodeAGroup =
-        nodeToConnect.node.isGroupNode && !node.isGroupNode
-      const isOnlySecondNodeAGroup =
-        !nodeToConnect.node.isGroupNode && node.isGroupNode
-      const isOneAGroup = isOnlyFirstNodeAGroup || isOnlySecondNodeAGroup
-
-      if (isOneAGroup) {
-        // One of the nodes is a group; add/remove it to/from the group
-        const groupId = isOnlyFirstNodeAGroup ? nodeToConnect.node.id : node.id
-        const personId = isOnlyFirstNodeAGroup ? node.id : nodeToConnect.node.id
-        const group =
-          store.getState().networks.currentNetwork?.relationshipGroups[groupId]
-
-        try {
-          if (!group) throw new Error("That group doesn't exist")
-
-          const isPersonInGroup = group.personIds.includes(personId)
-
+      // Disconnect the nodes if they are already connected
+      try {
+        if (areNodesConnected) {
           await store.dispatch<any>(
-            togglePersonInGroup(
-              currentNetwork.id,
-              groupId,
-              personId,
-              !isPersonInGroup,
-            ),
+            disconnectPeople(currentNetworkId, {
+              p1Id: nodeToConnect.node.id,
+              p2Id: node.id,
+            }),
           )
-        } catch (error) {
-          console.error(error)
+        } else {
+          // Otherwise, connect the nodes
+          await store.dispatch<any>(
+            connectPeople(currentNetworkId, {
+              p1Id: nodeToConnect.node.id,
+              p2Id: node.id,
+            }),
+          )
         }
-      } else {
-        // Otherwise, make each node add each other to their relationships field
-
-        // Check if the node are already connected
-        const areNodesConnected = node.id in nodeToConnect.node.relationships
-
-        // Disconnect the nodes if they are already connected
-        try {
-          if (areNodesConnected) {
-            await store.dispatch<any>(
-              disconnectPeople(currentNetwork.id, {
-                p1Id: nodeToConnect.node.id,
-                p2Id: node.id,
-              }),
-            )
-          } else {
-            // Otherwise, connect the nodes
-            await store.dispatch<any>(
-              connectPeople(currentNetwork.id, {
-                p1Id: nodeToConnect.node.id,
-                p2Id: node.id,
-              }),
-            )
-          }
-        } catch (error) {
-          console.error(error)
-        }
+      } catch (error) {
+        console.error(error)
       }
-
-      // Clear the node to connect
-      // Can keep making connections to the first node if SHIFT is down
-      if (isShiftDown) {
-        const updatedNode = graph
-          .graphData()
-          .nodes.find((gNode) => gNode.id === nodeToConnect.node?.id)
-        nodeToConnect.node = (updatedNode as IPersonNode) || null
-        return
-      }
-      nodeToConnect.node = null
     }
+
+    // Clear the node to connect
+    // Can keep making connections to the first node if SHIFT is down
+    if (doContinue) {
+      const updatedNode = Graph.graphData().nodes.find(
+        (gNode) => gNode.id === nodeToConnect.node?.id,
+      )
+      nodeToConnect.node = (updatedNode as IPersonNode) || null
+      return
+    }
+
+    clearNodeToConnect()
   }
+}
+
+// Clears the node to connect. This stops the linking action if there is a node being connecting.
+export function clearNodeToConnect() {
+  nodeToConnect.node = null
 }
 
 export function addGroupNodeToForceGraph(

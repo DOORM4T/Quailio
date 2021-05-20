@@ -11,6 +11,7 @@ import {
   addGroupNodeLinks,
   clearCustomListeners,
   clearHighlights,
+  clearNodeToConnect,
   clearSelected,
   createLinksByRelationships,
   createNetworkGraph,
@@ -45,6 +46,9 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   useEffect(() => {
     const Graph = forceGraphRef.current
     if (!Graph) return
+    clearNodeToConnect() // Stops linking (if in the middle of a linking) -- this prevents the link line from showing during other toolbar actions
+    clearHighlights() // Clears any lingering highlights
+    dispatch(zoomToPerson(null))
 
     switch (toolbarAction) {
       case "MOVE": {

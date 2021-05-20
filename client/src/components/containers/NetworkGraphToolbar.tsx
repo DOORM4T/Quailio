@@ -79,13 +79,17 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
           isDisabled={isViewingShared}
         />
       )}
+
+      {!isViewingShared && (
+        <ToolTipButton
+          tooltip="Link"
+          icon={<Icons.Connect color={accentIfSelected("LINK")} />}
+          dropProps={dropProps}
+          onClick={setAction("LINK")}
+          isDisabled={isViewingShared}
+        />
+      )}
       {/*
-      <ToolTipButton
-        tooltip="Link"
-        icon={<Icons.Connect color={accentIfSelected("LINK")} />}
-        dropProps={dropProps}
-        onClick={setAction("LINK")}
-      />
 
       <ToolTipButton
         tooltip="Resize"
