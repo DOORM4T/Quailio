@@ -23,7 +23,6 @@ import { store } from "../../../store/store"
 import {
   selectNodes,
   setPersonInFocus,
-  setUILoading,
   togglePersonOverlay,
 } from "../../../store/ui/uiActions"
 import {
@@ -960,12 +959,9 @@ function handleNodeDragEnd(
       ) as { nodeId: string; isGroup: boolean; pinXY: XYVals }[]
 
     try {
-      store.dispatch<any>(setUILoading(true))
       await store.dispatch<any>(pinMultipleNodes(state.id, nodesToFix))
     } catch (error) {
       console.error(error)
-    } finally {
-      store.dispatch<any>(setUILoading(false))
     }
 
     container.style.cursor = "grab"
@@ -981,6 +977,7 @@ function handleNodeClick(Graph: ForceGraphInstance) {
 
     switch (currentToolbarAction) {
       case "SELECT":
+      case "RESIZE":
       case "MOVE": {
         if (node.isGroupNode) {
           handleGroupSelect(node.id)
