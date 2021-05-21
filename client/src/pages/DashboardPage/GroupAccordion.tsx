@@ -1,6 +1,6 @@
 import { AccordionPanel, Box, List, Tab, Tabs } from "grommet"
 import * as Icons from "grommet-icons"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
@@ -56,6 +56,22 @@ const GroupAccordion: React.FC<IProps> = ({
   const isEmpty = peopleInGroup.length === 0
   let doShowGroup = filterGroups[groupId]
   if (doShowGroup === undefined) doShowGroup = true // Undefined showing state also means the group should show
+  const accordionRef = useRef<HTMLDivElement | null>(null)
+
+  // Make the accordion header sticky
+  // This is a hacky solution, but Grommet's AccordionPanel style prop doesn't style the right element to make the accordion sticky
+  useEffect(() => {
+    if (!accordionRef.current) return
+
+    const actualAccordionLabel = accordionRef.current.querySelector(
+      "[role='tab']",
+    ) as HTMLButtonElement
+    console.log(actualAccordionLabel)
+
+    if (!actualAccordionLabel) return
+    actualAccordionLabel.style.position = "sticky"
+    actualAccordionLabel.style.top = "0px"
+  }, [accordionRef])
 
   const visibilityMap = useSelector(
     (state: IApplicationState) => state.ui.personNodeVisibility,
@@ -86,20 +102,18 @@ const GroupAccordion: React.FC<IProps> = ({
     setShowAll(true)
   }, [visibilityMap])
 
-  const handleTogglePersonInGroup = (
-    personId: string,
-    isInGroup: boolean,
-  ) => async () => {
-    const doAdd = !isInGroup
+  const handleTogglePersonInGroup =
+    (personId: string, isInGroup: boolean) => async () => {
+      const doAdd = !isInGroup
 
-    try {
-      await dispatch(
-        togglePersonInGroup(currentNetwork.id, groupId, personId, doAdd),
-      )
-    } catch (error) {
-      console.error(error)
-    }
-  } // handleTogglePersonInGroup
+      try {
+        await dispatch(
+          togglePersonInGroup(currentNetwork.id, groupId, personId, doAdd),
+        )
+      } catch (error) {
+        console.error(error)
+      }
+    } // handleTogglePersonInGroup
 
   const handleRenameGroup = async () => {
     try {
@@ -187,6 +201,7 @@ const GroupAccordion: React.FC<IProps> = ({
     filter: !doShowGroup // Dim the group accordion if it's empty or if it's hiding its nodes
       ? "brightness(0.5)"
       : undefined,
+    opacity: 1,
   } // groupAccordionStyles
 
   const toggleGroupVisibilityTooltip = doShowGroup
@@ -314,6 +329,7 @@ const GroupAccordion: React.FC<IProps> = ({
       key={key}
       style={groupAccordionStyles}
       label={GroupAccordionLabel}
+      ref={accordionRef}
     >
       <Box pad="medium">
         <Tabs>
