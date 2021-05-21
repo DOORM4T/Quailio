@@ -22,6 +22,7 @@ import {
 import { store } from "../../../store/store"
 import {
   setPersonInFocus,
+  setUILoading,
   togglePersonOverlay,
 } from "../../../store/ui/uiActions"
 import {
@@ -960,9 +961,12 @@ function handleNodeDragEnd(
       ) as { nodeId: string; isGroup: boolean; pinXY: XYVals }[]
 
     try {
+      store.dispatch<any>(setUILoading(true))
       await store.dispatch<any>(pinMultipleNodes(state.id, nodesToFix))
     } catch (error) {
       console.error(error)
+    } finally {
+      store.dispatch<any>(setUILoading(false))
     }
 
     container.style.cursor = "grab"
@@ -994,6 +998,7 @@ function handleNodeClick(Graph: ForceGraphInstance) {
       }
 
       case "LINK": {
+        setMouseCoords(event) // This keeps the mouse position variables updated, since they otherwise update on mouse move
         await handleNodeLinking(Graph, node, doMultiselect)
         return
       }
@@ -1089,16 +1094,11 @@ function handleBackgroundClick(
       }
     }
 
-    function cancelLinking() {
-      if (nodeToConnect.node) {
-        nodeToConnect.node = null
-        return
-      }
-    }
     // #endregion Background Click Helper Functions
   }
 }
 
+// #region Node Linking
 async function handleNodeLinking(
   Graph: ForceGraphInstance,
   node: NodeObject & IPersonNode,
@@ -1200,6 +1200,14 @@ async function handleNodeLinking(
     clearNodeToConnect()
   }
 }
+
+function cancelLinking() {
+  if (nodeToConnect.node) {
+    nodeToConnect.node = null
+    return
+  }
+}
+// #endregion Node Linking
 
 // Clears the node to connect. This stops the linking action if there is a node being connecting.
 export function clearNodeToConnect() {
