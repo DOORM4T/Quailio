@@ -5,6 +5,7 @@ import {
   IInitializePersonGroupList,
   IPersonIDWithActiveGroups,
   IResetUIAction,
+  ISelectNodesAction,
   ISetNodeVisibilityAction,
   ISetSmallModeAction,
   ISetToolbarAction,
@@ -129,4 +130,9 @@ export const setToolbarAction = (
 export const setSmallMode = (isSmall: boolean): ISetSmallModeAction => ({
   type: UserInterfaceActionTypes.SET_SMALL_MODE,
   isSmall,
+})
+
+export const selectNodes = (selectedNodeIds: string[]): ISelectNodesAction => ({
+  type: UserInterfaceActionTypes.SELECT_NODES,
+  selectedNodeIds,
 })

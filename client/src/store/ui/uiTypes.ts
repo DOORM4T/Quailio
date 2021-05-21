@@ -12,6 +12,7 @@ export interface IUserInterfaceState {
 
   readonly toolbarAction: ToolbarAction
   readonly isSmallMode: boolean
+  readonly selectedNodeIds: string[]
 }
 
 export type ToolbarAction =
@@ -41,6 +42,7 @@ export enum UserInterfaceActionTypes {
   RESET_UI = "UI/RESET_UI",
   SET_TOOLBAR_ACTION = "UI/SET_TOOLBAR_ACTION",
   SET_SMALL_MODE = "UI/SET_SMALL_MODE",
+  SELECT_NODES = "UI/SELECT_NODES",
 }
 
 export interface ISetUILoadingAction {
@@ -109,6 +111,11 @@ export interface ISetSmallModeAction {
   isSmall: boolean
 }
 
+export interface ISelectNodesAction {
+  type: UserInterfaceActionTypes.SELECT_NODES
+  selectedNodeIds: string[]
+}
+
 // action types used by the networks reducer
 export type UserInterfaceActions =
   | ISetUILoadingAction
@@ -123,3 +130,4 @@ export type UserInterfaceActions =
   | IResetUIAction
   | ISetToolbarAction
   | ISetSmallModeAction
+  | ISelectNodesAction

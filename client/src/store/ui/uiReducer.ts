@@ -18,6 +18,7 @@ const initialState: IUserInterfaceState = {
   personNodeVisibility: {},
   toolbarAction: "VIEW",
   isSmallMode: false,
+  selectedNodeIds: [],
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -112,6 +113,7 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
         personNodeVisibility: {},
         personInFocus: null,
         personInZoom: null,
+        selectedNodeIds: [],
       }
     }
 
@@ -126,6 +128,13 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         isSmallMode: action.isSmall,
+      }
+    }
+
+    case UserInterfaceActionTypes.SELECT_NODES: {
+      return {
+        ...state,
+        selectedNodeIds: action.selectedNodeIds,
       }
     }
 

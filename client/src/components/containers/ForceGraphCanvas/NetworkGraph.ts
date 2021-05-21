@@ -21,6 +21,7 @@ import {
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
 import {
+  selectNodes,
   setPersonInFocus,
   setUILoading,
   togglePersonOverlay,
@@ -39,7 +40,6 @@ const NODE_SIZE = 64
 const INITIAL_DISTANCE = NODE_SIZE * 4
 const DEFAULT_LINK_SIZE = 1.5
 
-const selectedNodeIds = new Set<string>()
 const highlightNodes = new Set<NodeObject>()
 const highlightLinks = new Set<LinkObject>()
 let hoverNodeId: string | null = null
@@ -311,10 +311,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const isHoveredNode = node.id === hoverNodeId
     const highlightColor = isHoveredNode ? "red" : "orange"
 
-    const isSelected = selectedNodeIds.has(id)
-
-    const { isSmallMode } = store.getState().ui
-
+    const { selectedNodeIds, isSmallMode } = store.getState().ui
+    const isSelected = selectedNodeIds.includes(id)
     if (isSmallMode && !isBackground) {
       drawSmallNode()
       return
@@ -925,8 +923,9 @@ function handleNodeDrag(container: HTMLDivElement, Graph: ForceGraphInstance) {
 }
 
 function getOtherSelectedNodes(currentId: string, gDataNodes: NodeObject[]) {
-  if (selectedNodeIds.has(currentId)) {
-    return Array.from(selectedNodeIds)
+  const { selectedNodeIds } = store.getState().ui
+  if (selectedNodeIds.includes(currentId)) {
+    return selectedNodeIds
       .filter((selId) => selId !== currentId)
       .map((selId) => gDataNodes.find((node) => node.id === selId))
       .filter((node) => node !== undefined) as (NodeObject & IPersonNode)[]
@@ -1021,37 +1020,47 @@ function handleNodeClick(Graph: ForceGraphInstance) {
           groupNodeId
         ]
       if (!group) return
+
+      const { selectedNodeIds } = store.getState().ui
+      const selectedNodeIdsSet = new Set(selectedNodeIds)
+
       const entireGroupSelected = group.personIds.every((id) =>
-        selectedNodeIds.has(id),
+        selectedNodeIdsSet.has(id),
       )
       const shouldDeselectGroup =
-        entireGroupSelected && selectedNodeIds.has(groupNodeId)
+        entireGroupSelected && selectedNodeIdsSet.has(groupNodeId)
 
       if (shouldDeselectGroup) {
-        group.personIds.forEach((id) => selectedNodeIds.delete(id))
-        selectedNodeIds.delete(groupNodeId)
+        group.personIds.forEach((id) => selectedNodeIdsSet.delete(id))
+        selectedNodeIdsSet.delete(groupNodeId)
+        store.dispatch<any>(selectNodes(Array.from(selectedNodeIdsSet)))
         return
       }
 
-      if (!doMultiselect) clearSelected()
-      group.personIds.forEach((id) => selectedNodeIds.add(id))
-      selectedNodeIds.add(groupNodeId)
+      if (!doMultiselect) selectedNodeIdsSet.clear()
+      group.personIds.forEach((id) => selectedNodeIdsSet.add(id))
+      selectedNodeIdsSet.add(groupNodeId)
+      store.dispatch<any>(selectNodes(Array.from(selectedNodeIdsSet)))
     }
 
     function handleSelect(nodeId: string) {
+      const { selectedNodeIds } = store.getState().ui
+      const selectedNodeIdsSet = new Set(selectedNodeIds)
+
       if (doMultiselect) {
-        if (selectedNodeIds.has(nodeId)) selectedNodeIds.delete(nodeId)
-        else selectedNodeIds.add(nodeId)
-        return
+        if (selectedNodeIdsSet.has(nodeId)) selectedNodeIdsSet.delete(nodeId)
+        else selectedNodeIdsSet.add(nodeId)
+      } else if (
+        selectedNodeIdsSet.size === 1 &&
+        selectedNodeIdsSet.has(nodeId)
+      ) {
+        selectedNodeIdsSet.delete(nodeId)
+      } else {
+        selectedNodeIdsSet.clear()
+        selectedNodeIdsSet.add(nodeId)
       }
 
-      if (selectedNodeIds.size === 1 && selectedNodeIds.has(nodeId)) {
-        selectedNodeIds.delete(nodeId)
-        return
-      }
-
-      clearSelected()
-      selectedNodeIds.add(nodeId)
+      store.dispatch<any>(selectNodes(Array.from(selectedNodeIdsSet)))
     }
     // #endregion handleNodeClick Helper Functions
   }
@@ -1373,6 +1382,8 @@ export function sortNodesBySize(gData: IForceGraphData) {
 }
 
 export function clearSelected() {
-  selectedNodeIds.clear()
+  const { selectedNodeIds } = store.getState().ui
+  if (selectedNodeIds.length === 0) return
+  store.dispatch<any>(selectNodes([]))
 }
 // #endregion HELPER FUNCTIONS
