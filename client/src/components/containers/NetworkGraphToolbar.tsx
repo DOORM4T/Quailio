@@ -1,13 +1,16 @@
-import { Box, DropProps } from "grommet"
+import { Box, Button, DropButton, DropProps, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { FC } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
+import { scalePerson } from "../../store/networks/actions"
+import { IPerson } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
 import { ToolbarAction } from "../../store/ui/uiTypes"
 import ToolTipButton from "../ToolTipButton"
+import { XYVals } from "./ForceGraphCanvas/networkGraphTypes"
 
 interface IProps {
   isViewingShared: boolean
@@ -98,14 +101,17 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
           isDisabled={isViewingShared}
         />
       )}
+      <Tip content="Resize" dropProps={dropProps}>
+        <DropButton
+          icon={<Icons.Expand color={accentIfSelected("RESIZE")} />}
+          onClick={setAction("RESIZE")}
+          dropContent={<ResizeToolbar isHorizontal={isSmall} />}
+          dropAlign={{ right: "left" }}
+          onBlur={(e) => e.preventDefault()}
+        />
+      </Tip>
       {/*
 
-      <ToolTipButton
-        tooltip="Resize"
-        icon={<Icons.Expand color={accentIfSelected("RESIZE")} />}
-        dropProps={dropProps}
-        onClick={setAction("RESIZE")}
-      />
       <ToolTipButton
         tooltip="Pin/Unpin"
         icon={<Icons.Pin color={accentIfSelected("PIN")} />}
@@ -136,5 +142,83 @@ const Divider: FC<{ isVertical: boolean }> = ({ isVertical }) => {
         height: isVertical ? 24 : 1,
       }}
     />
+  )
+}
+
+interface IResizeToolbarProps {
+  isHorizontal: boolean
+  [key: string]: any
+}
+
+const INCREMENT = 0.1
+const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
+  const dispatch = useDispatch()
+  const currentNetworkId = useSelector(
+    (state: IApplicationState) => state.networks.currentNetwork?.id,
+  )
+  const people = useSelector(
+    (state: IApplicationState) => state.networks.currentNetwork?.people,
+  )
+  const selectedNodeIds = useSelector(
+    (state: IApplicationState) => state.ui.selectedNodeIds,
+  )
+
+  if (!currentNetworkId || !people || selectedNodeIds.length === 0) return null
+  const selectedPeople = selectedNodeIds
+    .map((id) => people.find((p) => p.id === id))
+    .filter((p) => p !== undefined) as IPerson[]
+
+  const handleChangeSize = (change: "increment" | "decrement") => async () => {
+    const resizePromise = selectedPeople.map(async (p) => {
+      try {
+        const { x, y } = p.scaleXY ? p.scaleXY : { x: 1, y: 1 }
+        const newScale: XYVals =
+          change === "increment"
+            ? { x: x + INCREMENT, y: y + INCREMENT }
+            : { x: x - INCREMENT, y: y - INCREMENT }
+        if (newScale.x < 0 || newScale.y < 0) return
+
+        return dispatch(scalePerson(currentNetworkId, p.id, newScale))
+      } catch (error) {
+        console.error(error)
+      }
+    })
+
+    await Promise.all(resizePromise)
+  }
+
+  // TODO: Options to resize horizontally, vertically, and both
+  // TODO: Fix accuracy of single-node % calculation
+  const value: string =
+    selectedPeople.length === 1
+      ? `${Math.trunc((selectedPeople[0].scaleXY?.x ?? 1) * 100)}%`
+      : "-"
+
+  return (
+    <Box
+      direction={props.isHorizontal ? "row" : "column"}
+      overflow="hidden"
+      {...props}
+    >
+      <Button
+        icon={<Icons.Add width="48px" height="48px" />}
+        onClick={handleChangeSize("increment")}
+      />
+      {/* TODO: Directly edit input */}
+      <input
+        type="text"
+        value={value}
+        style={{
+          display: "block",
+          width: "48px",
+          height: "48px",
+          textAlign: "center",
+        }}
+      />
+      <Button
+        icon={<Icons.Subtract width="48px" height="48px" />}
+        onClick={handleChangeSize("decrement")}
+      />
+    </Box>
   )
 }
