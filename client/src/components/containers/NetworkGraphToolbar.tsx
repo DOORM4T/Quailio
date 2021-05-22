@@ -150,7 +150,6 @@ interface IResizeToolbarProps {
   [key: string]: any
 }
 
-const INCREMENT = 0.1
 const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
   const dispatch = useDispatch()
   const currentNetworkId = useSelector(
@@ -174,8 +173,14 @@ const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
         const { x, y } = p.scaleXY ? p.scaleXY : { x: 1, y: 1 }
         const newScale: XYVals =
           change === "increment"
-            ? { x: x + INCREMENT, y: y + INCREMENT }
-            : { x: x - INCREMENT, y: y - INCREMENT }
+            ? {
+                x: changeAndFix("increment", x),
+                y: changeAndFix("increment", y),
+              }
+            : {
+                x: changeAndFix("decrement", x),
+                y: changeAndFix("decrement", y),
+              }
         if (newScale.x < 0 || newScale.y < 0) return
 
         return dispatch(scalePerson(currentNetworkId, p.id, newScale))
@@ -188,10 +193,9 @@ const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
   }
 
   // TODO: Options to resize horizontally, vertically, and both
-  // TODO: Fix accuracy of single-node % calculation
   const value: string =
     selectedPeople.length === 1
-      ? `${Math.trunc((selectedPeople[0].scaleXY?.x ?? 1) * 100)}%`
+      ? getScalePercentage(selectedPeople[0].scaleXY ?? { x: 1, y: 1 })
       : "-"
 
   return (
@@ -221,4 +225,23 @@ const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
       />
     </Box>
   )
+}
+
+const INCREMENT = 0.1
+function changeAndFix(
+  change: "increment" | "decrement",
+  value: number,
+  fixTo: number = 2,
+) {
+  const changed = change === "increment" ? value + INCREMENT : value - INCREMENT
+  const fixed = changed.toFixed(fixTo)
+  return Number(fixed)
+}
+
+function getScalePercentage(scaleXY: XYVals): string {
+  // e.g. 4.8999999999999995 => 4.90
+  const decimal = Number(scaleXY.x.toFixed(2))
+
+  // e.g. 4.90 => 490%
+  return `${Math.round(decimal * 100)}%`
 }
