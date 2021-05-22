@@ -194,6 +194,14 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       //
 
       updateGraph()
+
+      // This prevents the first node from being created off screen:
+      if (updatedGraphData.nodes.length === 1) {
+        setTimeout(() => {
+          const node = updatedGraphData.nodes[0]
+          forceGraph.centerAt(node.x, node.y, 250)
+        }, 100)
+      }
     }
 
     const removePeopleFromGraph = () => {
