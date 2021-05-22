@@ -1,6 +1,6 @@
 import { Box, Button, DropButton, DropProps, Tip } from "grommet"
 import * as Icons from "grommet-icons"
-import React, { FC } from "react"
+import React, { FC, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
@@ -162,10 +162,27 @@ const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
     (state: IApplicationState) => state.ui.selectedNodeIds,
   )
 
-  if (!currentNetworkId || !people || selectedNodeIds.length === 0) return null
+  const [scaleInput, scaleInputSet] = useState("100%")
+
   const selectedPeople = selectedNodeIds
-    .map((id) => people.find((p) => p.id === id))
+    .map((id) => people && people.find((p) => p.id === id))
     .filter((p) => p !== undefined) as IPerson[]
+
+  // TODO: Options to resize horizontally, vertically, and both
+  const value: string =
+    selectedPeople.length === 1
+      ? getScalePercentage(selectedPeople[0].scaleXY ?? { x: 1, y: 1 })
+      : "-"
+
+  useEffect(() => {
+    scaleInputSet(value)
+  }, [value])
+
+  // TODO: allow direct percentage editing
+  // useEffect(()=>{
+  // }, [scaleInput])
+
+  if (!currentNetworkId || !people || selectedNodeIds.length === 0) return null
 
   const handleChangeSize = (change: "increment" | "decrement") => async () => {
     const resizePromise = selectedPeople.map(async (p) => {
@@ -192,12 +209,6 @@ const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
     await Promise.all(resizePromise)
   }
 
-  // TODO: Options to resize horizontally, vertically, and both
-  const value: string =
-    selectedPeople.length === 1
-      ? getScalePercentage(selectedPeople[0].scaleXY ?? { x: 1, y: 1 })
-      : "-"
-
   return (
     <Box
       direction={props.isHorizontal ? "row" : "column"}
@@ -212,6 +223,12 @@ const ResizeToolbar: FC<IResizeToolbarProps> = (props) => {
       <input
         type="text"
         value={value}
+        // value={scaleInput}
+        // onChange={(e) => {
+        //   const isPercentage = Number(e.target.value.replace("%", ""))
+        //   if (!isPercentage) return
+        //   scaleInputSet(e.target.value)
+        // }}
         style={{
           display: "block",
           width: "48px",
