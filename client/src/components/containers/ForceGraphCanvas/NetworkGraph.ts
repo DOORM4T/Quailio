@@ -338,7 +338,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     function drawSmallNode() {
       ctx.beginPath()
       const largerScale = xScale > yScale ? xScale : yScale
-      const radius = 50 * largerScale
+      const radius = 5 * largerScale
       ctx.arc(x, y, radius, 0, 2 * Math.PI)
 
       if (doPointerDetection) {
@@ -353,7 +353,6 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fillStyle = fillColor
       }
       ctx.fill()
-      ctx.lineWidth = 10
       ctx.strokeStyle = "black"
       ctx.stroke()
 
@@ -445,7 +444,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.textBaseline = "top"
 
       // Scale font size based on the current zoom level
-      let realFontSize = BASE_FONT_SIZE / currentZoom
+      let realFontSize = BASE_FONT_SIZE * yScale
       if (realFontSize < BASE_FONT_SIZE) realFontSize = BASE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
       if (realFontSize > MAX_FONT_SIZE) realFontSize = MAX_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
       ctx.font = `bolder ${realFontSize}px ${FONT_FAMILY}`
