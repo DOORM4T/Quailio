@@ -3,11 +3,13 @@ import * as Icons from "grommet-icons"
 import React, { CSSProperties } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
-import { updatePersonName } from "../../../store/networks/actions"
-import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
-  getCurrentNetworkGroups,
+  disconnectPeople,
+  updatePersonName,
+} from "../../../store/networks/actions"
+import {
   getCurrentNetworkId,
+  getCurrentNetworkPeople,
 } from "../../../store/selectors/networks/getCurrentNetwork"
 import {
   getPersonInFocusId,
@@ -27,7 +29,8 @@ const PersonHeader: React.FC<IProps> = (props) => {
   const currentNetworkId = useSelector(getCurrentNetworkId)
   const currentPersonId = useSelector(getPersonInFocusId)
   const currentPersonName = useSelector(getPersonInFocusName)
-  const currentNetworkGroups = useSelector(getCurrentNetworkGroups)
+  const people = useSelector(getCurrentNetworkPeople)
+  const groups = people.filter((p) => p.isGroup)
 
   const [personName, setPersonName] = React.useState<string>(
     currentPersonName || "",
@@ -59,21 +62,17 @@ const PersonHeader: React.FC<IProps> = (props) => {
 
   const GroupBadges: React.ReactNode = (
     <Box direction="row" overflow={{ horizontal: "auto", vertical: "hidden" }}>
-      {Object.entries(currentNetworkGroups)
-        .filter((entry) => entry[1].personIds.includes(currentPersonId))
-        .map((entry, index) => {
-          const [groupId, group] = entry
-
+      {groups
+        .filter((group) => group.relationships[currentPersonId] !== undefined)
+        .map((group, index) => {
           // FUNCTION | Remove the current person from this group
           const removeFromGroup = async () => {
             try {
               await dispatch(
-                togglePersonInGroup(
-                  currentNetworkId,
-                  groupId,
-                  currentPersonId,
-                  false,
-                ),
+                disconnectPeople(currentNetworkId, {
+                  p1Id: currentPersonId,
+                  p2Id: group.id,
+                }),
               )
             } catch (error) {
               console.error(error)
@@ -103,8 +102,8 @@ const PersonHeader: React.FC<IProps> = (props) => {
             <Badge
               key={`${group.name}-badge-${index}`}
               name={group.name}
-              backgroundColor={group.backgroundColor}
-              textColor={group.textColor}
+              backgroundColor={group.backgroundColor || "white"}
+              textColor={group.textColor || "black"}
               render={renderGroupBadge}
             />
           )

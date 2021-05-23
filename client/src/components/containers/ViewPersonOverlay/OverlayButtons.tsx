@@ -7,14 +7,12 @@ import {
   connectPeople,
   deletePerson as deletePersonById,
   disconnectPeople,
-  pinNode,
   scalePerson,
+  setIsGroup,
   toggleBackgroundNode,
 } from "../../../store/networks/actions"
-import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
-import { IRelationships } from "../../../store/networks/networkTypes"
+import { IPerson, IRelationships } from "../../../store/networks/networkTypes"
 import {
-  getCurrentNetworkGroups,
   getCurrentNetworkId,
   getCurrentNetworkPeople,
 } from "../../../store/selectors/networks/getCurrentNetwork"
@@ -49,18 +47,14 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const currentPersonRelationships = useSelector(getPersonInFocusRelationships)
   const currentPersonName = useSelector(getPersonInFocusName)
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
-  const currentNetworkGroups = useSelector(getCurrentNetworkGroups)
-  const groupsWithId = Object.entries(currentNetworkGroups).map((entry) => ({
-    ...entry[1],
-    id: entry[0],
-  }))
+  const groups = currentNetworkPeople.filter((p) => p.isGroup)
 
   const currentPerson = currentNetworkPeople.find(
     (p) => p.id === currentPersonId,
   )
-  const isPersonPinned = Boolean(currentPerson?.pinXY)
   const personScaleXY = currentPerson?.scaleXY || { x: 1, y: 1 }
   const isPersonABackgroundNode = currentPerson?.isBackground || false
+  const isPersonAGroupNode = currentPerson?.isGroup || false
 
   // Connection drop-button ref -- used to trigger a click to close the menu
   const connectPeopleDropButtonRef = React.useRef<any>()
@@ -245,18 +239,30 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     </Tip>
   )
 
-  const isPersonInGroup = (groupWithId: typeof groupsWithId[0]) =>
-    groupWithId.personIds.includes(currentPersonId)
+  const isPersonInGroup = (group: IPerson) =>
+    group.relationships[currentPersonId] !== undefined
 
-  const toggleGroup = (id: string, isInGroup: boolean) => async () => {
+  const toggleGroup = (groupId: string, isInGroup: boolean) => async () => {
     // Add to the group if they're not already in it
     const doGroup = !isInGroup
 
     try {
-      // Toggle the person in the group in global state using a custom Redux action
-      await dispatch(
-        togglePersonInGroup(currentNetworkId, id, currentPersonId, doGroup),
-      )
+      if (doGroup) {
+        // Toggle the person in the group in global state using a custom Redux action
+        await dispatch(
+          connectPeople(currentNetworkId, {
+            p1Id: currentPersonId,
+            p2Id: groupId,
+          }),
+        )
+      } else {
+        await dispatch(
+          disconnectPeople(currentNetworkId, {
+            p1Id: currentPersonId,
+            p2Id: groupId,
+          }),
+        )
+      }
     } catch (error) {
       console.error(error)
     }
@@ -287,7 +293,8 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
               />
             </Box>
             <SearchAndCheckMenu
-              defaultOptions={groupsWithId}
+              // CANNOT add a group node to its own group
+              defaultOptions={groups.filter((g) => g.id !== currentPersonId)}
               idField="id"
               nameField="name"
               isCheckedFunction={isPersonInGroup}
@@ -301,24 +308,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
         }
       />
     </Tip>
-  )
-
-  const handleUnpinPerson = async () => {
-    try {
-      await dispatch(
-        pinNode(currentNetworkId, currentPersonId, false, undefined),
-      )
-    } catch (error) {
-      console.error(error)
-    }
-  }
-  const unpinPersonButton: React.ReactNode = (
-    <ToolTipButton
-      tooltip="Unpin from graph"
-      id="unpin-person-button"
-      icon={<Icons.Pin color="status-critical" />}
-      onClick={handleUnpinPerson}
-    />
   )
 
   const handleScalePerson = async () => {
@@ -377,6 +366,32 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
+  const togglePersonAsGroup = async () => {
+    try {
+      await dispatch(
+        setIsGroup(currentNetworkId, currentPersonId, !isPersonAGroupNode),
+      )
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  const toggleGroupNodeButton: React.ReactNode = (
+    <ToolTipButton
+      tooltip={
+        isPersonAGroupNode ? "Turn into non-group node" : "Turn into group node"
+      }
+      id="toggle-background-node-button"
+      icon={
+        isPersonAGroupNode ? (
+          <Icons.Folder color="status-ok" />
+        ) : (
+          <Icons.Folder color="status-critical" />
+        )
+      }
+      onClick={togglePersonAsGroup}
+    />
+  )
+
   return (
     <Box direction="row">
       {props.isEditing ? (
@@ -386,9 +401,9 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
           {ConnectPeopleDropButton}
           {ManageGroupsDropButton}
           {scalePersonButton}
+          {toggleGroupNodeButton}
           {toggleBackgroundNodeButton}
           {deleteCurrentPersonButton}
-          {isPersonPinned && unpinPersonButton}
         </React.Fragment>
       ) : (
         // View Mode

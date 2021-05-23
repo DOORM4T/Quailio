@@ -9,7 +9,6 @@ import { IApplicationState } from "../../../store/store"
 import { setToolbarAction, zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
 import {
-  addGroupNodeLinks,
   clearCustomListeners,
   clearHighlights,
   clearNodeToConnect,
@@ -17,7 +16,6 @@ import {
   createLinksByRelationships,
   createNetworkGraph,
   createPersonNode,
-  groupAsPersonNode,
   highlightNode,
   setNodeNeighborsAndLinks,
   sortNodesBySize,
@@ -134,7 +132,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     if (!forceGraphRef.current || !currentNetwork) return
     const forceGraph = forceGraphRef.current
     const people = currentNetwork.people
-    const groups = currentNetwork.relationshipGroups
 
     const { links, nodes } = forceGraphRef.current.graphData() as {
       links: LinkObject[]
@@ -150,9 +147,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     // Reusable function to update the graph using the updatedGraphData object
     const updateGraph = () => {
       sortNodesBySize(updatedGraphData)
-
       people.forEach(createLinksByRelationships(updatedGraphData))
-      addGroupNodeLinks(updatedGraphData)
 
       // Refresh links and neighbors for each node (This is for highlighting)
       updatedGraphData.nodes.forEach((node) => {
@@ -227,8 +222,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
         .filter((n) => n !== null) as IPersonNode[]
 
       updatedNodes.forEach(replaceUpdatedInGraph)
-
-      // DO NOT call updateGraph -- it will be called after other group-rerendering functions run
+      updateGraph()
 
       // #region rerenderUpdatedPeopleInGraph: HELPERS
       function asUpdatedNode(n: IPersonNode) {
@@ -280,73 +274,8 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       // #endregion rerenderUpdatedPeopleInGraph: HELPERS
     }
 
-    const rerenderUpdatedGroupsInGraph = () => {
-      const nodeToUpdatedNodeWithIndex = (n: IPersonNode, index: number) => {
-        if (!n.isGroupNode || !n || !groups[n.id]) return null
-
-        const groupNode = groupAsPersonNode(n.id, groups[n.id])
-        const arePinsSame = groupNode.pinXY === n.pinXY
-        const areNamesSame = groupNode.name === n.name
-        const areSame = arePinsSame && areNamesSame
-        if (!areSame) return { groupNode, index }
-        return null
-      }
-      const updated = updatedGraphData.nodes.map(nodeToUpdatedNodeWithIndex)
-      const updatedWithoutNull = updated.filter((obj) => obj !== null) as {
-        groupNode: IPersonNode
-        index: number
-      }[]
-
-      updatedWithoutNull.forEach(
-        (obj) => (updatedGraphData.nodes[obj.index] = obj.groupNode),
-      )
-
-      // DO NOT call updateGraph -- will be called at the end of the calling block
-    }
-
-    const addRemoveGroupInGraph = () => {
-      const addGroup = () => {
-        const ids = new Set(Object.keys(groups))
-        const removeIdFromIds = (n: IPersonNode) => {
-          if (!n.isGroupNode) return
-          ids.delete(n.id)
-        }
-        updatedGraphData.nodes.forEach(removeIdFromIds)
-
-        const addNodeToGraphById = (id: string) =>
-          updatedGraphData.nodes.push(groupAsPersonNode(id, groups[id]))
-        ids.forEach(addNodeToGraphById)
-      }
-
-      const removeGroup = () => {
-        const nodeIds = updatedGraphData.nodes.map((n) => n.id)
-        const idSet = new Set(nodeIds)
-        const removeIdFromIds = (id: string) => {
-          idSet.delete(id)
-        }
-        Object.keys(groups).forEach(removeIdFromIds)
-
-        const keepNode = (n: IPersonNode) => {
-          if (n.isGroupNode && idSet.has(n.id)) return false
-          return true
-        }
-        updatedGraphData.nodes = updatedGraphData.nodes.filter(keepNode)
-      }
-
-      const didAddGroup = numNewGroups > existingGroupNodes.length
-      if (didAddGroup) addGroup()
-      else removeGroup()
-
-      // DO NOT call updateGraph -- will be called at the end of the calling block
-    }
-
     const peopleLen = people.length
     const existingLen = existingPeopleIds.size
-    const existingGroupNodes = (
-      forceGraph.graphData().nodes as IPersonNode[]
-    ).filter((node) => node.isGroupNode)
-    const numNewGroups = groups ? Object.keys(groups).length : 0
-    const didNumGroupsChange = existingGroupNodes.length !== numNewGroups
 
     if (peopleLen > existingLen) {
       addPeopleToGraph()
@@ -355,21 +284,8 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     } else if (peopleLen === existingLen) {
       // #people didn't change; relationship reason, thumbnail, or pinXY changed
       rerenderUpdatedPeopleInGraph()
-
-      if (didNumGroupsChange) {
-        // OR a group was added or removed
-        addRemoveGroupInGraph()
-      } else {
-        // OR a group name/color/pinXY changed
-        rerenderUpdatedGroupsInGraph()
-      }
-      updateGraph()
     }
-  }, [
-    currentNetwork?.people,
-    currentNetwork?.relationshipGroups,
-    currentNetwork?.groupIds,
-  ])
+  }, [currentNetwork?.people])
 
   // Zoom in on a person node
   useEffect(() => {
@@ -423,15 +339,7 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
     nextCurrentNetwork?.people.map(toCheckParams),
   )
 
-  // ...or if groups changed
-  const areGroupsSame =
-    deepEqual(
-      prevCurrentNetwork?.relationshipGroups,
-      nextCurrentNetwork?.relationshipGroups,
-    ) &&
-    prevCurrentNetwork?.groupIds.length === nextCurrentNetwork?.groupIds.length
-
-  const skipRerender = areNumPeopleSame && arePeopleSame && areGroupsSame
+  const skipRerender = areNumPeopleSame && arePeopleSame
   return skipRerender
 })
 

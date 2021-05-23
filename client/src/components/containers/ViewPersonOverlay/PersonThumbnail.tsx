@@ -15,7 +15,7 @@ import {
 } from "../../../store/networks/actions"
 import { getCurrentNetworkId } from "../../../store/selectors/networks/getCurrentNetwork"
 import {
-  getPersonInFocusId,
+  getPersonInFocusData,
   getPersonInFocusThumbnailURL,
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import ToolTipButton from "../../ToolTipButton"
@@ -37,20 +37,18 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
   const isSmall = useSmallBreakpoint()
 
   const currentNetworkId = useSelector(getCurrentNetworkId)
-  const currentPersonId = useSelector(getPersonInFocusId)
+  const currentPerson = useSelector(getPersonInFocusData)
   const currentPersonThumbnailURL = useSelector(getPersonInFocusThumbnailURL)
 
-  const [
-    isThumbnailsOverlayOpen,
-    setThumbnailsOverlayOpen,
-  ] = React.useState<boolean>(false)
+  const [isThumbnailsOverlayOpen, setThumbnailsOverlayOpen] =
+    React.useState<boolean>(false)
 
   const [uploadedThumbnails, setUploadedThumbnails] = React.useState<
     IThumbnailDetails[]
   >([])
 
   /* Do not render if no network or person is selected */
-  if (!currentNetworkId || !currentPersonId) return null
+  if (!currentNetworkId || !currentPerson) return null
 
   /**
    * Handle thumbnail uploading
@@ -65,7 +63,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
 
       // Update the person in the database and in global state
       await dispatch(
-        setPersonThumbnail(currentNetworkId, currentPersonId, file),
+        setPersonThumbnail(currentNetworkId, currentPerson.id, file),
       )
     } catch (error) {
       // Failed to upload a thumbnail
@@ -97,7 +95,9 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
     if (!url || url.length > MAX_DATA_URL_SIZE) return
 
     try {
-      await dispatch(setPersonThumbnail(currentNetworkId, currentPersonId, url))
+      await dispatch(
+        setPersonThumbnail(currentNetworkId, currentPerson.id, url),
+      )
     } catch (error) {
       console.error(error)
     }
@@ -139,7 +139,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
     if (!doContinue) return
 
     try {
-      await dispatch(setPersonThumbnail(currentNetworkId, currentPersonId, ""))
+      await dispatch(setPersonThumbnail(currentNetworkId, currentPerson.id, ""))
     } catch (error) {
       console.error(error)
     }
@@ -157,6 +157,8 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
     >
       {currentPersonThumbnailURL ? (
         <Image src={currentPersonThumbnailURL} fill />
+      ) : currentPerson.isGroup ? (
+        <Icons.Folder color="dark-1" size="xxlarge" />
       ) : (
         <Icons.User color="dark-1" size="xxlarge" />
       )}
@@ -222,7 +224,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
       {isThumbnailsOverlayOpen && (
         <ThumbnailsOverlay
           networkId={currentNetworkId}
-          personId={currentPersonId}
+          personId={currentPerson.id}
           currentThumbnailURL={currentPersonThumbnailURL}
           thumbnailDetails={uploadedThumbnails}
           setOpen={setThumbnailsOverlayOpen}
@@ -283,32 +285,31 @@ const ThumbnailsOverlay: React.FC<IThumbnailsOverlayProps> = ({
 
   // Delete the thumbnail from the back end storage bucket
   // Takes the path to the storage bucket to delete from
-  const handleDeleteThumbnail = ({
-    path,
-    url,
-  }: IThumbnailDetails) => async () => {
-    // Ensure the user wants to delete the thumbnail
-    const doContinue = window.confirm(
-      "Are you sure you want to delete this thumbnail?",
-    )
-    if (!doContinue) return
+  const handleDeleteThumbnail =
+    ({ path, url }: IThumbnailDetails) =>
+    async () => {
+      // Ensure the user wants to delete the thumbnail
+      const doContinue = window.confirm(
+        "Are you sure you want to delete this thumbnail?",
+      )
+      if (!doContinue) return
 
-    try {
-      // Delete the thumbnail
-      await deleteThumbnail(path)
+      try {
+        // Delete the thumbnail
+        await deleteThumbnail(path)
 
-      // Remove the current person's thumbnail in global state if it was deleted
-      if (url === currentThumbnailURL) {
-        await dispatch(setPersonThumbnail(networkId, personId, ""))
+        // Remove the current person's thumbnail in global state if it was deleted
+        if (url === currentThumbnailURL) {
+          await dispatch(setPersonThumbnail(networkId, personId, ""))
+        }
+
+        // Set thumbnails state to re-render available thumbnails
+        const thumbnails = await getNetworkThumbnails(networkId)
+        setUploadedThumbnails(thumbnails)
+      } catch (error) {
+        console.error(error)
       }
-
-      // Set thumbnails state to re-render available thumbnails
-      const thumbnails = await getNetworkThumbnails(networkId)
-      setUploadedThumbnails(thumbnails)
-    } catch (error) {
-      console.error(error)
     }
-  }
 
   return (
     <Layer onEsc={handleClose}>

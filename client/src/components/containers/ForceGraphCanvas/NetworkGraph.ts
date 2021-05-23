@@ -11,13 +11,11 @@ import {
   pinMultipleNodes,
   updateRelationshipReason,
 } from "../../../store/networks/actions"
-import { togglePersonInGroup } from "../../../store/networks/actions/togglePersonInGroup"
 import {
   ConnectionShape,
   ICurrentNetwork,
   IPerson,
   IRelationship,
-  IRelationshipGroup,
 } from "../../../store/networks/networkTypes"
 import { store } from "../../../store/store"
 import {
@@ -53,19 +51,12 @@ const mouseCoords: XYVals = { x: 0, y: 0 }
 // Default color if a node/its links aren't part of a group
 const DEFAULT_NODE_COLOR = "white"
 const DEFAULT_TEXT_COLOR = "black"
-const DEFAULT_LINK_COLOR = "black"
 const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/links for non-highlighted nodes when something is being highlighted
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
 const MAX_FONT_SIZE = BASE_FONT_SIZE * 10
 const BADGE_FONT_SIZE = BASE_FONT_SIZE / 1.5
 const MAX_BADGE_SIZE = BADGE_FONT_SIZE * 3
-
-// Line dash constants
-const MIN_SEGMENT_LENGTH = 5
-const MIN_SPACE_LENGTH = 20
-const MAX_SEGMENT_LENGTH = 50
-const MAX_SPACE_LENGTH = 100
 
 let currentZoom = 1 // Use current zoom to scale visuals such as name tags
 
@@ -83,12 +74,6 @@ export function createNetworkGraph(
     links: [],
   }
 
-  const createGroupNode = ([groupId, group]: [string, IRelationshipGroup]) => {
-    addGroupNodeToForceGraph(gData, groupId, group)
-  }
-  Object.entries(currentNetwork.relationshipGroups).forEach(createGroupNode)
-
-  addGroupNodeLinks(gData)
   currentNetwork.people.forEach(createLinksByRelationships(gData))
   gData.links.forEach(setNodeNeighborsAndLinks(gData))
 
@@ -191,31 +176,6 @@ export function createPersonNode(person: IPerson): IPersonNode & NodeObject {
     thumbnail,
     neighbors: [],
     links: [],
-    isGroupNode: false,
-    isBackground: person.isBackground || false, // If this is undefined, the node isn't a background node
-  }
-}
-
-/**
- * @param group
- * @returns the group as a Person Node
- */
-export function groupAsPersonNode(
-  groupId: string,
-  group: IRelationshipGroup,
-): IPersonNode & NodeObject {
-  return {
-    id: groupId,
-    name: group.name,
-    thumbnail: null,
-    neighbors: [],
-    links: [],
-    relationships: {},
-    isGroupNode: true,
-    isBackground: false,
-
-    // Pin position (if the node has a pinXY property)
-    pinXY: group.pinXY,
   }
 }
 
@@ -271,10 +231,6 @@ export function setNodeNeighborsAndLinks(gData: IForceGraphData) {
 //
 
 // Closure function to draw a node or its pointer collision area
-const DEFAULT_NODE_COLOR_OBJECT = [
-  { backgroundColor: DEFAULT_NODE_COLOR, textColor: DEFAULT_TEXT_COLOR },
-]
-
 function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
   return (n: NodeObject, areaColor: string, ctx: CanvasRenderingContext2D) => {
     if (!n) return
@@ -283,27 +239,23 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const {
       thumbnail,
       name,
-      isGroupNode,
       id,
       scaleXY,
       x = 0,
       y = 0,
       isBackground,
+      isGroup,
+      backgroundColor = DEFAULT_NODE_COLOR,
+      textColor = DEFAULT_TEXT_COLOR,
     } = node
     const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
     const doPointerDetection = isAreaPaint && isBackground === false // Explicitly check for false since true and undefined mean a node IS NOT a background node
 
-    if (isGroupNode && store.getState().ui.filteredGroups[id] === false) return // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
+    if (isGroup && store.getState().ui.filteredGroups[id] === false) return // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
 
     const isConnecting = id === nodeToConnect.node?.id
     if (isConnecting && isMouseOver && !isPanningOrZooming && !isAreaPaint)
       drawLineToMouse(ctx, x, y)
-
-    let colors = getNodeGroupColors(node as IPersonNode)
-    if (colors.length === 0) colors = DEFAULT_NODE_COLOR_OBJECT
-
-    const gradient = makeGradient()
-    const fillColor = gradient ? gradient : colors[0].backgroundColor
 
     const isHighlighting = highlightNodes.size > 0
     const doHighlightNode = isHighlighting && highlightNodes.has(node)
@@ -323,7 +275,6 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const { nameTagWidth: ntWidth, nameTagHeight: ntHeight } = drawNameTag()
 
     // Draw group badges
-    if (isGroupNode) return // Group nodes aren't part of other groups
     let badgeXOffset = -ntWidth / 2
     let badgeYOffset = thumbnailHeight / 2 + ntHeight
     const groupIds = store.getState().ui.activeGroupsByPersonId[node.id]
@@ -350,7 +301,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fillStyle = highlightColor
         ctx.strokeStyle = highlightColor
       } else {
-        ctx.fillStyle = fillColor
+        ctx.fillStyle = DEFAULT_NODE_COLOR
       }
       ctx.fill()
       ctx.strokeStyle = "black"
@@ -369,7 +320,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.lineWidth = 0.5
       ctx.strokeText(name, x, y + radius)
 
-      if (isGroupNode) {
+      if (isGroup) {
         ctx.font = `${radius}px ${FONT_FAMILY} bolder`
         ctx.fillStyle = "black"
         ctx.fillText("G", x, y - radius / 2)
@@ -384,8 +335,11 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       if (realBadgeFontSize > MAX_BADGE_SIZE) realBadgeFontSize = MAX_BADGE_SIZE
       ctx.font = `${realBadgeFontSize}px ${FONT_FAMILY}`
 
-      const group =
-        store.getState().networks.currentNetwork?.relationshipGroups[groupId]
+      const group = store
+        .getState()
+        .networks.currentNetwork?.people.find(
+          (p) => p.isGroup && p.id === groupId,
+        )
       if (!group) return
       const {
         name: groupName,
@@ -425,8 +379,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     }
 
     function drawNameTag() {
-      const doHighlightNameTag =
-        isHighlighting && doHighlightNode && !isGroupNode
+      const doHighlightNameTag = isHighlighting && doHighlightNode && !isGroup
       // Name tag color. Group Nodes keep their color
       if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
@@ -434,10 +387,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       } else if (doHighlightNameTag || isSelected) {
         // This node is highlighted or selected
         ctx.fillStyle = highlightColor
-      } else if (isGroupNode) {
-        ctx.fillStyle = fillColor
       } else {
-        ctx.fillStyle = DEFAULT_NODE_COLOR
+        ctx.fillStyle = backgroundColor
       }
 
       ctx.textAlign = "center"
@@ -477,7 +428,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.beginPath()
       // Custom group name tag styles
       // These are hidden when something is highlighted by this group isn't one of them + SHIFT is down
-      if (isGroupNode) {
+      if (isGroup) {
         ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"
         ctx.lineWidth = 2 / currentZoom
       }
@@ -530,23 +481,6 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       return { height }
     }
 
-    function makeGradient() {
-      if (colors.length === 1) return null
-
-      const colorGradient = ctx.createLinearGradient(x, y, x, y + NODE_SIZE)
-
-      if (colorGradient) {
-        colors.forEach((color, index) =>
-          colorGradient.addColorStop(
-            (index + 1) / colors.length,
-            color.backgroundColor,
-          ),
-        )
-      }
-
-      return colorGradient
-    }
-
     //
     // #endregion nodePaint: HELPERS
     //
@@ -594,48 +528,19 @@ function drawLinkObject(
     return null
   }
 
-  const isGroupConnection = srcNode.isGroupNode || targetNode.isGroupNode
+  const isGroupConnection = srcNode.isGroup || targetNode.isGroup
 
   // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
-  if (
-    srcNode.isGroupNode &&
-    store.getState().ui.filteredGroups[srcId] === false
-  )
+  if (srcNode.isGroup && store.getState().ui.filteredGroups[srcId] === false)
     return
   if (
-    targetNode.isGroupNode &&
+    targetNode.isGroup &&
     store.getState().ui.filteredGroups[targetId] === false
   )
     return
 
-  const centerX = (x1 + x2) / 2
-  const centerY = (y1 + y2) / 2
-  const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
-
-  const linkColors = getLinkColors(link) ?? [DEFAULT_LINK_COLOR]
-
-  const gradient =
-    linkColors.length > 1
-      ? ctx.createRadialGradient(
-          centerX,
-          centerY,
-          0,
-          centerX,
-          centerY,
-          distance / 3,
-        )
-      : null
-  if (gradient) {
-    linkColors.forEach((color, index) =>
-      gradient.addColorStop((index + 1) / linkColors.length, color),
-    )
-  }
-
   const isHighlighting = highlightLinks.size > 0 || highlightNodes.size > 0
   const doHighlightLink = isHighlighting && highlightLinks.has(link)
-
-  ctx.setLineDash([])
-  if (isGroupConnection) dashLine(ctx)
 
   if (doHighlightLink) {
     ctx.strokeStyle = "yellow"
@@ -645,7 +550,8 @@ function drawLinkObject(
   } else if (isGroupConnection) {
     ctx.strokeStyle = "rgba(0,0,0,0.2)"
   } else {
-    ctx.strokeStyle = gradient ? gradient : linkColors[0]
+    // TODO: use link color after implementing link groups
+    ctx.strokeStyle = "DEFAULT_LINK_COLOR"
   }
 
   let lineWidth = doHighlightLink ? DEFAULT_LINK_SIZE * 2 : DEFAULT_LINK_SIZE
@@ -738,60 +644,6 @@ function drawLinkObject(
   //
 }
 
-function dashLine(ctx: CanvasRenderingContext2D) {
-  let segment = MIN_SEGMENT_LENGTH / currentZoom
-  let space = MIN_SPACE_LENGTH / currentZoom
-  if (segment < MIN_SEGMENT_LENGTH) segment = MIN_SEGMENT_LENGTH
-  if (segment > MAX_SEGMENT_LENGTH) segment = MAX_SEGMENT_LENGTH
-
-  if (space < MIN_SPACE_LENGTH) space = MIN_SPACE_LENGTH
-  if (space > MAX_SPACE_LENGTH) space = MAX_SPACE_LENGTH
-
-  ctx.lineCap = "square"
-  ctx.setLineDash([segment, space])
-}
-
-/**
- * @param node Person Node to get the group colors for
- * @returns array of group colors for bg and text -- [bgColor, textColor][]
- */
-type GroupColors = { backgroundColor: string; textColor: string }
-function getNodeGroupColors(node: IPersonNode): GroupColors[] {
-  // Get the group color
-  const currentNetwork = store.getState().networks.currentNetwork
-  if (!currentNetwork) return []
-
-  // The PersonNode represents a group, instead of an actual person node?
-  if (node.isGroupNode && currentNetwork.relationshipGroups[node.id]) {
-    const { backgroundColor, textColor } =
-      currentNetwork.relationshipGroups[node.id]
-    return [{ backgroundColor, textColor }]
-  }
-
-  // The node represents an actual IPerson. Get the groups this node is part of
-  const { filteredGroups } = store.getState().ui
-  const groupsWithThisNode = Object.entries(
-    currentNetwork.relationshipGroups,
-  ).filter((entry) => {
-    const [groupId, group] = entry
-
-    // Ensure that this group is active
-    //  explicitly check if the "showing" state is false since we treat "undefined" as true
-    if (filteredGroups[groupId] === false) return false
-
-    // Ensure the node is in the group
-    const hasNode = group.personIds.includes(node.id)
-    return hasNode
-  })
-
-  // Get the colors associated with the groups
-  const colors = groupsWithThisNode.map((group) => {
-    const { backgroundColor, textColor } = group[1]
-    return { backgroundColor, textColor }
-  })
-  return colors
-}
-
 function handleLinkHover(container: HTMLDivElement) {
   return (link: LinkObject | null) => {
     const currentToolbarAction = store.getState().ui.toolbarAction
@@ -829,41 +681,6 @@ function getLinkLabel(link: LinkObject | null) {
   const reason = relationship.reason || ""
 
   return reason
-}
-
-/**
- * @param link
- * @returns Array of common group colors between the linked nodes
- */
-function getLinkColors(link: LinkObject): string[] | null {
-  const srcNode = link.source as IPersonNode
-  const targetNode = link.target as IPersonNode
-  if (!srcNode.relationships || !targetNode.relationships) return null
-
-  // Get the group color
-  const currentNetwork = store.getState().networks.currentNetwork
-  if (!currentNetwork) return null
-
-  const { filteredGroups } = store.getState().ui
-  const commonGroups = Object.entries(currentNetwork.relationshipGroups).filter(
-    (entry) => {
-      const [groupId, group] = entry
-
-      // Ensure that this group is active
-      //  explicitly check if the "showing" state is false since we treat "undefined" as true
-      if (filteredGroups[groupId] === false) return false
-
-      // Ensure the source and target nodes are both in the group
-      const hasSrcNode = group.personIds.includes(srcNode.id)
-      const hasTargetNode = group.personIds.includes(targetNode.id)
-      return hasSrcNode && hasTargetNode
-    },
-  )
-
-  const commonColors = commonGroups.map((group) => group[1].backgroundColor)
-  const colors = commonColors.length > 0 ? commonColors : null
-
-  return colors
 }
 
 function handleNodeHover(container: HTMLDivElement) {
@@ -947,7 +764,7 @@ function handleNodeDragEnd(
     const selNodes = otherSelectedNodes ? [node, ...otherSelectedNodes] : [node]
 
     const nodesToFix = selNodes
-      .map(({ id: nodeId, isGroupNode: isGroup, x, y }) => ({
+      .map(({ id: nodeId, isGroup, x, y }) => ({
         nodeId,
         isGroup,
         pinXY: { x, y },
@@ -978,7 +795,7 @@ function handleNodeClick(Graph: ForceGraphInstance) {
       case "SELECT":
       case "RESIZE":
       case "MOVE": {
-        if (node.isGroupNode) {
+        if (node.isGroup) {
           handleGroupSelect(node.id)
           return
         }
@@ -987,7 +804,6 @@ function handleNodeClick(Graph: ForceGraphInstance) {
       }
 
       case "VIEW": {
-        if (node.isGroupNode) return
         handleNodeView(node.id)
         return
       }
@@ -1010,32 +826,34 @@ function handleNodeClick(Graph: ForceGraphInstance) {
     }
 
     // Clicking a group in MOVE mode (de)selects all nodes in the group
-    function handleGroupSelect(groupNodeId: string) {
-      const group =
-        store.getState().networks.currentNetwork?.relationshipGroups[
-          groupNodeId
-        ]
+    function handleGroupSelect(groupId: string) {
+      const group = store
+        .getState()
+        .networks.currentNetwork?.people.find(
+          (p) => p.isGroup && p.id === groupId,
+        )
       if (!group) return
 
       const { selectedNodeIds } = store.getState().ui
       const selectedNodeIdsSet = new Set(selectedNodeIds)
 
-      const entireGroupSelected = group.personIds.every((id) =>
+      const nodeIdsInGroup = Object.keys(group.relationships)
+      const entireGroupSelected = nodeIdsInGroup.every((id) =>
         selectedNodeIdsSet.has(id),
       )
       const shouldDeselectGroup =
-        entireGroupSelected && selectedNodeIdsSet.has(groupNodeId)
+        entireGroupSelected && selectedNodeIdsSet.has(groupId)
 
       if (shouldDeselectGroup) {
-        group.personIds.forEach((id) => selectedNodeIdsSet.delete(id))
-        selectedNodeIdsSet.delete(groupNodeId)
+        nodeIdsInGroup.forEach((id) => selectedNodeIdsSet.delete(id))
+        selectedNodeIdsSet.delete(groupId)
         store.dispatch<any>(selectNodes(Array.from(selectedNodeIdsSet)))
         return
       }
 
       if (!doMultiselect) selectedNodeIdsSet.clear()
-      group.personIds.forEach((id) => selectedNodeIdsSet.add(id))
-      selectedNodeIdsSet.add(groupNodeId)
+      nodeIdsInGroup.forEach((id) => selectedNodeIdsSet.add(id))
+      selectedNodeIdsSet.add(groupId)
       store.dispatch<any>(selectNodes(Array.from(selectedNodeIdsSet)))
     }
 
@@ -1115,85 +933,39 @@ async function handleNodeLinking(
   const currentNetworkId = store.getState().networks.currentNetwork?.id
   if (!currentNetworkId) return
 
-  /* Connect two nodes right-clicked nodes
-         Valid connections are:
-           1. Person-Person
-           2. Person-Group
-           3. Group-Person
- 
-         Users CANNOT link two groups (Group-Group)
-         Users CANNOT link a node to itself
-     */
+  // Connect two nodes
   if (!nodeToConnect.node) {
     // Picked the first node to dis(connect) or toggle in a group
     nodeToConnect.node = node as NodeObject & IPersonNode
   } else {
     // Picked the second node to dis(connect) or toggle in a group
+    const isSelfConnection = nodeToConnect.node.id === node.id
+    if (isSelfConnection) return // Self-Self connections are illegal
 
-    // Group-Group connections are illegal
-    if (nodeToConnect.node.isGroupNode && node.isGroupNode) return
-
-    // Self-Self connections are illegal
-    if (nodeToConnect.node.id === node.id) return
-
-    const isOnlyFirstNodeAGroup =
-      nodeToConnect.node.isGroupNode && !node.isGroupNode
-    const isOnlySecondNodeAGroup =
-      !nodeToConnect.node.isGroupNode && node.isGroupNode
-    const isOneAGroup = isOnlyFirstNodeAGroup || isOnlySecondNodeAGroup
-
-    if (isOneAGroup) {
-      // One of the nodes is a group; add/remove it to/from the group
-      const groupId = isOnlyFirstNodeAGroup ? nodeToConnect.node.id : node.id
-      const personId = isOnlyFirstNodeAGroup ? node.id : nodeToConnect.node.id
-      const group =
-        store.getState().networks.currentNetwork?.relationshipGroups[groupId]
-
-      try {
-        if (!group) throw new Error("That group doesn't exist")
-        const isPersonInGroup = group.personIds.includes(personId)
+    const areNodesConnected = node.id in nodeToConnect.node.relationships
+    // Disconnect the nodes if they are already connected
+    try {
+      if (areNodesConnected) {
         await store.dispatch<any>(
-          togglePersonInGroup(
-            currentNetworkId,
-            groupId,
-            personId,
-            !isPersonInGroup,
-          ),
+          disconnectPeople(currentNetworkId, {
+            p1Id: nodeToConnect.node.id,
+            p2Id: node.id,
+          }),
         )
-      } catch (error) {
-        console.error(error)
+      } else {
+        // Otherwise, connect the nodes
+        await store.dispatch<any>(
+          connectPeople(currentNetworkId, {
+            p1Id: nodeToConnect.node.id,
+            p2Id: node.id,
+          }),
+        )
       }
-    } else {
-      // Otherwise, make each node add each other to their relationships field
-
-      // Check if the node are already connected
-      const areNodesConnected = node.id in nodeToConnect.node.relationships
-
-      // Disconnect the nodes if they are already connected
-      try {
-        if (areNodesConnected) {
-          await store.dispatch<any>(
-            disconnectPeople(currentNetworkId, {
-              p1Id: nodeToConnect.node.id,
-              p2Id: node.id,
-            }),
-          )
-        } else {
-          // Otherwise, connect the nodes
-          await store.dispatch<any>(
-            connectPeople(currentNetworkId, {
-              p1Id: nodeToConnect.node.id,
-              p2Id: node.id,
-            }),
-          )
-        }
-      } catch (error) {
-        console.error(error)
-      }
+    } catch (error) {
+      console.error(error)
     }
 
-    // Clear the node to connect
-    // Can keep making connections to the first node if SHIFT is down
+    // Continue linking...
     if (doContinue) {
       const updatedNode = Graph.graphData().nodes.find(
         (gNode) => gNode.id === nodeToConnect.node?.id,
@@ -1202,6 +974,7 @@ async function handleNodeLinking(
       return
     }
 
+    // Or clean up
     clearNodeToConnect()
   }
 }
@@ -1217,49 +990,6 @@ function cancelLinking() {
 // Clears the node to connect. This stops the linking action if there is a node being connecting.
 export function clearNodeToConnect() {
   nodeToConnect.node = null
-}
-
-export function addGroupNodeToForceGraph(
-  gData: IForceGraphData,
-  groupId: string,
-  group: IRelationshipGroup,
-) {
-  if (!gData) return
-
-  const visibleGroups = store.getState().ui.filteredGroups
-  // Hidden if explicitly false. undefined/true indicate the group is visible
-  if (visibleGroups[groupId] === false) return
-
-  const node = groupAsPersonNode(groupId, group)
-  gData.nodes = gData.nodes.concat(node)
-}
-
-export function addGroupNodeLinks(gData: IForceGraphData) {
-  if (!gData) return
-
-  const groupNodes = gData.nodes.filter((node) => node.isGroupNode)
-
-  const relationshipGroups =
-    store.getState().networks.currentNetwork?.relationshipGroups
-  if (!relationshipGroups) return
-
-  groupNodes.forEach((groupNode) => {
-    const group = relationshipGroups[groupNode.id]
-    if (!group) return
-
-    group.personIds.forEach((personId) => {
-      //  Ensure the person has a node in the force graph
-      const doesOtherPersonExist = gData.nodes.some(
-        (node) => node.id === personId,
-      )
-      if (!doesOtherPersonExist) return
-
-      gData.links.push({
-        source: groupNode.id,
-        target: personId,
-      })
-    })
-  })
 }
 
 function updateMouseCoords(e: MouseEvent) {
@@ -1333,7 +1063,7 @@ async function handleLinkClick(link: LinkObject) {
   const srcNode = link.source as IPersonNode | undefined
   const targetNode = link.target as IPersonNode | undefined
   if (!srcNode || !targetNode) return
-  if (srcNode.isGroupNode || targetNode.isGroupNode) return
+  if (srcNode.isGroup || targetNode.isGroup) return
 
   const relationship = srcNode.relationships[targetNode.id]
   if (!relationship) return

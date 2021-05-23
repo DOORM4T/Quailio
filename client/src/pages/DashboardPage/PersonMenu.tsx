@@ -22,6 +22,7 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
     SearchAddInputNode,
   } = usePersonMenu(props)
 
+  const groupNodes = currentNetwork?.people.filter((p) => p.isGroup) || []
   const [isAllGroupOpen, setAllGroupOpen] = React.useState(false)
 
   const openAllGroupWhenSearching = (activeIndexes: number[]) => {
@@ -57,16 +58,15 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
 
         {/* Render user-created groups */}
         {!isSearching &&
-          currentNetwork.relationshipGroups &&
-          Object.entries(currentNetwork.relationshipGroups)
+          groupNodes.length > 0 &&
+          groupNodes
             // Sort each group by name in alphanumeric order
-            .sort((e1, e2) =>
-              e1[1].name.toLowerCase().localeCompare(e2[1].name.toLowerCase()),
+            .sort((g1, g2) =>
+              g1.name.toLowerCase().localeCompare(g2.name.toLowerCase()),
             )
 
             // Render Accordion Panels for each group
-            .map((entry, index) => {
-              const [groupId, group] = entry
+            .map((group, index) => {
               const key = `group-${group.name}-${index}`
 
               return (
@@ -74,7 +74,6 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
                   key={key}
                   currentNetwork={currentNetwork}
                   group={group}
-                  groupId={groupId}
                   filterablePeople={filterablePeople}
                   filterGroups={filterGroups}
                   isViewingShared={isViewingShared}

@@ -1,5 +1,4 @@
 import {
-  groupsCollection,
   networksCollection,
   peopleCollection,
   usersCollection,
@@ -56,17 +55,6 @@ export const deleteNetwork = (networkId: string): AppThunk => {
           }
         })
         await Promise.all(deletePeopleList)
-
-        // Delete all groups in the network
-        const deleteGroupsList = networkData.groupIds.map(async (groupId) => {
-          try {
-            await groupsCollection.doc(groupId).delete()
-          } catch (error) {
-            /* Log any errors; keep going even if a person isn't found */
-            console.error(error)
-          }
-        })
-        await Promise.all(deleteGroupsList)
 
         /* Delete the Network */
         await networkDoc.delete()

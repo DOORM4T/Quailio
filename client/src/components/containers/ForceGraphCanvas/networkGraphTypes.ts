@@ -10,7 +10,6 @@ export interface IPersonNode extends IPerson {
   thumbnail: HTMLImageElement | null
   neighbors: IPersonNode[]
   links: LinkObject[]
-  isGroupNode: boolean // A group can be represented by a PersonNode
 }
 export type XYVals = { x: number; y: number }
 export type NodeToConnect = {

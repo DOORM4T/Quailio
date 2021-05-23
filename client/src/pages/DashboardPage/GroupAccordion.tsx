@@ -5,18 +5,12 @@ import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import SearchAndCheckMenu from "../../components/SearchAndCheckMenu"
 import ToolTipButton from "../../components/ToolTipButton"
-import { deleteGroup } from "../../store/networks/actions"
+import { connectPeople, disconnectPeople } from "../../store/networks/actions"
 import {
-  changeGroupColor,
   GroupColorField,
-} from "../../store/networks/actions/changeGroupBackgroundColor"
-import { renameGroup } from "../../store/networks/actions/renameGroup"
-import { togglePersonInGroup } from "../../store/networks/actions/togglePersonInGroup"
-import {
-  ICurrentNetwork,
-  IPerson,
-  IRelationshipGroup,
-} from "../../store/networks/networkTypes"
+  setNodeColor,
+} from "../../store/networks/actions/setNodeColor"
+import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
 import {
   toggleGroupFilter,
@@ -26,8 +20,7 @@ import {
 interface IProps {
   key: string
   currentNetwork: ICurrentNetwork
-  group: IRelationshipGroup
-  groupId: string
+  group: IPerson // a group is a person whose .isGroup is true
   filterablePeople: IPerson[]
   filterGroups: {
     [groupId: string]: boolean
@@ -42,7 +35,6 @@ const GroupAccordion: React.FC<IProps> = ({
   key,
   currentNetwork,
   group,
-  groupId,
   filterablePeople,
   filterGroups,
   isViewingShared,
@@ -51,10 +43,10 @@ const GroupAccordion: React.FC<IProps> = ({
   const dispatch: Dispatch<any> = useDispatch()
   const [doShowAll, setShowAll] = useState(true)
 
-  const hasPerson = (person: IPerson) => group.personIds.includes(person.id)
-  const peopleInGroup = filterablePeople.filter(hasPerson)
-  const isEmpty = peopleInGroup.length === 0
-  let doShowGroup = filterGroups[groupId]
+  const hasPerson = (person: IPerson) =>
+    group.relationships[person.id] !== undefined
+  const peopleInGroup = filterablePeople.filter(hasPerson) // People in a group are people connected to the group
+  let doShowGroup = filterGroups[group.id]
   if (doShowGroup === undefined) doShowGroup = true // Undefined showing state also means the group should show
   const accordionRef = useRef<HTMLDivElement | null>(null)
 
@@ -107,27 +99,25 @@ const GroupAccordion: React.FC<IProps> = ({
       const doAdd = !isInGroup
 
       try {
-        await dispatch(
-          togglePersonInGroup(currentNetwork.id, groupId, personId, doAdd),
-        )
+        if (doAdd) {
+          await dispatch(
+            connectPeople(currentNetwork.id, {
+              p1Id: group.id,
+              p2Id: personId,
+            }),
+          )
+        } else {
+          await dispatch(
+            disconnectPeople(currentNetwork.id, {
+              p1Id: group.id,
+              p2Id: personId,
+            }),
+          )
+        }
       } catch (error) {
         console.error(error)
       }
     } // handleTogglePersonInGroup
-
-  const handleRenameGroup = async () => {
-    try {
-      const newName = window.prompt(`Rename [${group.name}] to:`)
-
-      // Stop if the user didn't enter anything
-      if (!newName) return
-
-      // Rename the group in global state through a custom Redux function
-      await dispatch(renameGroup(currentNetwork.id, groupId, newName))
-    } catch (error) {
-      console.error(error)
-    }
-  } //  handleDeleteGroup
 
   const changeGroupColorByField = (field: GroupColorField) => async () => {
     // Create a color picker input
@@ -151,9 +141,9 @@ const GroupAccordion: React.FC<IProps> = ({
     // Update the color in global state using a custom Redux action
     try {
       await dispatch(
-        changeGroupColor(
-          groupId,
+        setNodeColor(
           currentNetwork.id,
+          group.id,
           field, // Change backgroundColor or textColor
           newColor as string,
         ),
@@ -163,22 +153,6 @@ const GroupAccordion: React.FC<IProps> = ({
     }
   } // changeGroupColorByField
 
-  const handleDeleteGroup = async () => {
-    try {
-      const doDelete = window.confirm(
-        `Delete group: [${group.name}]? This action cannot be reversed.`,
-      )
-
-      // Stop if the user canceled the confirm prompt
-      if (!doDelete) return
-
-      // Delete the group from global state through a custom Redux function
-      await dispatch(deleteGroup(currentNetwork.id, groupId))
-    } catch (error) {
-      console.error(error)
-    }
-  } // handleDeleteGroup
-
   const toggleGroupVisibility = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
@@ -187,7 +161,7 @@ const GroupAccordion: React.FC<IProps> = ({
 
     try {
       // Toggle the groups "showing" state
-      await dispatch(toggleGroupFilter(groupId, !doShowGroup))
+      await dispatch(toggleGroupFilter(group.id, !doShowGroup))
     } catch (error) {
       console.error(error)
     }
@@ -196,8 +170,8 @@ const GroupAccordion: React.FC<IProps> = ({
   const groupAccordionStyles: React.CSSProperties = {
     height: "48px",
     width: "100%",
-    backgroundColor: group.backgroundColor,
-    color: group.textColor,
+    backgroundColor: group.backgroundColor || "white",
+    color: group.textColor || "black",
     filter: !doShowGroup // Dim the group accordion if it's empty or if it's hiding its nodes
       ? "brightness(0.5)"
       : undefined,
@@ -284,11 +258,6 @@ const GroupAccordion: React.FC<IProps> = ({
       {/* Buttons */}
       <Box direction="row" justify="end">
         <ToolTipButton
-          tooltip="Rename group"
-          onClick={handleRenameGroup}
-          icon={<Icons.Tag color="brand" />}
-        />
-        <ToolTipButton
           tooltip="Change group background color"
           onClick={changeGroupColorByField("backgroundColor")}
           icon={<Icons.Paint color={group.backgroundColor} />}
@@ -298,19 +267,16 @@ const GroupAccordion: React.FC<IProps> = ({
           onClick={changeGroupColorByField("textColor")}
           icon={<Icons.TextAlignFull color={group.textColor} />}
         />
-        <ToolTipButton
-          tooltip="Delete group"
-          onClick={handleDeleteGroup}
-          icon={<Icons.Trash color="status-critical" />}
-        />
       </Box>
       {/* Search-Checkbox Menu */}
       <Box background="light-1">
         <SearchAndCheckMenu
-          defaultOptions={filterablePeople}
+          defaultOptions={filterablePeople.filter((p) => p.id !== group.id)} // CANNOT add a group to itself
           idField="id"
           nameField="name"
-          isCheckedFunction={(arg: IPerson) => group.personIds.includes(arg.id)}
+          isCheckedFunction={(arg: IPerson) =>
+            group.relationships[arg.id] !== undefined
+          }
           toggleOption={handleTogglePersonInGroup}
         />
       </Box>

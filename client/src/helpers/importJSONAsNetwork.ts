@@ -20,7 +20,6 @@ export async function importJSONAsNetwork(files: FileList | null) {
     })
 
     const data = await Promise.all(getParsedJSON)
-    console.log(data)
 
     // Import the JSON to global state
     const dispatchImportFunctions = data.map(async (parsedJSON) => {

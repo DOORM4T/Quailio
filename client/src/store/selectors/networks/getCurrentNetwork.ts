@@ -18,8 +18,3 @@ export const getCurrentNetworkPeople = createSelector(
   selectors,
   (network) => network?.people || [],
 )
-
-export const getCurrentNetworkGroups = createSelector(
-  selectors,
-  (network) => network?.relationshipGroups || {},
-)

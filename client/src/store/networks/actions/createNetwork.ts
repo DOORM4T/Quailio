@@ -18,12 +18,10 @@ export const createNetwork = (name: string): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
-    /* Create a network object */
     const newNetwork: INetwork = {
       id: uuidv4(),
       name,
       personIds: [],
-      groupIds: [],
     }
 
     try {

@@ -1,7 +1,6 @@
 import firebase from "firebase"
 import { v4 as uuidv4 } from "uuid"
 import {
-  groupsCollection,
   networksCollection,
   peopleCollection,
   usersCollection,
@@ -54,15 +53,11 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
  * @returns a current network with updated UUIDs
  */
 function makeNetworkCopy(networkJSON: INetworkJSON) {
-  const groupsCopy = { ...networkJSON.relationshipGroups }
-  const groupIds = Object.keys(groupsCopy)
   const peopleCopy = [...networkJSON.people]
 
-  groupIds.forEach(updateGroupCopyId)
   peopleCopy.forEach(updatePersonCopyId)
 
   const updatedPersonIds = peopleCopy.map((p) => p.id)
-  const updatedGroupIds = Object.keys(groupsCopy)
 
   const updatedNetworkId = uuidv4()
   const updatedCurrentNetwork: ICurrentNetwork = {
@@ -70,8 +65,6 @@ function makeNetworkCopy(networkJSON: INetworkJSON) {
     id: updatedNetworkId,
     people: peopleCopy,
     personIds: updatedPersonIds,
-    groupIds: updatedGroupIds,
-    relationshipGroups: groupsCopy,
   }
 
   return updatedCurrentNetwork
@@ -79,21 +72,10 @@ function makeNetworkCopy(networkJSON: INetworkJSON) {
   //
   // #region makeNetworkCopy: HELPERS
   //
-  function updateGroupCopyId(groupId: string) {
-    const groupData = { ...groupsCopy[groupId] }
-
-    const newGroupId = uuidv4()
-    delete groupsCopy[groupId]
-    groupsCopy[newGroupId] = groupData
-  }
-
   function updatePersonCopyId(personCopy: IPerson) {
     const oldId = personCopy.id
     personCopy.id = uuidv4()
     peopleCopy.forEach(updatePersonIdInRels)
-
-    const groupCopyIds = Object.keys(groupsCopy)
-    groupCopyIds.forEach(updatePersonIdInGroups)
 
     // #region assignNewIds: HELPERS
     function updatePersonIdInRels(otherPerson: IPerson) {
@@ -106,17 +88,6 @@ function makeNetworkCopy(networkJSON: INetworkJSON) {
       delete otherPerson.relationships[oldId]
 
       otherPerson.relationships[newId] = relationshipCopy
-    }
-
-    function updatePersonIdInGroups(groupId: string) {
-      const group = groupsCopy[groupId]
-
-      const personIdIndexInGroup = group.personIds.findIndex(
-        (pid) => pid === oldId,
-      )
-      if (personIdIndexInGroup === -1) return
-
-      group.personIds[personIdIndexInGroup] = personCopy.id
     }
 
     // #endregion assignNewIds: HELPERS
@@ -154,7 +125,6 @@ async function importToFirestore(uid: string, toImport: ICurrentNetwork) {
     id: toImport.id,
     name: toImport.name,
     personIds: toImport.personIds,
-    groupIds: toImport.groupIds, // TODO: Update group IDs
   }
   await networkDoc.ref.set(network)
 
@@ -176,24 +146,4 @@ async function importToFirestore(uid: string, toImport: ICurrentNetwork) {
   })
 
   await Promise.all(uploadPersonPromises)
-
-  // TODO: Create group docs in Firestore
-  const uploadGroupsPromises = Object.entries(toImport.relationshipGroups).map(
-    async (groupEntry) => {
-      const [groupId, group] = groupEntry
-      const groupDoc = await groupsCollection.doc(groupId).get()
-
-      // Stop importing if the group already exists (ID clash. This should very rarely happen.)
-      if (groupDoc.exists)
-        throw new Error(
-          "Group ID clashed with an existing group. Stopping import.",
-        )
-
-      // Return a promise to set the person document
-      const setGroupPromise = groupDoc.ref.set(group)
-      return setGroupPromise
-    },
-  )
-
-  await Promise.all(uploadGroupsPromises)
 }

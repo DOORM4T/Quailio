@@ -11,7 +11,6 @@ import useAuth from "../../../hooks/auth/useAuth"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
 import {
   addPerson,
-  createGroup,
   createNetwork,
   deleteNetwork,
   renameNetwork,
@@ -228,26 +227,6 @@ export default function useMenuHeader({
     fileInput.onchange = () => importJSONAsNetwork(fileInput.files)
   }
 
-  const handleCreateGroup = async () => {
-    if (!currentNetwork) {
-      alert("Please select a Network!")
-      return
-    }
-
-    /* get name of person to add */
-    const groupName = window.prompt("Name of group:")
-    if (!groupName) {
-      alert("Canceled create group action")
-      return
-    }
-
-    try {
-      await dispatch(createGroup(currentNetwork.id, groupName))
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
   // FUNCTION | Open the sharing overlay menu
   const openSharingMenu = async () => {
     if (!currentNetwork) return
@@ -267,16 +246,6 @@ export default function useMenuHeader({
       ariaLabel="Add a person to the network"
       icon={<Icons.UserAdd color="light-1" />}
       onClick={handleAddPerson}
-      isDisabled={!currentNetwork}
-    />,
-
-    <ToolTipButton
-      key="create-group-button"
-      id="create-group-button"
-      tooltip="Create relationship group"
-      ariaLabel="Create a relationship group"
-      icon={<Icons.Folder color="light-1" />}
-      onClick={handleCreateGroup}
       isDisabled={!currentNetwork}
     />,
 

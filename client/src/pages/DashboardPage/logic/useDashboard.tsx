@@ -124,20 +124,19 @@ export default function useDashboard() {
             |    processing that would otherwise be inefficiently calculated during each tick of the force-graph  */
   React.useEffect(() => {
     // Stop if there aren't any groups in the current network -- this means there's no person-group data to cache
-    if (!currentNetwork || !currentNetwork.relationshipGroups) return
-
-    const groups = currentNetwork.relationshipGroups
+    if (!currentNetwork || !currentNetwork.people.some((p) => p.isGroup)) return
+    const groups = currentNetwork.people.filter((p) => p.isGroup)
 
     // Get an array of objects containing a personId and active groups containing that person
     const groupsByPersonIds = currentNetwork.people.map((person) => {
-      const groupsWithThisPerson = Object.keys(groups).filter((groupId) =>
-        groups[groupId].personIds.includes(person.id),
+      const groupsWithThisPerson = groups.filter(
+        (group) => group.relationships[person.id] !== undefined,
       )
 
       // Keep only the active groups the person is in
-      const activeGroupIds = groupsWithThisPerson.filter(
-        (groupId) => filterGroupsMap[groupId] !== false,
-      )
+      const activeGroupIds = groupsWithThisPerson
+        .filter((group) => filterGroupsMap[group.id] !== false)
+        .map((g) => g.id)
 
       const data: IPersonIDWithActiveGroups = {
         personId: person.id,
@@ -148,7 +147,7 @@ export default function useDashboard() {
 
     // Cache in global state
     dispatch(cachePersonGroupList(groupsByPersonIds))
-  }, [currentNetwork?.relationshipGroups]) // Cache groups by person ID
+  }, [currentNetwork?.people]) // Cache groups by person ID
 
   // RETURN | All the hook values that will be used by the Dashboard page
   return {

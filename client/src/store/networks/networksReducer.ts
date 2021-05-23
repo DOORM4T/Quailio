@@ -1,13 +1,9 @@
 import { Reducer } from "redux"
-import { restructureLegacyCurrentNetwork } from "./helpers/restructureLegacyCurrentNetwork"
 import {
   IAddPersonAction,
-  IChangeGroupColorAction,
   IConnectPeopleAction,
-  ICreateGroupAction,
   ICreateNetworkAction,
   ICurrentNetwork,
-  IDeleteGroupAction,
   IDeleteNetworkByIdAction,
   IDeletePersonByIdAction,
   IDisconnectPeopleAction,
@@ -16,12 +12,11 @@ import {
   INetwork,
   INetworksState,
   IPerson,
-  IRelationshipGroup,
-  IRelationshipGroups,
   IRelationships,
-  IRenameGroupAction,
   IRenameNetworkAction,
+  ISetIsGroupAction,
   ISetNetworkAction,
+  ISetNodeColor,
   ISetNodePinAction,
   ISetNodeScaleAction,
   ISetPersonAsBackgroundNodeAction,
@@ -29,7 +24,6 @@ import {
   ISetRelationshipShape,
   ISharedNetworkProperties,
   IShareNetworkAction,
-  ITogglePersonInGroupAction,
   IUnshareNetworkAction,
   IUpdatePersonContentAction,
   IUpdatePersonNameAction,
@@ -114,23 +108,11 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.SET_RELATIONSHIP_SHAPE:
       return getSetRelationshipShapeState(state, action)
 
-    //
-    // GROUPS
-    //
-    case NetworkActionTypes.CREATE_GROUP:
-      return getCreateGroupState(state, action)
+    case NetworkActionTypes.SET_IS_GROUP:
+      return getSetIsGroupNodeState(state, action)
 
-    case NetworkActionTypes.TOGGLE_PERSON_IN_GROUP:
-      return getTogglePersonInGroupState(state, action)
-
-    case NetworkActionTypes.DELETE_GROUP:
-      return getDeleteGroupState(state, action)
-
-    case NetworkActionTypes.RENAME_GROUP:
-      return getRenameGroupState(state, action)
-
-    case NetworkActionTypes.CHANGE_GROUP_COLOR:
-      return getChangeGroupColorState(state, action)
+    case NetworkActionTypes.SET_NODE_COLOR:
+      return getSetNodeColorState(state, action)
 
     // SHARING
     case NetworkActionTypes.SHARE_NETWORK:
@@ -253,55 +235,30 @@ function getSetRelationshipShapeState(
 
 function getPinNodeState(state: INetworksState, action: ISetNodePinAction) {
   if (state.currentNetwork?.id !== action.networkId) return state
+  // Pinning a person node
+  const personIndex = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.nodeId,
+  )
 
-  if (action.isGroup) {
-    // Pinning a group node
-    const updatedGroup = {
-      ...state.currentNetwork.relationshipGroups[action.nodeId],
-    }
-    updatedGroup.pinXY = action.pinXY
+  if (personIndex === -1) return state
 
-    const updatedGroups = {
-      ...state.currentNetwork.relationshipGroups,
-      [action.nodeId]: updatedGroup,
-    }
+  const updatedPerson: IPerson = {
+    ...state.currentNetwork.people[personIndex],
+    pinXY: action.pinXY,
+  }
 
-    const updatedCurrentNetwork: ICurrentNetwork = {
-      ...state.currentNetwork,
-      relationshipGroups: updatedGroups,
-    }
+  const updatedPeople: IPerson[] = [...state.currentNetwork.people]
+  updatedPeople[personIndex] = updatedPerson
 
-    return {
-      ...state,
-      currentNetwork: updatedCurrentNetwork,
-      isLoading: false,
-    }
-  } else {
-    // Pinning a person node
-    const personIndex = state.currentNetwork.people.findIndex(
-      (p) => p.id === action.nodeId,
-    )
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
+  }
 
-    if (personIndex === -1) return state
-
-    const updatedPerson: IPerson = {
-      ...state.currentNetwork.people[personIndex],
-      pinXY: action.pinXY,
-    }
-
-    const updatedPeople: IPerson[] = [...state.currentNetwork.people]
-    updatedPeople[personIndex] = updatedPerson
-
-    const updatedCurrentNetwork: ICurrentNetwork = {
-      ...state.currentNetwork,
-      people: updatedPeople,
-    }
-
-    return {
-      ...state,
-      currentNetwork: updatedCurrentNetwork,
-      isLoading: false,
-    }
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 
@@ -385,28 +342,31 @@ function getShareNetworkState(
   }
 }
 
-function getChangeGroupColorState(
+function getSetNodeColorState(
   state: INetworksState,
-  action: IChangeGroupColorAction,
+  action: ISetNodeColor,
 ): INetworksState {
   // Stop if there's no current network or if the changed network isn't in view
   const currentNetwork = state.currentNetwork
   if (!currentNetwork || currentNetwork.id !== action.networkId) return state
 
-  // Update group color
-  const updatedGroup: IRelationshipGroup = {
-    ...currentNetwork.relationshipGroups[action.groupId],
+  const personIndex = currentNetwork.people.findIndex(
+    (p) => p.id === action.personId,
+  )
+  if (personIndex === -1) return state
+
+  const updatedPerson: IPerson = {
+    ...currentNetwork.people[personIndex],
     // Update the backgroundColor or textColor -- depends on the passed field
     [action.field]: action.newColor,
   }
 
-  // Update the current network
+  const updatedPeople: IPerson[] = [...currentNetwork.people]
+  updatedPeople[personIndex] = updatedPerson
+
   const updatedCurrentNetwork: ICurrentNetwork = {
     ...currentNetwork,
-    relationshipGroups: {
-      ...currentNetwork.relationshipGroups,
-      [action.groupId]: updatedGroup,
-    },
+    people: updatedPeople,
   }
 
   return {
@@ -416,154 +376,32 @@ function getChangeGroupColorState(
   }
 }
 
-function getRenameGroupState(
+function getSetIsGroupNodeState(
   state: INetworksState,
-  action: IRenameGroupAction,
-): INetworksState {
-  // Stop if the network doesn't match the current network (no need to reflect changes immediately)
-  const currentNetwork = state.currentNetwork
-  if (!currentNetwork || action.networkId !== currentNetwork.id) return state
-
-  // Get the group -- stop if the group doesn't exist
-  const group = currentNetwork.relationshipGroups[action.groupId]
-  if (!group) return state
-
-  // Create an updated copy of the group
-  const renamedGroup: IRelationshipGroup = { ...group, name: action.newName }
-
-  // Update the current network
-  const updatedRelationshipGroups: IRelationshipGroups = {
-    ...currentNetwork.relationshipGroups,
-    [action.groupId]: renamedGroup,
-  }
-  const updatedCurrentNetwork: ICurrentNetwork = {
-    ...currentNetwork,
-    relationshipGroups: updatedRelationshipGroups,
-  }
-
-  return {
-    ...state,
-    currentNetwork: updatedCurrentNetwork,
-    isLoading: false,
-  }
-}
-
-function getDeleteGroupState(
-  state: INetworksState,
-  action: IDeleteGroupAction,
-): INetworksState {
-  // Stop if there's no current network or if the current network isn't in view
-  if (!state.currentNetwork || state.currentNetwork.id !== action.networkId)
-    return state
-
-  // Create a copy of the groups without the deleted group
-  const groups = state.currentNetwork.relationshipGroups
-  const groupsWithoutDeleted: IRelationshipGroups = {}
-  Object.keys(groups).forEach((groupId) => {
-    if (groupId !== action.groupId) {
-      groupsWithoutDeleted[groupId] = { ...groups[groupId] }
-    }
-  })
-
-  // Create a copy of the group IDs without the deleted group
-  const groupIdsWithoutDeleted = state.currentNetwork.groupIds.filter(
-    (groupId) => groupId !== action.groupId,
-  )
-
-  // Update the current network
-  const updatedCurrentNetwork: ICurrentNetwork = {
-    ...state.currentNetwork,
-    relationshipGroups: groupsWithoutDeleted,
-    groupIds: groupIdsWithoutDeleted,
-  }
-
-  return {
-    ...state,
-    currentNetwork: updatedCurrentNetwork,
-    isLoading: false,
-  }
-}
-
-function getTogglePersonInGroupState(
-  state: INetworksState,
-  action: ITogglePersonInGroupAction,
-): INetworksState {
-  if (!state.currentNetwork || action.networkId !== state.currentNetwork.id)
-    return state
-
-  const group = state.currentNetwork.relationshipGroups[action.groupId]
-  if (!group) return state
-
-  let updatedPersonIds = [...group.personIds]
-
-  if (action.toggleOn) {
-    updatedPersonIds.push(action.personId)
-  } else {
-    updatedPersonIds = updatedPersonIds.filter((pid) => pid !== action.personId)
-  }
-
-  const updatedGroup: IRelationshipGroup = {
-    ...group,
-    personIds: updatedPersonIds,
-  }
-
-  const updatedGroups: IRelationshipGroups = {
-    ...state.currentNetwork.relationshipGroups,
-  }
-  updatedGroups[action.groupId] = updatedGroup
-
-  const updatedCurrentNetwork: ICurrentNetwork = {
-    ...state.currentNetwork,
-    relationshipGroups: updatedGroups,
-  }
-
-  return {
-    ...state,
-    currentNetwork: updatedCurrentNetwork,
-    isLoading: false,
-  }
-}
-
-function getCreateGroupState(
-  state: INetworksState,
-  action: ICreateGroupAction,
+  action: ISetIsGroupAction,
 ): INetworksState {
   // Ensure the current network is being updated
   if (state.currentNetwork?.id !== action.networkId) return state
 
-  // Get the index of the network in the global networks state
-  const networkIndex = state.networks.findIndex(
-    (n) => n.id === action.networkId,
-  )
-  if (networkIndex === -1) return state
-  const network = state.networks[networkIndex]
+  const { people } = state.currentNetwork
+  const personIndex = people.findIndex((p) => p.id === action.personId)
+  if (personIndex === -1) return state
 
-  // Add the new group ID to the network groupIds list
-  const updatedNetwork: INetwork = {
-    ...network,
-    groupIds: network.groupIds ? network.groupIds.concat(action.uuid) : [], // Create the groupIds array if it doesn't exist
+  const updatedPerson: IPerson = {
+    ...people[personIndex],
+    isGroup: action.isGroup,
   }
+  const updatedPeople: IPerson[] = [...people]
+  updatedPeople[personIndex] = updatedPerson
 
-  // Update the whole list of networks with the updated network
-  const updatedNetworks = [...state.networks]
-  updatedNetworks[networkIndex] = updatedNetwork
-
-  // Add the RelationshipGroup to current the current network
-  const currentNetworkCopy: ICurrentNetwork = { ...state.currentNetwork }
-  currentNetworkCopy.groupIds = updatedNetwork.groupIds // Copy the group IDs from updatedNetwork
-
-  // No relationship groups object? Set it. This might be because the currentNetwork was a legacy network before relationshipGroups were implemented
-  if (!currentNetworkCopy.relationshipGroups) {
-    currentNetworkCopy.relationshipGroups = {}
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
   }
-
-  // Set the group in the relationship groups object
-  currentNetworkCopy.relationshipGroups[action.uuid] = action.groupData
 
   return {
     ...state,
-    networks: updatedNetworks,
-    currentNetwork: currentNetworkCopy,
+    currentNetwork: updatedCurrentNetwork,
     isLoading: false,
   }
 }
@@ -608,18 +446,12 @@ function getImportedNetworkState(
   state: INetworksState,
   action: IImportNetworkAction,
 ): INetworksState {
-  const { id, name, personIds, groupIds } = action.asCurrentNetwork
-  const asNetworkListItem: INetwork = { id, name, personIds, groupIds }
-
-  /* Ensure backwards compatibility by restructuring legacy data types */
-  const currentNetwork = restructureLegacyCurrentNetwork(
-    action.asCurrentNetwork,
-  )
-
+  const { id, name, personIds } = action.asCurrentNetwork
+  const asNetworkListItem: INetwork = { id, name, personIds }
   return {
     ...state,
     networks: state.networks.concat(asNetworkListItem),
-    currentNetwork,
+    currentNetwork: action.asCurrentNetwork,
     isLoading: false,
   }
 }
@@ -774,12 +606,10 @@ function getUpdatedPersonThumbnailState(
   }
 
   /* Create an updated people array */
-  const peopleWithoutUpdatedPerson: IPerson[] = state.currentNetwork.people.filter(
-    (p) => p.id !== action.personId,
-  )
-  const updatedPeople: IPerson[] = peopleWithoutUpdatedPerson.concat(
-    updatedPerson,
-  )
+  const peopleWithoutUpdatedPerson: IPerson[] =
+    state.currentNetwork.people.filter((p) => p.id !== action.personId)
+  const updatedPeople: IPerson[] =
+    peopleWithoutUpdatedPerson.concat(updatedPerson)
 
   /* Update the current network with the updated people list*/
   const updatedNetwork: ICurrentNetwork = {
@@ -855,9 +685,11 @@ function getUpdatedConnectionState(
 ) {
   /* Stop if there is no network selected */
   if (!state.currentNetwork) return state
-  const peopleWithoutUpdatedPeople: IPerson[] = state.currentNetwork.people.filter(
-    (p) => p.id !== action.updatedP1Data.id && p.id !== action.updatedP2Data.id,
-  )
+  const peopleWithoutUpdatedPeople: IPerson[] =
+    state.currentNetwork.people.filter(
+      (p) =>
+        p.id !== action.updatedP1Data.id && p.id !== action.updatedP2Data.id,
+    )
 
   /* Append the updated people to the list */
   const updatedPeople = peopleWithoutUpdatedPeople
@@ -931,12 +763,9 @@ function getSetCurrentNetworkState(
   state: INetworksState,
   action: ISetNetworkAction,
 ): INetworksState {
-  /* Ensure backwards compatibility by restructuring legacy data types, if there are any */
-  const currentNetwork = restructureLegacyCurrentNetwork(action.currentNetwork)
-
   return {
     ...state,
-    currentNetwork,
+    currentNetwork: action.currentNetwork,
     isLoading: false,
   }
 }
@@ -951,7 +780,6 @@ function getCreateNetworkState(
     currentNetwork: {
       ...action.newNetwork,
       people: [],
-      relationshipGroups: {},
     },
     isLoading: false,
   }

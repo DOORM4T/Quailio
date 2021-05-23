@@ -44,7 +44,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
   )
 
   // VARS | Derived from current network; Track whether there are groups or not
-  const groups = currentNetwork?.relationshipGroups
+  const groups = currentNetwork?.people.filter((p) => p.isGroup)
   const hasGroups = groups && Object.keys(groups).length > 0
 
   // REDUX SELECTOR | Viewing a shared network?

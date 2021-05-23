@@ -1,5 +1,5 @@
 import { XYVals } from "../../components/containers/ForceGraphCanvas/networkGraphTypes"
-import { GroupColorField } from "./actions/changeGroupBackgroundColor"
+import { GroupColorField } from "./actions/setNodeColor"
 
 // -== STATE TYPES ==- //
 export interface INetworksState {
@@ -16,7 +16,6 @@ export interface INetwork {
   id: string
   name: string
   personIds: string[] // IDs of people in the network
-  groupIds: string[] // IDs of relationship groups in the network
   sharedProperties?: ISharedNetworkProperties // Properties used when this network is shared to the public/to certain users
 }
 
@@ -26,7 +25,6 @@ export interface INetwork {
 */
 export interface ICurrentNetwork extends INetwork {
   people: IPerson[] // People in the current network
-  relationshipGroups: IRelationshipGroups // Map of Relationship Groups in the current network
 }
 
 export interface IPerson {
@@ -38,6 +36,10 @@ export interface IPerson {
   pinXY?: XYVals
   scaleXY?: XYVals
   isBackground?: boolean
+
+  isGroup?: boolean
+  backgroundColor?: string
+  textColor?: string
 }
 
 // A person's Relationships object maps a relationship to another person by their ID
@@ -49,20 +51,6 @@ export interface IRelationship {
 
 // Shape that appears on the related person's node
 export type ConnectionShape = "arrow" | "none"
-
-// Map of Relationship Groups using their IDs as keys
-export type IRelationshipGroups = { [groupId: string]: IRelationshipGroup }
-
-// A Relationship Group has a name and associated color (used for the group and its link colors)
-export type IRelationshipGroup = {
-  name: string
-  personIds: string[]
-  backgroundColor: string
-  textColor: string
-
-  // The Force Graph node created for a group can be pinned
-  pinXY?: XYVals
-}
 
 // -== ACTION TYPES ==- //
 export enum NetworkActionTypes {
@@ -85,11 +73,8 @@ export enum NetworkActionTypes {
   IMPORT_NETWORK = "NETWORK/IMPORT_NETWORK",
   RENAME_NETWORK = "NETWORK/RENAME_NETWORK",
 
-  CREATE_GROUP = "GROUP/CREATE",
-  TOGGLE_PERSON_IN_GROUP = "GROUP/TOGGLE_PERSON",
-  DELETE_GROUP = "GROUP/DELETE",
-  RENAME_GROUP = "GROUP/RENAME",
-  CHANGE_GROUP_COLOR = "GROUP/CHANGE_COLOR",
+  SET_IS_GROUP = "NETWORK/SET_IS_GROUP",
+  SET_NODE_COLOR = "NETWORK/SET_NODE_COLOR",
 
   SHARE_NETWORK = "NETWORK/SHARE",
   UNSHARE_NETWORK = "NETWORK/UNSHARE",
@@ -189,38 +174,17 @@ export interface IRenameNetworkAction {
   newName: string
 }
 
-export interface ICreateGroupAction {
-  type: NetworkActionTypes.CREATE_GROUP
+export interface ISetIsGroupAction {
+  type: NetworkActionTypes.SET_IS_GROUP
   networkId: string
-  uuid: string
-  groupData: IRelationshipGroup
-}
-
-export interface ITogglePersonInGroupAction {
-  type: NetworkActionTypes.TOGGLE_PERSON_IN_GROUP
-  networkId: string
-  groupId: string
   personId: string
-  toggleOn: boolean
+  isGroup: boolean
 }
 
-export interface IDeleteGroupAction {
-  type: NetworkActionTypes.DELETE_GROUP
+export interface ISetNodeColor {
+  type: NetworkActionTypes.SET_NODE_COLOR
   networkId: string
-  groupId: string
-}
-
-export interface IRenameGroupAction {
-  type: NetworkActionTypes.RENAME_GROUP
-  networkId: string
-  groupId: string
-  newName: string
-}
-
-export interface IChangeGroupColorAction {
-  type: NetworkActionTypes.CHANGE_GROUP_COLOR
-  networkId: string
-  groupId: string
+  personId: string
   field: GroupColorField
   newColor: string
 }
@@ -292,11 +256,8 @@ export type NetworksActions =
   | IUpdatePersonContentAction
   | IImportNetworkAction
   | IRenameNetworkAction
-  | ICreateGroupAction
-  | ITogglePersonInGroupAction
-  | IDeleteGroupAction
-  | IRenameGroupAction
-  | IChangeGroupColorAction
+  | ISetIsGroupAction
+  | ISetNodeColor
   | IShareNetworkAction
   | IUnshareNetworkAction
   | ISetNodePinAction

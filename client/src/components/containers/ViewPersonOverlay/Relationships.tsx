@@ -22,6 +22,7 @@ import {
   getPersonInFocusRelationships,
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import { setPersonInFocus } from "../../../store/ui/uiActions"
+import Badge from "../../Badge"
 import ToolTipButton from "../../ToolTipButton"
 
 // Specific data to display for a person related to the current person
@@ -31,6 +32,9 @@ interface IRelatedPersonData {
   reason: string
   relationshipId: string
   lineEndingShape: ConnectionShape
+  isGroup?: boolean
+  backgroundColor?: string
+  textColor?: string
 }
 
 interface IRelationshipsProps {
@@ -253,7 +257,16 @@ const Relationships: React.FC<IRelationshipsProps> = ({ isEditing }) => {
                 className="relationship-anchor"
                 onClick={navigateToRelatedPerson}
                 label={person.name}
+                margin={{ right: "0.5rem" }}
               />
+
+              {person.isGroup && (
+                <Badge
+                  name="Group"
+                  backgroundColor={person.backgroundColor || "white"}
+                  textColor={person.textColor || "black"}
+                />
+              )}
             </Box>
             <Box pad="4px">
               {isEditing ? relationshipReasonEditor : readOnlyRelReason}
@@ -307,13 +320,17 @@ function getRelatedPeople(
     const relationship = personRelationships[relationshipId]
     const reason = relationship.reason || ""
     const lineEndingShape: ConnectionShape = relationship.shape || "none"
+    const { id, name, isGroup, backgroundColor, textColor } = otherPerson
 
     return {
-      id: otherPerson.id,
-      name: otherPerson.name,
+      id,
+      name,
       reason,
       relationshipId,
       lineEndingShape,
+      isGroup,
+      backgroundColor,
+      textColor,
     }
   }
 
