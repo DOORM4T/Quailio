@@ -249,7 +249,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       textColor = DEFAULT_TEXT_COLOR,
     } = node
     const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
-    const doPointerDetection = isAreaPaint && isBackground === false // Explicitly check for false since true and undefined mean a node IS NOT a background node
+    const doPointerDetection = isAreaPaint && isBackground !== true // Explicitly check for true since false and undefined mean a node IS NOT a background node
 
     if (isGroup && store.getState().ui.filteredGroups[id] === false) return // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
 
@@ -329,11 +329,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     }
 
     function drawGroupBadge(groupId: string) {
-      let realBadgeFontSize = BADGE_FONT_SIZE / currentZoom
-      if (realBadgeFontSize < BADGE_FONT_SIZE)
-        realBadgeFontSize = BADGE_FONT_SIZE // BASE_FONT_SIZE is the minimum font size
-      if (realBadgeFontSize > MAX_BADGE_SIZE) realBadgeFontSize = MAX_BADGE_SIZE
-      ctx.font = `${realBadgeFontSize}px ${FONT_FAMILY}`
+      ctx.font = `${BADGE_FONT_SIZE}px ${FONT_FAMILY}`
 
       const group = store
         .getState()
@@ -353,7 +349,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         x + badgeXOffset,
         y + badgeYOffset,
         badgeWidth,
-        realBadgeFontSize,
+        BADGE_FONT_SIZE,
       )
 
       ctx.strokeStyle = "black"
@@ -362,7 +358,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         x + badgeXOffset,
         y + badgeYOffset,
         badgeWidth,
-        realBadgeFontSize,
+        BADGE_FONT_SIZE,
       )
 
       ctx.fillStyle = badgeTextColor || "black"
@@ -374,12 +370,12 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
       badgeXOffset += badgeWidth
       if (badgeXOffset + ntWidth / 2 + badgeWidth < ntWidth) return
-      badgeYOffset += realBadgeFontSize
+      badgeYOffset += BADGE_FONT_SIZE
       badgeXOffset = -ntWidth / 2
     }
 
     function drawNameTag() {
-      const doHighlightNameTag = isHighlighting && doHighlightNode && !isGroup
+      const doHighlightNameTag = isHighlighting && doHighlightNode
       // Name tag color. Group Nodes keep their color
       if (isHighlighting && !doHighlightNode) {
         // There are highlighted nodes but this one isn't one of them
@@ -407,7 +403,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       const PADDING = 32
       let nameTagWidth = ctx.measureText(name).width + PADDING
       if (nameTagWidth < NODE_SIZE) nameTagWidth = NODE_SIZE
-      const nameTagHeight = realFontSize
+      const nameTagHeight = realFontSize + (isGroup ? PADDING : 0)
 
       const textX = x - nameTagWidth / 2
       const textY = y + nameTagYOffset
@@ -426,15 +422,25 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       }
 
       ctx.beginPath()
-      // Custom group name tag styles
-      // These are hidden when something is highlighted by this group isn't one of them + SHIFT is down
-      if (isGroup) {
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"
-        ctx.lineWidth = 2 / currentZoom
-      }
       ctx.strokeRect(textX, textY, nameTagWidth, nameTagHeight)
-      ctx.fillText(name, textX + nameTagWidth / 2, textY, nameTagWidth)
+
+      ctx.fillText(
+        name,
+        textX + nameTagWidth / 2,
+        textY + (isGroup ? PADDING / 1.5 : 0),
+        nameTagWidth,
+      )
       ctx.closePath()
+
+      if (isGroup) {
+        ctx.font = `${realFontSize / 2}px ${FONT_FAMILY}`
+        ctx.fillText(
+          "(group)",
+          textX + nameTagWidth / 2,
+          textY + PADDING / 1.5 - realFontSize / 2,
+          nameTagWidth,
+        )
+      }
 
       if (isAreaPaint) {
         // ALL nodes including background nodes can be interacted with via their name tag
@@ -528,8 +534,6 @@ function drawLinkObject(
     return null
   }
 
-  const isGroupConnection = srcNode.isGroup || targetNode.isGroup
-
   // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
   if (srcNode.isGroup && store.getState().ui.filteredGroups[srcId] === false)
     return
@@ -547,8 +551,6 @@ function drawLinkObject(
   } else if (isHighlighting) {
     // Links are being highlight but this link isn't one of them
     ctx.strokeStyle = LOW_ATTENTION_COLOR
-  } else if (isGroupConnection) {
-    ctx.strokeStyle = "rgba(0,0,0,0.2)"
   } else {
     // TODO: use link color after implementing link groups
     ctx.strokeStyle = "DEFAULT_LINK_COLOR"
@@ -1062,8 +1064,7 @@ async function handleLinkClick(link: LinkObject) {
 
   const srcNode = link.source as IPersonNode | undefined
   const targetNode = link.target as IPersonNode | undefined
-  if (!srcNode || !targetNode) return
-  if (srcNode.isGroup || targetNode.isGroup) return
+  if (!srcNode || !targetNode || !("relationships" in srcNode)) return
 
   const relationship = srcNode.relationships[targetNode.id]
   if (!relationship) return

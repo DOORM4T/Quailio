@@ -18,6 +18,7 @@ const customTheme: ThemeType = {
   tip: {
     content: {
       background: "dark-1",
+      animation: { delay: 0 },
     },
   },
   fileInput: {

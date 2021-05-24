@@ -19,7 +19,7 @@ const Overlay: React.FC<IProps> = (props) => {
         position: "absolute",
         zIndex: 99,
       }}
-      animation="slide"
+      animation="none"
     >
       {/* Close Button */}
       <Button

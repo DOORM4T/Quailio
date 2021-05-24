@@ -1,4 +1,4 @@
-import { Box, Header, TextInput } from "grommet"
+import { Box, Header, Text, TextInput } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { CSSProperties } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -11,10 +11,7 @@ import {
   getCurrentNetworkId,
   getCurrentNetworkPeople,
 } from "../../../store/selectors/networks/getCurrentNetwork"
-import {
-  getPersonInFocusId,
-  getPersonInFocusName,
-} from "../../../store/selectors/ui/getPersonInFocusData"
+import { getPersonInFocusData } from "../../../store/selectors/ui/getPersonInFocusData"
 import Badge from "../../Badge"
 import OverlayButtons from "./OverlayButtons"
 import PersonThumbnail from "./PersonThumbnail"
@@ -26,51 +23,50 @@ interface IProps {
 
 const PersonHeader: React.FC<IProps> = (props) => {
   const dispatch: Dispatch<any> = useDispatch()
+  const person = useSelector(getPersonInFocusData)
   const currentNetworkId = useSelector(getCurrentNetworkId)
-  const currentPersonId = useSelector(getPersonInFocusId)
-  const currentPersonName = useSelector(getPersonInFocusName)
   const people = useSelector(getCurrentNetworkPeople)
   const groups = people.filter((p) => p.isGroup)
 
-  const [personName, setPersonName] = React.useState<string>(
-    currentPersonName || "",
-  )
+  const [personName, setPersonName] = React.useState<string>("")
 
-  // Person in focus changed? Update state with the new name
   React.useEffect(() => {
-    setPersonName(currentPersonName || "")
-  }, [currentPersonName])
+    if (!person) return
+    setPersonName(person.name || "")
+  }, [person])
 
-  /* Do not render if no network or person is selected */
-  if (!currentNetworkId || !currentPersonId) return null
+  if (!currentNetworkId || !person) return null
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPersonName(e.currentTarget.value)
   }
 
   const handleUpdateName = async () => {
-    /* Skip updating if the name didn't change */
-    if (personName === currentPersonName) return
+    // Skip updating if the name didn't change
+    if (personName === person.name) return
 
     try {
       /* Dispatch the name change to the global store */
-      await dispatch(updatePersonName(currentPersonId, personName))
+      await dispatch(updatePersonName(person.id, personName))
     } catch (error) {
       console.error(error)
     }
   }
 
   const GroupBadges: React.ReactNode = (
-    <Box direction="row" overflow={{ horizontal: "auto", vertical: "hidden" }}>
+    <Box
+      direction="row"
+      overflow={{ horizontal: "auto", vertical: "hidden" }}
+      margin={{ top: "1rem" }}
+    >
       {groups
-        .filter((group) => group.relationships[currentPersonId] !== undefined)
+        .filter((group) => group.relationships[person.id] !== undefined)
         .map((group, index) => {
-          // FUNCTION | Remove the current person from this group
           const removeFromGroup = async () => {
             try {
               await dispatch(
                 disconnectPeople(currentNetworkId, {
-                  p1Id: currentPersonId,
+                  p1Id: person.id,
                   p2Id: group.id,
                 }),
               )
@@ -142,6 +138,7 @@ const PersonHeader: React.FC<IProps> = (props) => {
         </h1>
       )}
 
+      <Text>&nbsp;{person.isGroup ? "(group)" : ""}&nbsp;</Text>
       {GroupBadges}
 
       <OverlayButtons

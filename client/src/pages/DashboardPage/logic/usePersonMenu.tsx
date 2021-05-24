@@ -22,13 +22,12 @@ import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import { IApplicationState } from "../../../store/store"
 import {
-  setPersonInFocus,
   toggleGroupFilter,
-  togglePersonOverlay,
   togglePersonVisibility,
   zoomToPerson,
 } from "../../../store/ui/uiActions"
 import { IPersonMenuProps } from "../PersonMenu"
+import useViewPerson from "./useViewPerson"
 
 const NAME_CHAR_LIMIT = 30
 export const SEARCH_INPUT_HEIGHT = "48px"
@@ -132,30 +131,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     }
   } // END | handleAddPerson
 
-  // FUNCTION | Open a Person's content menu
-  const viewPerson = (id: string) => async () => {
-    if (!currentNetwork) return
-    const person = currentNetwork.people.find((p) => p.id === id)
-    if (!person) return
-
-    // Focus on the person's info and open the content overlay
-    try {
-      await dispatch(setPersonInFocus(person.id))
-      dispatch(togglePersonOverlay(true))
-    } catch (error) {
-      console.error(error)
-    }
-  } // END | viewPerson
-
-  // FUNCTION | Un-zoom on a person in the force-graph
-  const resetZoomedPerson = () => {
-    dispatch(zoomToPerson(null))
-
-    if (searchIndex > -1) {
-      // Zoom back in on current search value
-      dispatch(zoomToPerson(filterablePeople[searchIndex].id))
-    }
-  } // END | resetZoomedPerson
+  const { viewPerson } = useViewPerson(currentNetwork)
 
   /**
    * Creates a function for how a list renders items
@@ -173,7 +149,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
           onMouseEnter={() => {
             dispatch(zoomToPerson(person.id))
           }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on that person.
-          onMouseLeave={resetZoomedPerson}
+          onMouseLeave={() => dispatch(zoomToPerson(null))}
           aria-label="Select person"
           width="64px"
           height="64px"
@@ -184,7 +160,13 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
             filter: isSelected ? "brightness(200%)" : undefined,
           }}
         >
-          <Box background="light-1" fill align="center" justify="center">
+          <Box
+            background="light-1"
+            fill
+            align="center"
+            justify="center"
+            style={{ borderRadius: 4 }}
+          >
             {person.thumbnailUrl ? (
               <Image src={person.thumbnailUrl} height="64px" width="64px" />
             ) : (
@@ -275,7 +257,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     e.stopPropagation() // Prevent the button click from propagating to the accordion (to avoid unintentional closing/opening of the accordion)
     if (!groups) return // Stop if there are no groups
 
-    const groupIds = Object.keys(groups)
+    const groupIds = groups.map((g) => g.id)
 
     // If currently showing all, hide all
     if (isShowingAllGroups) {

@@ -1,4 +1,4 @@
-import { AccordionPanel, Box, List, Tab, Tabs } from "grommet"
+import { AccordionPanel, Box, Image, List, Tab, Tabs } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -15,7 +15,9 @@ import { IApplicationState } from "../../store/store"
 import {
   toggleGroupFilter,
   togglePersonVisibility,
+  zoomToPerson,
 } from "../../store/ui/uiActions"
+import useViewPerson from "./logic/useViewPerson"
 
 interface IProps {
   key: string
@@ -58,7 +60,6 @@ const GroupAccordion: React.FC<IProps> = ({
     const actualAccordionLabel = accordionRef.current.querySelector(
       "[role='tab']",
     ) as HTMLButtonElement
-    console.log(actualAccordionLabel)
 
     if (!actualAccordionLabel) return
     actualAccordionLabel.style.position = "sticky"
@@ -170,8 +171,8 @@ const GroupAccordion: React.FC<IProps> = ({
   const groupAccordionStyles: React.CSSProperties = {
     height: "48px",
     width: "100%",
-    backgroundColor: group.backgroundColor || "white",
-    color: group.textColor || "black",
+    backgroundColor: "#222",
+    color: "#ddd",
     filter: !doShowGroup // Dim the group accordion if it's empty or if it's hiding its nodes
       ? "brightness(0.5)"
       : undefined,
@@ -189,7 +190,7 @@ const GroupAccordion: React.FC<IProps> = ({
   )
 
   const GroupVisibilityToggle = (
-    <Box margin={{ left: "auto" }}>
+    <Box margin={{ left: "auto" }} background="dark-1">
       <ToolTipButton
         tooltip={toggleGroupVisibilityTooltip}
         onClick={toggleGroupVisibility}
@@ -222,7 +223,7 @@ const GroupAccordion: React.FC<IProps> = ({
   } // toggleNodes
 
   const NodesVisibilityToggle = (
-    <Box margin={{ left: "auto" }}>
+    <Box margin={{ left: "auto" }} background="dark-1">
       <ToolTipButton
         tooltip={toggleNodesTooltip}
         onClick={toggleNodes}
@@ -239,12 +240,53 @@ const GroupAccordion: React.FC<IProps> = ({
       : "EMPTY") +
     "]"
 
+  const { viewPerson } = useViewPerson(currentNetwork)
+  const GroupThumbnail = (
+    <Box
+      onClick={(e) => {
+        e.stopPropagation()
+        viewPerson(group.id)()
+      }} // Open the person overlay for the group when clicked
+      onMouseEnter={() => {
+        dispatch(zoomToPerson(group.id))
+      }} // Set the "zoomed-in person" in global state. The force-graph will zoom in on this group's node
+      onMouseLeave={() => dispatch(zoomToPerson(null))}
+      align="center"
+      justify="center"
+      style={{
+        margin: "0 1rem",
+        backgroundColor: "#ddd",
+        overflow: "hidden",
+        width: 32,
+        height: 32,
+        borderRadius: 4,
+      }}
+    >
+      {group.thumbnailUrl ? (
+        <Image src={group.thumbnailUrl} fit="cover" />
+      ) : (
+        <Icons.Folder color="dark-1" />
+      )}
+    </Box>
+  )
+
   const GroupAccordionLabel: React.ReactNode = (
-    <Box direction="row" align="center" justify="start" fill>
-      <span style={{ marginLeft: "1rem" }}>{group.name}</span>
+    <Box
+      direction="row"
+      align="center"
+      justify="start"
+      fill
+      aria-label="Select person"
+      style={{
+        backgroundColor: group.backgroundColor || "#ddd",
+        color: group.textColor || "#222",
+      }}
+    >
+      {GroupThumbnail}
+      <span>{group.name}</span>
       {
         <Box direction="row" margin={{ left: "auto" }} align="center">
-          <span>{personCountLabel}</span>
+          <span style={{ marginRight: "1rem" }}>{personCountLabel}</span>
           {GroupVisibilityToggle}
           {NodesVisibilityToggle}
         </Box>
@@ -269,7 +311,7 @@ const GroupAccordion: React.FC<IProps> = ({
         />
       </Box>
       {/* Search-Checkbox Menu */}
-      <Box background="light-1">
+      <Box background="light-1" height="medium">
         <SearchAndCheckMenu
           defaultOptions={filterablePeople.filter((p) => p.id !== group.id)} // CANNOT add a group to itself
           idField="id"
