@@ -1062,9 +1062,10 @@ async function handleLinkClick(link: LinkObject) {
   // DO NOT allow right click events if in sharing mode
   if (store.getState().ui.isViewingShared) return
 
+  if (typeof link.source === "string" || typeof link.target === "string") return
   const srcNode = link.source as IPersonNode | undefined
   const targetNode = link.target as IPersonNode | undefined
-  if (!srcNode || !targetNode || !("relationships" in srcNode)) return
+  if (!srcNode || !targetNode) return
 
   const relationship = srcNode.relationships[targetNode.id]
   if (!relationship) return
