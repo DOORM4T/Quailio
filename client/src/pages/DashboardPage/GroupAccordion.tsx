@@ -282,8 +282,18 @@ const GroupAccordion: React.FC<IProps> = ({
         color: group.textColor || "#222",
       }}
     >
-      {GroupThumbnail}
-      <span>{group.name}</span>
+      <Box direction="row" width="60%">
+        {GroupThumbnail}
+        <span
+          style={{
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {group.name}
+        </span>
+      </Box>
       {
         <Box direction="row" margin={{ left: "auto" }} align="center">
           <span style={{ marginRight: "1rem" }}>{personCountLabel}</span>
