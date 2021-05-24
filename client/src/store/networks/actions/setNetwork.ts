@@ -81,8 +81,9 @@ export const setNetwork = (networkId: string, isShared?: boolean): AppThunk => {
 export async function getAllPersonDataFromDB(personIds: string[]) {
   /* Get all Person documents related to the Person IDs in the Network */
   const getPeopleData = personIds.map(
-    async (id) => (await peopleCollection.doc(id).get()).data() as IPerson,
+    async (id) =>
+      (await peopleCollection.doc(id).get()).data() as IPerson | null,
   )
-  const peopleData: IPerson[] = await Promise.all(getPeopleData)
-  return peopleData
+  const peopleData: (IPerson | null)[] = await Promise.all(getPeopleData)
+  return peopleData.filter((p) => Boolean(p)) as IPerson[]
 }
