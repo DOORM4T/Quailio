@@ -251,7 +251,8 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
     const { x: xScale, y: yScale } = scaleXY || { x: 1, y: 1 }
     const doPointerDetection = isAreaPaint && isBackground !== true // Explicitly check for true since false and undefined mean a node IS NOT a background node
 
-    if (isGroup && store.getState().ui.filteredGroups[id] === false) return // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
+    if (isGroup && store.getState().ui.personNodeVisibility[id] === false)
+      return // Skip render if the node is a group and is hidden. true and undefined mean it's visible.
 
     const isConnecting = id === nodeToConnect.node?.id
     if (isConnecting && isMouseOver && !isPanningOrZooming && !isAreaPaint)
@@ -535,11 +536,14 @@ function drawLinkObject(
   }
 
   // Skip render if the node is a group and is hidden. True and undefined mean it's visible.
-  if (srcNode.isGroup && store.getState().ui.filteredGroups[srcId] === false)
+  if (
+    srcNode.isGroup &&
+    store.getState().ui.personNodeVisibility[srcId] === false
+  )
     return
   if (
     targetNode.isGroup &&
-    store.getState().ui.filteredGroups[targetId] === false
+    store.getState().ui.personNodeVisibility[targetId] === false
   )
     return
 

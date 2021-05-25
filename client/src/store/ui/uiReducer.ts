@@ -11,7 +11,6 @@ const initialState: IUserInterfaceState = {
   isPersonEditMenuOpen: false,
   personInFocus: null,
   personInZoom: null,
-  filteredGroups: {},
   activeGroupsByPersonId: {},
   isShareMenuOpen: false,
   isViewingShared: false,
@@ -68,17 +67,6 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       }
     }
 
-    // State for filtering shown groups
-    case UserInterfaceActionTypes.TOGGLE_GROUP_FILTER: {
-      const filteredGroupsCopy = { ...state.filteredGroups }
-      filteredGroupsCopy[action.groupId] = action.doShow
-
-      return {
-        ...state,
-        filteredGroups: filteredGroupsCopy,
-      }
-    }
-
     case UserInterfaceActionTypes.TOGGLE_SHARE_OVERLAY: {
       return {
         ...state,
@@ -107,7 +95,6 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         activeGroupsByPersonId: {},
-        filteredGroups: {},
         isPersonEditMenuOpen: false,
         isShareMenuOpen: false,
         personNodeVisibility: {},

@@ -5,16 +5,15 @@ export interface IUserInterfaceState {
   readonly personInFocus: string | null
   readonly personInZoom: string | null
   readonly activeGroupsByPersonId: IActiveGroupsByPersonId // Map tracking the active/showing groups a person is part of
-  readonly filteredGroups: { [groupId: string]: boolean } // "Showing" state for each group
   readonly isShareMenuOpen: boolean // State for showing the share menu
   readonly isViewingShared: boolean // Whether the user is viewing a shared network or not
-  readonly personNodeVisibility: { [personId: string]: boolean }
-
+  readonly personNodeVisibility: IVisibilityMap
   readonly toolbarAction: ToolbarAction
   readonly isSmallMode: boolean
   readonly selectedNodeIds: string[]
 }
 
+export type IVisibilityMap = { [nodeId: string]: boolean } // Visible if true or undefined
 export type ToolbarAction =
   | "VIEW"
   | "SELECT"
@@ -35,7 +34,6 @@ export enum UserInterfaceActionTypes {
   TOGGLE_PERSON_OVERLAY = "UI/TOGGLE_PERSON_OVERLAY",
   ZOOM_TO_PERSON = "UI/ZOOM_TO_PERSON",
   INIT_PERSON_ACTIVE_GROUPS = "UI/INIT_PERSON_ACTIVE_GROUPS",
-  TOGGLE_GROUP_FILTER = "UI/TOGGLE_GROUP_FILTER",
   TOGGLE_SHARE_OVERLAY = "UI/TOGGLE_SHARE_OVERLAY",
   SET_VIEWING_SHARED = "UI/SET_VIEWING_SHARED",
   SET_NODE_VISIBILITY = "UI/SET_NODE_VISIBILITY",
@@ -73,12 +71,6 @@ export interface IPersonIDWithActiveGroups {
 export interface IInitializePersonGroupList {
   type: UserInterfaceActionTypes.INIT_PERSON_ACTIVE_GROUPS
   groupIdsbyPersonId: IPersonIDWithActiveGroups[] // Takes an array of objects using personIds as keys and an array of group IDs as values
-}
-
-export interface IToggleGroupFilterAction {
-  type: UserInterfaceActionTypes.TOGGLE_GROUP_FILTER
-  groupId: string
-  doShow: boolean
 }
 
 export interface IToggleShareOverlayAction {
@@ -123,7 +115,6 @@ export type UserInterfaceActions =
   | ITogglePersonOverlay
   | IZoomToPersonAction
   | IInitializePersonGroupList
-  | IToggleGroupFilterAction
   | IToggleShareOverlayAction
   | ISetViewingSharedAction
   | ISetNodeVisibilityAction

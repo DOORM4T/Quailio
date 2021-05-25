@@ -1,7 +1,9 @@
 import { Accordion, Box } from "grommet"
 import React from "react"
+import { useSelector } from "react-redux"
 import { IPerson } from "../../store/networks/networkTypes"
-import GroupAccordion from "./GroupAccordion"
+import { IApplicationState } from "../../store/store"
+import GroupAccordion from "./components/GroupAccordion"
 import usePersonMenu, { SEARCH_INPUT_HEIGHT } from "./logic/usePersonMenu"
 
 export interface IPersonMenuProps {
@@ -14,10 +16,8 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
     allGroupButtonLabelRef,
     currentNetwork,
     filterablePeople,
-    filterGroups,
     isSearching,
     isViewingShared,
-
     renderItem,
     SearchAddInputNode,
   } = usePersonMenu(props)
@@ -74,8 +74,7 @@ const PersonMenu: React.FC<IPersonMenuProps> = (props) => {
                   key={key}
                   currentNetwork={currentNetwork}
                   group={group}
-                  filterablePeople={filterablePeople}
-                  filterGroups={filterGroups}
+                  people={filterablePeople}
                   isViewingShared={isViewingShared}
                   renderItem={renderItem}
                 />

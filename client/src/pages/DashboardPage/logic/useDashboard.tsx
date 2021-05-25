@@ -11,10 +11,11 @@ import {
   resetLocalNetworks,
   setNetwork,
 } from "../../../store/networks/actions"
+import { IPerson } from "../../../store/networks/networkTypes"
 import { getAllNetworkData } from "../../../store/selectors/networks/getAllNetworkData"
 import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
-import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
+import { getNodeVisibilityMap } from "../../../store/selectors/ui/getPersonNodeVisibility"
 import {
   cachePersonGroupList,
   setViewingShared,
@@ -31,7 +32,7 @@ export default function useDashboard() {
   const networks = useSelector(getAllNetworkData)
   const currentNetwork = useSelector(getCurrentNetwork)
   const isViewingShared = useSelector(getIsViewingShared)
-  const filterGroupsMap = useSelector(getFilterGroups)
+  const nodeVisibilityMap = useSelector(getNodeVisibilityMap)
 
   // Check if the user is authenticated -- if not, use zero-login features
   const { isAuthenticated } = useAuth()
@@ -127,19 +128,19 @@ export default function useDashboard() {
     if (!currentNetwork || !currentNetwork.people.some((p) => p.isGroup)) return
     const groups = currentNetwork.people.filter((p) => p.isGroup)
 
-    // Get an array of objects containing a personId and active groups containing that person
-    const groupsByPersonIds = currentNetwork.people.map((person) => {
-      const groupsWithThisPerson = groups.filter(
-        (group) => group.relationships[person.id] !== undefined,
-      )
+    const groupsByPersonIds = currentNetwork.people.map((p) => {
+      const isPersonInGroup = (group: IPerson) =>
+        group.relationships[p.id] !== undefined
+      const groupsWithPerson = groups.filter(isPersonInGroup)
 
-      // Keep only the active groups the person is in
-      const activeGroupIds = groupsWithThisPerson
-        .filter((group) => filterGroupsMap[group.id] !== false)
+      const isGroupVisible = (group: IPerson) =>
+        nodeVisibilityMap[group.id] !== false
+      const activeGroupIds = groupsWithPerson
+        .filter(isGroupVisible)
         .map((g) => g.id)
 
       const data: IPersonIDWithActiveGroups = {
-        personId: person.id,
+        personId: p.id,
         activeGroupIds,
       }
       return data

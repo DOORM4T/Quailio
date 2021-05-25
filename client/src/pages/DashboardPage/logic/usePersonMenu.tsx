@@ -18,14 +18,9 @@ import ToolTipButton from "../../../components/ToolTipButton"
 import { addPerson } from "../../../store/networks/actions"
 import { IPerson } from "../../../store/networks/networkTypes"
 import { getCurrentNetwork } from "../../../store/selectors/networks/getCurrentNetwork"
-import { getFilterGroups } from "../../../store/selectors/ui/getFilterGroups"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
 import { IApplicationState } from "../../../store/store"
-import {
-  toggleGroupFilter,
-  togglePersonVisibility,
-  zoomToPerson,
-} from "../../../store/ui/uiActions"
+import { setNodeVisibility, zoomToPerson } from "../../../store/ui/uiActions"
 import { IPersonMenuProps } from "../PersonMenu"
 import useViewPerson from "./useViewPerson"
 
@@ -37,7 +32,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
   const [doShowAll, setShowAll] = useState(true)
 
   const currentNetwork = useSelector(getCurrentNetwork)
-  const filterGroupsMap = useSelector(getFilterGroups)
   const visibilityMap = useSelector(
     (state: IApplicationState) => state.ui.personNodeVisibility,
   )
@@ -198,7 +192,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
         : Icons.FormViewHide
 
       const toggleVisibility = async () => {
-        dispatch(togglePersonVisibility(person.id, !isVisible))
+        dispatch(setNodeVisibility(person.id, !isVisible))
       }
 
       const VisibilityToggle: React.ReactNode = (
@@ -262,13 +256,13 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     // If currently showing all, hide all
     if (isShowingAllGroups) {
       groupIds.forEach((groupId) => {
-        dispatch(toggleGroupFilter(groupId, false))
+        dispatch(setNodeVisibility(groupId, false))
       })
       setShowingAllGroups(false)
     } else {
       // Otherwise, show all
       groupIds.forEach((groupId) => {
-        dispatch(toggleGroupFilter(groupId, true))
+        dispatch(setNodeVisibility(groupId, true))
       })
       setShowingAllGroups(true)
     }
@@ -348,7 +342,7 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     e.stopPropagation()
 
     const togglePromise = filterablePeople.map(({ id }) =>
-      Promise.resolve(dispatch(togglePersonVisibility(id, !doShowAll))),
+      Promise.resolve(dispatch(setNodeVisibility(id, !doShowAll))),
     )
     await Promise.all(togglePromise)
 
@@ -441,7 +435,6 @@ export default function usePersonMenu({ people }: IPersonMenuProps) {
     allGroupButtonLabelRef,
     currentNetwork,
     filterablePeople,
-    filterGroups: filterGroupsMap,
     isSearching,
     isViewingShared,
     renderItem,

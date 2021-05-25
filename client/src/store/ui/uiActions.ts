@@ -11,7 +11,6 @@ import {
   ISetToolbarAction,
   ISetUILoadingAction,
   ISetViewingSharedAction,
-  IToggleGroupFilterAction,
   ITogglePersonOverlay,
   IToggleShareOverlayAction,
   IZoomToPersonAction,
@@ -79,16 +78,6 @@ export const cachePersonGroupList: ActionCreator<IInitializePersonGroupList> = (
   groupIdsbyPersonId,
 })
 
-// Toggle a group's "showing" state
-export const toggleGroupFilter: ActionCreator<IToggleGroupFilterAction> = (
-  groupId: string,
-  doShow: boolean,
-) => ({
-  type: UserInterfaceActionTypes.TOGGLE_GROUP_FILTER,
-  groupId,
-  doShow,
-})
-
 // Open/close the network sharing overlay
 export const toggleShareOverlay: ActionCreator<IToggleShareOverlayAction> = (
   isOpen: boolean,
@@ -105,13 +94,13 @@ export const setViewingShared: ActionCreator<ISetViewingSharedAction> = (
   isViewingShared,
 })
 
-// Toggle a person's visibility
-export const togglePersonVisibility = (
-  personId: string,
+// Toggle a (person/group) node's visibility
+export const setNodeVisibility = (
+  nodeId: string,
   doShow: boolean,
 ): ISetNodeVisibilityAction => ({
   type: UserInterfaceActionTypes.SET_NODE_VISIBILITY,
-  nodeId: personId,
+  nodeId,
   isVisible: doShow,
 })
 
