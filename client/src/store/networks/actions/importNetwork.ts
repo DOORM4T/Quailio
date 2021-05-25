@@ -1,6 +1,8 @@
 import firebase from "firebase"
 import { v4 as uuidv4 } from "uuid"
 import {
+  auth,
+  db,
   networksCollection,
   peopleCollection,
   usersCollection,
@@ -31,7 +33,7 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
     try {
       const currentNetworkCopy = makeNetworkCopy(networkJSON)
 
-      const uid = getState().auth.userId
+      const uid = auth.currentUser?.uid
       if (uid) await importToFirestore(uid, currentNetworkCopy)
       if (!uid) dispatch(resetLocalNetworks()) // Clears array of networks in global state -- offline users can't use this since they only have IDs whose data cannot be fetched
 
@@ -42,7 +44,6 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
 
       return dispatch(action)
     } catch (error) {
-      /* Failed to import the Network */
       dispatch(setNetworkLoading(false))
       throw error
     }
@@ -162,47 +163,29 @@ function makeNetworkCopy(networkJSON: INetworkJSON) {
  * @param toImport current network copy to import
  */
 async function importToFirestore(uid: string, toImport: ICurrentNetwork) {
-  // Add the network's ID to the user doc networks list
-  const addToNetworkIds: { networkIds: any } = {
+  const networkRef = networksCollection.doc(toImport.id)
+  if ((await networkRef.get()).exists)
+    throw new Error("Network ID clashed with an existing network.")
+
+  const batch = db.batch() // Batch the import operations -- this means nothing is saved unless everything is saved successfully
+
+  const addToNetworkIds = {
     networkIds: firebase.firestore.FieldValue.arrayUnion(toImport.id),
   }
-  await usersCollection.doc(uid).update(addToNetworkIds)
+  const userRef = usersCollection.doc(uid)
+  batch.update(userRef, addToNetworkIds)
 
-  //
-  // Add the network
-  //
-  const networkDoc = await networksCollection.doc(toImport.id).get()
+  const { id, name, personIds } = toImport
+  const networkToCreate: INetwork = { id, name, personIds }
+  batch.set(networkRef, networkToCreate)
 
-  // Ensure the network doesn't already exist (in case the new UUID clashes, under astronomical odds)
-  if (networkDoc.exists)
-    throw new Error(
-      "Network ID clashed with an existing network. How unfortunate!",
-    )
+  for await (const p of toImport.people) {
+    const personRef = await peopleCollection.doc(p.id)
+    if ((await personRef.get()).exists)
+      throw new Error("Person ID clashed with an existing person.")
 
-  // Actually add the network
-  const network: INetwork = {
-    id: toImport.id,
-    name: toImport.name,
-    personIds: toImport.personIds,
+    batch.set(personRef, p)
   }
-  await networkDoc.ref.set(network)
 
-  //
-  // Add every person
-  //
-  const uploadPersonPromises = toImport.people.map(async (p) => {
-    const personDoc = await peopleCollection.doc(p.id).get()
-
-    // Stop importing if a person already exists (ID clash. This should very rarely happen.)
-    if (personDoc.exists)
-      throw new Error(
-        "Person ID clashed with an existing person. Stopping import.",
-      )
-
-    // Return a promise to set the person document
-    const setPersonPromise = personDoc.ref.set(p)
-    return setPersonPromise
-  })
-
-  await Promise.all(uploadPersonPromises)
+  await batch.commit()
 }
