@@ -6,6 +6,7 @@ import { firebaseConfig } from "../.firebaseConfig"
 
 // ==- INITIALIZATION -== //
 const app = firebase.initializeApp(firebaseConfig)
+app.firestore().settings({ ignoreUndefinedProperties: true })
 
 // ==- FIRESTORE (DATABASE) -== //
 export const db = firebase.firestore()
