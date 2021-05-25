@@ -2,13 +2,14 @@ import { Box, Menu, Select, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { useHistory } from "react-router-dom"
 import { ActionCreator, AnyAction } from "redux"
 import { HEADER_HEIGHT } from "../../../components/containers/AppHeader"
 import ToolTipButton from "../../../components/ToolTipButton"
 import { getCurrentNetworkJSON } from "../../../helpers/getNetworkJSON"
 import { importJSONAsNetwork } from "../../../helpers/importJSONAsNetwork"
-import useAuth from "../../../hooks/auth/useAuth"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
+import { routeNames } from "../../../Routes"
 import {
   addPerson,
   createNetwork,
@@ -37,22 +38,17 @@ export default function useMenuHeader({
   const isSmall = useSmallBreakpoint()
   const dispatch: ActionCreator<AnyAction> = useDispatch()
   const selectedNetwork = useSelector(getCurrentNetwork)
-  const { isAuthenticated } = useAuth()
-
-  // REDUX SELECTOR | Viewing a shared network?
   const isViewingShared = useSelector(getIsViewingShared)
-
-  const defaultNetworkOptions = networks.map((n) => ({
+  const myNetworks = networks.map((n) => ({
     id: n.id,
     name: n.name,
   }))
 
   const [isSearching, setSearching] = React.useState<boolean>(false)
-  const [networkOptions, setNetworkOptions] = React.useState<
-    INetworkSelectOption[]
-  >(defaultNetworkOptions)
+  const [networkOptions, setNetworkOptions] =
+    React.useState<INetworkSelectOption[]>(myNetworks)
 
-  /* Logic for opening the network select menu when CTRL + / is pressed */
+  // Open the network select menu when CTRL + / is pressed
   const selectNetworkRef = React.useRef<any>(null)
   React.useEffect(() => {
     const openNetworkSelect = (e: KeyboardEvent) => {
@@ -74,25 +70,19 @@ export default function useMenuHeader({
     }
   }, [])
 
-  //                                 //
-  // -== ACTION BUTTON FUNCTIONS ==- //
-  //                                 //
-
-  /* Add Person Function */
+  // #region Action Button Functions
   const handleAddPerson = async () => {
     if (!currentNetwork) {
       alert("Please select a Network!")
       return
     }
 
-    /* get name of person to add */
     const name = window.prompt("Name of person:")
     if (!name) {
       alert("Canceled add person action")
       return
     }
 
-    /* Update state */
     try {
       await dispatch(addPerson(currentNetwork.id, name))
     } catch (error) {
@@ -100,7 +90,6 @@ export default function useMenuHeader({
     }
   }
 
-  /* Delete Network Function */
   const handleDeleteNetwork = async () => {
     if (!currentNetwork) return
 
@@ -111,7 +100,6 @@ export default function useMenuHeader({
       return
     }
 
-    /* Update state */
     try {
       await dispatch(deleteNetwork(currentNetwork.id))
     } catch (error) {
@@ -119,7 +107,6 @@ export default function useMenuHeader({
     }
   }
 
-  /* Export Network to JSON Function */
   const handleExportToJSON = async () => {
     /* Stop if no network is selected */
     if (!currentNetwork) return
@@ -174,7 +161,6 @@ export default function useMenuHeader({
     }
   }
 
-  /* Select Network Function */
   const handleNetworkSelect = async (
     event: Event & { value: INetworkSelectOption },
   ) => {
@@ -188,7 +174,6 @@ export default function useMenuHeader({
     }
   }
 
-  /* Create Network Function */
   const handleCreateNetwork = async () => {
     /* If in Zero-login mode, this will delete the current network. Ask the user to confirm before creating a new network.
       (the old network will appear under the global 'networks' state, but will be unusable because person data will not be saved) */
@@ -215,7 +200,6 @@ export default function useMenuHeader({
     }
   }
 
-  /* Import Network from JSON Function */
   const handleImportFromJSON = async () => {
     const fileInput = document.createElement("input")
     fileInput.type = "file"
@@ -227,7 +211,6 @@ export default function useMenuHeader({
     fileInput.onchange = () => importJSONAsNetwork(fileInput.files)
   }
 
-  // FUNCTION | Open the sharing overlay menu
   const openSharingMenu = async () => {
     if (!currentNetwork) return
 
@@ -238,95 +221,127 @@ export default function useMenuHeader({
     }
   }
 
-  const actionButtons = [
-    <ToolTipButton
-      key="add-person-button"
-      id="add-person-button"
-      tooltip="Add person"
-      ariaLabel="Add a person to the network"
-      icon={<Icons.UserAdd color="light-1" />}
-      onClick={handleAddPerson}
-      isDisabled={!currentNetwork}
-    />,
+  const history = useHistory()
+  const handleExitSharedMode = () => {
+    history.push(routeNames.DASHBOARD)
+  }
+  // #endregion Action Button Functions
 
-    <ToolTipButton
-      key="export-network-json-button"
-      id="export-network-json-button"
-      tooltip="Export network to JSON"
-      ariaLabel="Export the network as a JSON file"
-      icon={<Icons.Download color="light-1" />}
-      onClick={handleExportToJSON}
-      isDisabled={!currentNetwork}
-    />,
-
-    <ToolTipButton
-      key="rename-network-button"
-      id="rename-network-button"
-      tooltip="Rename network"
-      ariaLabel="Rename this network"
-      icon={<Icons.Tag color="light-1" />}
-      onClick={handleRenameNetwork}
-      isDisabled={!currentNetwork}
-    />,
-
-    // Share Button -- Shows only if the user is authenticated
-    isAuthenticated ? (
-      <ToolTipButton
-        key="share-network-button"
-        id="share-network-button"
-        tooltip="Share network"
-        ariaLabel="Share this network"
-        icon={<Icons.ShareOption color="accent-1" />}
-        onClick={openSharingMenu}
-        isDisabled={!currentNetwork}
-      />
-    ) : null,
-
-    <ToolTipButton
-      key="delete-network-button"
-      id="delete-network-button"
-      tooltip="Delete network"
-      ariaLabel="Delete this network"
-      icon={<Icons.Threats color="status-critical" />}
-      onClick={handleDeleteNetwork}
-      isDisabled={!currentNetwork}
-    />,
+  const actionButtonsMap: {
+    btn: React.ReactNode
+    doShow: boolean
+  }[] = [
+    {
+      btn: (
+        <ToolTipButton
+          key="add-person-button"
+          id="add-person-button"
+          tooltip="Add person"
+          ariaLabel="Add a person to the network"
+          icon={<Icons.UserAdd color="light-1" />}
+          onClick={handleAddPerson}
+          isDisabled={!currentNetwork}
+        />
+      ),
+      doShow: !isViewingShared,
+    },
+    {
+      btn: (
+        <ToolTipButton
+          key="export-network-json-button"
+          id="export-network-json-button"
+          tooltip="Export network to JSON"
+          ariaLabel="Export the network as a JSON file"
+          icon={<Icons.Download color="light-1" />}
+          onClick={handleExportToJSON}
+          isDisabled={!currentNetwork}
+        />
+      ),
+      doShow: true,
+    },
+    {
+      btn: (
+        <ToolTipButton
+          key="rename-network-button"
+          id="rename-network-button"
+          tooltip="Rename network"
+          ariaLabel="Rename this network"
+          icon={<Icons.Tag color="light-1" />}
+          onClick={handleRenameNetwork}
+          isDisabled={!currentNetwork}
+        />
+      ),
+      doShow: !isViewingShared,
+    },
+    {
+      btn: (
+        <ToolTipButton
+          key="share-network-button"
+          id="share-network-button"
+          tooltip="Share network"
+          ariaLabel="Share this network"
+          icon={<Icons.ShareOption color="accent-1" />}
+          onClick={openSharingMenu}
+          isDisabled={!currentNetwork}
+        />
+      ),
+      doShow: !isViewingShared && !isZeroLoginMode,
+    },
+    {
+      btn: (
+        <ToolTipButton
+          key="delete-network-button"
+          id="delete-network-button"
+          tooltip="Delete network"
+          ariaLabel="Delete this network"
+          icon={<Icons.Threats color="status-critical" />}
+          onClick={handleDeleteNetwork}
+          isDisabled={!currentNetwork}
+        />
+      ),
+      doShow: !isViewingShared,
+    },
+    {
+      btn: (
+        <ToolTipButton
+          id="exit-sharing-button"
+          tooltip="Return to my Dashboard"
+          icon={<Icons.Logout color="accent-1" />}
+          onClick={handleExitSharedMode}
+          isDisabled={!currentNetwork}
+          buttonStyle={{ marginLeft: "auto" }}
+        />
+      ),
+      doShow: isViewingShared,
+    },
   ]
 
-  /* Handle searches for network options */
   const handleOptionSearch = (text: string) => {
     if (!text) {
-      /* Searching for nothing? Done searching. */
+      // Searching for nothing? Done searching.
       setSearching(false)
       return
     }
 
-    /* Filter default options using the search */
+    // Filter default options using the search
     setSearching(true)
-    const filtered = defaultNetworkOptions.filter((n) =>
+    const filtered = myNetworks.filter((n) =>
       n.name.match(new RegExp(text, "i")),
     )
     setNetworkOptions(filtered)
   }
 
-  /* How the select menu renders options */
   const renderNetworkOptions = (
     option: INetworkSelectOption,
     index: number,
   ) => {
     return (
-      <Box
-        key={`${option.id}-${index}`}
-        pad="small"
-        width="large"
-        // style={{ overflow: "hidden", textOverflow: "ellipsis" }}
-      >
+      <Box key={`${option.id}-${index}`} pad="small" width="large">
         {option.name}
       </Box>
     )
   }
 
-  /* Menu for selecting a network */
   const networkSelectMenu: React.ReactNode = (
     <Select
       dropHeight="350px"
@@ -338,7 +353,7 @@ export default function useMenuHeader({
           : `Select a network (CTRL + /)`
       }
       searchPlaceholder="Search by name"
-      options={isSearching ? networkOptions : defaultNetworkOptions}
+      options={isSearching ? networkOptions : myNetworks}
       onChange={handleNetworkSelect}
       dropAlign={{ top: "bottom" }}
       disabled={networks.length === 0}
@@ -443,7 +458,8 @@ export default function useMenuHeader({
     </Box>
   )
 
-  const rightHeaderItems: React.ReactNode = (
+  const actionButtons = actionButtonsMap.filter((actBtn) => actBtn.doShow)
+  const rightHeaderItems: React.ReactNode = currentNetwork && (
     <Box direction="row" margin={{ left: "auto" }}>
       {isSmall ? (
         <Menu
@@ -454,16 +470,15 @@ export default function useMenuHeader({
               icon={<Icons.Actions />}
             />
           }
-          items={actionButtons.map((btn) => ({ label: btn }))}
+          items={actionButtons.map((actBtn) => ({ label: actBtn.btn }))}
         />
       ) : (
-        actionButtons.map((btn) => btn)
+        actionButtons.map((actBtn) => actBtn.btn)
       )}
     </Box>
   )
 
   return {
-    currentNetwork,
     isViewingShared,
     isZeroLoginMode,
     leftHeaderItems,
