@@ -77,28 +77,24 @@ const GroupAccordion: React.FC<IProps> = (props) => {
     opacity: 1,
   } // groupAccordionStyles
 
-  const toggleGroupVisibilityTooltip = showing.group
-    ? "Click to hide group"
-    : "Click to show group"
-
-  const toggleGroupVisibilityIcon = showing.group ? (
-    <Icons.Folder color="accent-1" />
-  ) : (
-    <Icons.Folder color="accent-1" />
-  )
-
   const GroupVisibilityToggle = (
     <Box margin={{ left: "auto" }} background="dark-1">
       <ToolTipButton
-        tooltip={toggleGroupVisibilityTooltip}
         onClick={(e) => {
           e.stopPropagation()
           toggleGroupVisibility(e)
         }}
-        icon={toggleGroupVisibilityIcon}
+        tooltip={showing.group ? "Click to hide group" : "Click to show group"}
+        icon={
+          showing.group ? (
+            <Icons.Folder color="status-ok" />
+          ) : (
+            <Icons.Folder color="status-critical" />
+          )
+        }
       />
     </Box>
-  )
+  ) // GroupVisibilityToggle
 
   const NodesVisibilityToggle = (
     <Box margin={{ left: "auto" }} background="dark-1">
@@ -117,9 +113,8 @@ const GroupAccordion: React.FC<IProps> = (props) => {
         }
       />
     </Box>
-  )
+  ) // NodesVisibilityToggle
 
-  // UI | Label component for this group's Accordion
   const personCountLabel =
     "[" +
     (visibilityLists.allPeople.length > 0
@@ -155,7 +150,7 @@ const GroupAccordion: React.FC<IProps> = (props) => {
         <Icons.Folder color="dark-1" />
       )}
     </Box>
-  )
+  ) // GroupThumbnail
 
   const GroupAccordionLabel: React.ReactNode = (
     <Box
@@ -189,9 +184,8 @@ const GroupAccordion: React.FC<IProps> = (props) => {
         </Box>
       }
     </Box>
-  ) // END | GroupAccordionLabel
+  ) // GroupAccordionLabel
 
-  // UI | Component with UI for managing this group
   const ManageGroupBox: React.ReactNode = (
     <Box gap="xsmall">
       {/* Buttons */}
@@ -219,7 +213,7 @@ const GroupAccordion: React.FC<IProps> = (props) => {
         />
       </Box>
     </Box>
-  ) // END | ManageGroupBox
+  ) // ManageGroupBox
 
   return (
     <AccordionPanel
