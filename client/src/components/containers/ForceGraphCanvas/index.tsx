@@ -1,6 +1,6 @@
 import deepEqual from "deep-equal"
 import { ForceGraphInstance, LinkObject } from "force-graph"
-import React, { CSSProperties, useEffect, useRef } from "react"
+import React, { useEffect, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { CUSTOM_EVENT_NAMES } from "../../../helpers/customEvents"
@@ -27,7 +27,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   id: graphId,
   style,
 }) => {
-  // create a ref for forwarding to the Canvas presentational component
   const canvasRef = useRef<HTMLDivElement>()
   const forceGraphRef = useRef<ForceGraphInstance | undefined>()
   const existingPeopleIdsRef = useRef<Set<string>>(new Set<string>())
@@ -246,6 +245,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
         const didScaleChange = !deepEqual(nodeFromProps.scaleXY, n.scaleXY)
         const didBackgroundToggle =
           nodeFromProps.isBackground !== n.isBackground
+        const didIsGroupToggle = nodeFromProps.isGroup !== n.isGroup
 
         const doUpdate =
           didRelationshipsChange ||
@@ -253,7 +253,8 @@ const ForceGraphCanvas: React.FC<IProps> = ({
           didNameChange ||
           didPinChange ||
           didScaleChange ||
-          didBackgroundToggle
+          didBackgroundToggle ||
+          didIsGroupToggle
         if (!doUpdate) return null
 
         // Merge the new node and previous node. New node properties override existing ones!
@@ -325,14 +326,24 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
     nextCurrentNetwork?.personIds.length
 
   // Rerender if the "people" names, relationships, thumbnail, pinXY, or scaleXY changed
-  const toCheckParams = (p: IPerson) => ({
-    id: p.id,
-    name: p.name,
-    relationships: p.relationships,
-    thumbnail: p.thumbnailUrl,
-    pinXY: p.pinXY,
-    scaleXY: p.scaleXY,
-    isBackground: p.isBackground,
+  const toCheckParams = ({
+    id,
+    name,
+    relationships,
+    thumbnailUrl,
+    pinXY,
+    scaleXY,
+    isBackground,
+    isGroup,
+  }: IPerson) => ({
+    id,
+    name,
+    relationships,
+    thumbnail: thumbnailUrl,
+    pinXY,
+    scaleXY,
+    isBackground,
+    isGroup,
   })
   const arePeopleSame = deepEqual(
     prevCurrentNetwork?.people.map(toCheckParams),
@@ -343,9 +354,7 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
   return skipRerender
 })
 
-// ==- TYPE DEFINITIONS -== //
 interface IProps {
-  style?: CSSProperties
-  id: string
   currentNetwork: ICurrentNetwork | null
+  [key: string]: any
 }
