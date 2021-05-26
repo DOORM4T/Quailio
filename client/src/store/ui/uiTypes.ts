@@ -85,7 +85,7 @@ export interface ISetViewingSharedAction {
 
 export interface ISetNodeVisibilityAction {
   type: UserInterfaceActionTypes.SET_NODE_VISIBILITY
-  nodeId: string
+  nodeIds: string | string[]
   isVisible: boolean
 }
 

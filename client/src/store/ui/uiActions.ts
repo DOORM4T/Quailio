@@ -96,11 +96,11 @@ export const setViewingShared: ActionCreator<ISetViewingSharedAction> = (
 
 // Toggle a (person/group) node's visibility
 export const setNodeVisibility = (
-  nodeId: string,
+  nodeIds: string | string[],
   doShow: boolean,
 ): ISetNodeVisibilityAction => ({
   type: UserInterfaceActionTypes.SET_NODE_VISIBILITY,
-  nodeId,
+  nodeIds,
   isVisible: doShow,
 })
 

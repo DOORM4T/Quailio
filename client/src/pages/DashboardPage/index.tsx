@@ -47,27 +47,6 @@ const DashboardPage: React.FC = () => {
       }
     : null // networkWithActiveNodes
 
-  const PersonMenuWrapper: React.ReactNode = (
-    <Box
-      direction="column"
-      justify="start"
-      align="stretch"
-      width="large"
-      height={isSmall ? "50%" : "100%"}
-      style={{ display: doShowPersonMenu ? "block" : "none" }}
-    >
-      <PersonMenu
-        people={
-          currentNetwork
-            ? currentNetwork.people.sort((p1, p2) =>
-                p1.name.localeCompare(p2.name),
-              )
-            : []
-        }
-      />
-    </Box>
-  )
-
   const HelmetTitle =
     isViewingShared && currentNetwork ? (
       <Helmet>
@@ -104,7 +83,9 @@ const DashboardPage: React.FC = () => {
       >
         {currentNetwork ? (
           <React.Fragment>
-            {PersonMenuWrapper}
+            {doShowPersonMenu && (
+              <PersonMenu currentNetwork={currentNetwork} isSmall={isSmall} />
+            )}
             <ForceGraphCanvas
               id="network-sketch"
               currentNetwork={networkWithVisibleNodes}

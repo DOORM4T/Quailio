@@ -15,7 +15,7 @@ import { setNodeVisibility } from "../../../../store/ui/uiActions"
 
 interface IProps {
   currentNetwork: ICurrentNetwork
-  group: IPerson
+  group: IPerson | "all"
   doShowGroup: boolean
 }
 
@@ -25,6 +25,13 @@ function useGroupAccordionFunctions({
   doShowGroup,
 }: IProps) {
   const dispatch = useDispatch()
+
+  if (group === "all")
+    return {
+      changeGroupColorByField: null,
+      handleTogglePersonInGroup: null,
+      toggleGroupVisibility: null,
+    }
 
   const changeGroupColorByField = (field: GroupColorField) => async () => {
     // Create a color picker input
@@ -85,9 +92,7 @@ function useGroupAccordionFunctions({
       }
     } // handleTogglePersonInGroup
 
-  const toggleGroupVisibility = async (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) => {
+  const toggleGroupVisibility = async () => {
     try {
       await dispatch(setNodeVisibility(group.id, !doShowGroup))
     } catch (error) {

@@ -1,6 +1,15 @@
-import { AccordionPanel, Box, Image, List, Tab, Tabs } from "grommet"
+import {
+  AccordionPanel,
+  AccordionPanelProps,
+  Box,
+  Image,
+  List,
+  Tab,
+  Tabs,
+  Text,
+} from "grommet"
 import * as Icons from "grommet-icons"
-import React, { Dispatch, useEffect, useRef } from "react"
+import React, { Dispatch, memo, useEffect, useRef } from "react"
 import { useDispatch } from "react-redux"
 import SearchAndCheckMenu from "../../../../components/SearchAndCheckMenu"
 import ToolTipButton from "../../../../components/ToolTipButton"
@@ -12,16 +21,18 @@ import { zoomToPerson } from "../../../../store/ui/uiActions"
 import useViewPerson from "../../logic/useViewPerson"
 import useGroupAccordionFunctions from "./useGroupAccordionFunctions"
 import useGroupVisibility from "./useNodeVisibility"
+import useToggleAllGroups from "./useToggleAllGroups"
 
 interface IProps {
   currentNetwork: ICurrentNetwork
-  group: IPerson // a group is a person whose .isGroup is true
+  // a group is a person whose .isGroup is true
+  //  -- or an "all" literal indicating that all people should be rendered
+  group: IPerson | "all"
   people: IPerson[]
   isViewingShared: boolean
-  renderItem: (
-    canSearch: boolean,
-  ) => (person: IPerson, index: number) => React.ReactNode
-  [key: string]: any
+  renderItem: (person: IPerson, index: number) => React.ReactNode
+  search?: string
+  panelProps?: AccordionPanelProps
 }
 
 /**
@@ -30,10 +41,17 @@ interface IProps {
  * 3. Change group background and text colors
  * 4. Display tabs with nodes in 3 categories (All, Visible, Hidden)
  */
-const GroupAccordion: React.FC<IProps> = (props) => {
-  const { currentNetwork, group, people, isViewingShared, renderItem } = props
-
+const GroupAccordion: React.FC<IProps> = ({
+  currentNetwork,
+  group,
+  people,
+  isViewingShared,
+  renderItem,
+  search,
+  panelProps,
+}) => {
   const dispatch: Dispatch<any> = useDispatch()
+  const { viewPerson } = useViewPerson(currentNetwork)
 
   const { visibilityLists, showing, toggleAllNodeVisibility } =
     useGroupVisibility({
@@ -51,6 +69,10 @@ const GroupAccordion: React.FC<IProps> = (props) => {
     doShowGroup: showing.group,
   })
 
+  const { toggleAllGroupVisibility, isShowingAllGroups } = useToggleAllGroups({
+    groups: group === "all" ? people.filter((p) => p.isGroup) : [],
+  })
+
   const accordionRef = useRef<HTMLDivElement | null>(null)
   // Make the accordion header sticky
   // This is a hacky solution, but Grommet's AccordionPanel style prop doesn't style the right element to make the accordion sticky
@@ -65,6 +87,10 @@ const GroupAccordion: React.FC<IProps> = (props) => {
     actualAccordionLabel.style.position = "sticky"
     actualAccordionLabel.style.top = "0px"
   }, [accordionRef])
+
+  const doHideFromSearch =
+    search !== "" && visibilityLists.allPeople.length === 0
+  if (doHideFromSearch) return null
 
   const groupAccordionStyles: React.CSSProperties = {
     height: "48px",
@@ -82,11 +108,29 @@ const GroupAccordion: React.FC<IProps> = (props) => {
       <ToolTipButton
         onClick={(e) => {
           e.stopPropagation()
-          toggleGroupVisibility(e)
+          if (group === "all") {
+            toggleAllGroupVisibility()
+            return
+          }
+          toggleGroupVisibility!()
         }}
-        tooltip={showing.group ? "Click to hide group" : "Click to show group"}
+        tooltip={
+          group === "all"
+            ? isShowingAllGroups
+              ? "Click to hide all groups"
+              : "Click to show all groups"
+            : showing.group
+            ? "Click to hide group"
+            : "Click to show group"
+        }
         icon={
-          showing.group ? (
+          group === "all" ? (
+            isShowingAllGroups ? (
+              <Icons.Folder color="status-ok" />
+            ) : (
+              <Icons.Folder color="status-critical" />
+            )
+          ) : showing.group ? (
             <Icons.Folder color="status-ok" />
           ) : (
             <Icons.Folder color="status-critical" />
@@ -99,10 +143,18 @@ const GroupAccordion: React.FC<IProps> = (props) => {
   const NodesVisibilityToggle = (
     <Box margin={{ left: "auto" }} background="dark-1">
       <ToolTipButton
-        tooltip={showing.allPeople ? "Hide all in group" : "Show all in group"}
+        tooltip={
+          group === "all"
+            ? showing.allPeople
+              ? "Click to hide all"
+              : "Click to show all "
+            : showing.allPeople
+            ? "Click to hide all in group"
+            : "Click to show all in group"
+        }
         onClick={(e) => {
           e.stopPropagation()
-          toggleAllNodeVisibility(e)
+          toggleAllNodeVisibility()
         }}
         icon={
           showing.allPeople ? (
@@ -122,8 +174,7 @@ const GroupAccordion: React.FC<IProps> = (props) => {
       : "EMPTY") +
     "]"
 
-  const { viewPerson } = useViewPerson(currentNetwork)
-  const GroupThumbnail = (
+  const GroupThumbnail = group !== "all" && (
     <Box
       onClick={(e) => {
         e.stopPropagation()
@@ -160,8 +211,8 @@ const GroupAccordion: React.FC<IProps> = (props) => {
       fill
       aria-label="Select person"
       style={{
-        backgroundColor: group.backgroundColor || "#ddd",
-        color: group.textColor || "#222",
+        backgroundColor: group !== "all" ? group.backgroundColor : "#ddd",
+        color: group !== "all" ? group.textColor : "#222",
       }}
     >
       <Box direction="row" width="60%">
@@ -173,7 +224,11 @@ const GroupAccordion: React.FC<IProps> = (props) => {
             whiteSpace: "nowrap",
           }}
         >
-          {group.name}
+          {group === "all" ? (
+            <Text margin={{ left: "1rem" }}>All</Text>
+          ) : (
+            group.name
+          )}
         </span>
       </Box>
       {
@@ -186,18 +241,18 @@ const GroupAccordion: React.FC<IProps> = (props) => {
     </Box>
   ) // GroupAccordionLabel
 
-  const ManageGroupBox: React.ReactNode = (
+  const ManageGroupBox: React.ReactNode = group !== "all" && (
     <Box gap="xsmall">
       {/* Buttons */}
       <Box direction="row" justify="end">
         <ToolTipButton
           tooltip="Change group background color"
-          onClick={changeGroupColorByField("backgroundColor")}
+          onClick={changeGroupColorByField!("backgroundColor")}
           icon={<Icons.Paint color={group.backgroundColor} />}
         />
         <ToolTipButton
           tooltip="Change group text color"
-          onClick={changeGroupColorByField("textColor")}
+          onClick={changeGroupColorByField!("textColor")}
           icon={<Icons.TextAlignFull color={group.textColor} />}
         />
       </Box>
@@ -209,7 +264,7 @@ const GroupAccordion: React.FC<IProps> = (props) => {
           isCheckedFunction={(arg: IPerson) =>
             group.relationships[arg.id] !== undefined
           }
-          toggleOption={handleTogglePersonInGroup}
+          toggleOption={handleTogglePersonInGroup!}
         />
       </Box>
     </Box>
@@ -220,40 +275,28 @@ const GroupAccordion: React.FC<IProps> = (props) => {
       style={groupAccordionStyles}
       label={GroupAccordionLabel}
       ref={accordionRef}
-      {...props}
+      {...panelProps}
     >
       <Box pad="medium">
         <Tabs>
-          <Tab
-            title={`All (${visibilityLists.allPeople.length})`}
-            disabled={visibilityLists.allPeople.length === 0}
-          >
-            <List
-              data={visibilityLists.allPeople}
-              children={renderItem(false)}
-            />
-          </Tab>
-          <Tab
-            title={`Visible (${visibilityLists.visiblePeople.length})`}
-            disabled={visibilityLists.visiblePeople.length === 0}
-          >
-            <List
-              data={visibilityLists.visiblePeople}
-              children={renderItem(false)}
-            />
-          </Tab>
-
-          <Tab
-            title={`Hidden (${visibilityLists.hiddenPeople.length})`}
-            disabled={visibilityLists.hiddenPeople.length === 0}
-          >
-            <List
-              data={visibilityLists.hiddenPeople}
-              children={renderItem(false)}
-            />
-          </Tab>
-
-          {!isViewingShared && <Tab title="Manage">{ManageGroupBox}</Tab>}
+          <GroupTab
+            tabName="All"
+            items={visibilityLists.allPeople}
+            renderItem={renderItem}
+          />
+          <GroupTab
+            tabName="Visible"
+            items={visibilityLists.visiblePeople}
+            renderItem={renderItem}
+          />
+          <GroupTab
+            tabName="Hidden"
+            items={visibilityLists.hiddenPeople}
+            renderItem={renderItem}
+          />
+          {group !== "all" && !isViewingShared && (
+            <Tab title="Manage">{ManageGroupBox}</Tab>
+          )}
         </Tabs>
       </Box>
     </AccordionPanel>
@@ -261,3 +304,25 @@ const GroupAccordion: React.FC<IProps> = (props) => {
 }
 
 export default GroupAccordion
+
+interface IGroupTab<T> {
+  items: T[]
+  renderItem: (item: T, index: number) => React.ReactNode
+  tabName: string
+}
+
+// MUST memoize this component
+// -- otherwise, GroupTab keeps rendering.
+// I have yet to find the useEffect or useState causing unecessary rerenders (if it exists).
+const GroupTab = memo(
+  ({ items: people, renderItem, tabName }: IGroupTab<IPerson>) => {
+    return (
+      <Tab
+        title={`${tabName} (${people.length})`}
+        disabled={people.length === 0}
+      >
+        <List data={people} children={renderItem} />
+      </Tab>
+    )
+  },
+)

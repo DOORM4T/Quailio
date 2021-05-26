@@ -82,12 +82,14 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
     }
 
     case UserInterfaceActionTypes.SET_NODE_VISIBILITY: {
+      const personNodeVisibility = { ...state.personNodeVisibility }
+      let toSet: string[] = []
+      toSet = toSet.concat(action.nodeIds)
+      for (const id of toSet) personNodeVisibility[id] = action.isVisible
+
       return {
         ...state,
-        personNodeVisibility: {
-          ...state.personNodeVisibility,
-          [action.nodeId]: action.isVisible,
-        },
+        personNodeVisibility,
       }
     }
 

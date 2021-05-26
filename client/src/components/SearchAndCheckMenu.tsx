@@ -42,10 +42,12 @@ function SearchAndCheckMenu({
       <Box overflow="auto" height={{ max: "large" }}>
         <List
           id="add-relationship-buttons"
-          primaryKey="name"
-          data={defaultOptions.filter((opt) =>
-            opt.name.toLowerCase().includes(search.toLowerCase()),
-          )}
+          primaryKey={nameField}
+          data={defaultOptions
+            .filter((opt) =>
+              opt[nameField].toLowerCase().includes(search.toLowerCase()),
+            )
+            .sort((a, b) => a[nameField].localeCompare(b[nameField]))}
           style={{ maxHeight, overflowY: "auto" }}
         >
           {/* Render the list items */}
