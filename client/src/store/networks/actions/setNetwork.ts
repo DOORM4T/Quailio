@@ -62,7 +62,6 @@ export const setNetwork = (
 }
 
 async function addLegacyGroupFields(networkData: never) {
-  console.log("LEGACY GROUPS FOUND -- RESTRUCTURING TO LATEST FORMAT")
   const legacyNetwork = networkData as INetwork & ILegacyGroupsNetwork
   const getGroups = legacyNetwork.groupIds.map((id) =>
     groupsCollection
