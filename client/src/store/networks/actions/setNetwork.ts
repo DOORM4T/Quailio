@@ -1,8 +1,15 @@
 import {
+  auth,
+  groupsCollection,
   networksCollection,
   peopleCollection,
 } from "../../../firebase/services"
 import { AppThunk } from "../../store"
+import {
+  ILegacyGroup,
+  ILegacyGroupsNetwork,
+  restructureLegacyGroups,
+} from "../helpers/restuctureLegacyGroups"
 import {
   ICurrentNetwork,
   INetwork,
@@ -21,57 +28,76 @@ import { setNetworkLoading } from "./setNetworkLoading"
  * @param networkId
  */
 
-export const setNetwork = (networkId: string, isShared?: boolean): AppThunk => {
+export const setNetwork = (
+  networkId: string,
+  isShared: boolean = false,
+): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     try {
-      /* Get network data from Firestore  */
-      let networkDoc
-      if (isShared) {
-        // Network has a shared field? Any user can view the network.
-        networkDoc = (
-          await networksCollection
-            .where("sharedProperties.sharedId", "==", networkId)
-            .get()
-        ).docs[0]
-
-        if (!networkDoc) throw new Error("Shared network not found")
-      } else {
-        // Otherwise, this network should belong to the user
-        // Stop if the user is not authenticated
-        const uid = getState().auth.userId
-        if (!uid) throw new Error("There is no currently authenticated user.")
-
-        networkDoc = await networksCollection.doc(networkId).get()
-      }
-
+      const networkDoc = await getNetworkDoc(networkId, isShared)
       if (!networkDoc.exists) throw new Error("Network not found.")
+
       const networkData = networkDoc.data() as INetwork
+      if ("groupIds" in networkData) await addLegacyGroupFields(networkData)
 
-      /* Get all Person documents related to the Person IDs in the Network */
-      const people: IPerson[] = await getAllPersonDataFromDB(
-        networkData.personIds,
-      )
-
-      /* Create a current network object from Network and People state  */
+      const people = await getAllPersonDataFromDB(networkData.personIds)
       const currentNetwork: ICurrentNetwork = {
         ...networkData,
         people,
       }
 
-      /* Update state with the currentNetwork */
+      restructureLegacyGroups(currentNetwork, true)
       const action: ISetNetworkAction = {
         type: NetworkActionTypes.SET,
         currentNetwork,
       }
       return dispatch(action)
     } catch (error) {
-      /* Failed to get the network */
       dispatch(setNetworkLoading(false))
       throw error
     }
   }
+}
+
+async function addLegacyGroupFields(networkData: never) {
+  console.log("LEGACY GROUPS FOUND -- RESTRUCTURING TO LATEST FORMAT")
+  const legacyNetwork = networkData as INetwork & ILegacyGroupsNetwork
+  const getGroups = legacyNetwork.groupIds.map((id) =>
+    groupsCollection
+      .doc(id)
+      .get()
+      .then((snap) => ({ id, ...(snap.data() as ILegacyGroup) })),
+  )
+  const groups = await Promise.all(getGroups)
+  legacyNetwork.relationshipGroups = {}
+  groups.forEach((group) => {
+    legacyNetwork.relationshipGroups[group.id] = { ...group }
+    // ID field is already tracked as the object key; remove it from the actual group object
+    delete (legacyNetwork.relationshipGroups[group.id] as any).id
+  })
+}
+
+async function getNetworkDoc(networkId: string, isShared: boolean) {
+  let networkDoc
+  if (isShared) {
+    // Network has a shared field? Any user can view the network.
+    networkDoc = (
+      await networksCollection
+        .where("sharedProperties.sharedId", "==", networkId)
+        .get()
+    ).docs[0]
+    if (!networkDoc) throw new Error("Shared network not found")
+  } else {
+    // Otherwise, this network should belong to the user
+    // Stop if the user is not authenticated
+    const uid = auth.currentUser?.uid
+    if (!uid) throw new Error("There is no currently authenticated user.")
+    networkDoc = await networksCollection.doc(networkId).get()
+  }
+
+  return networkDoc
 }
 
 /**

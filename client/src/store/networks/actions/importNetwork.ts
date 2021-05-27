@@ -9,12 +9,12 @@ import {
 } from "../../../firebase/services"
 import { INetworkJSON } from "../../../helpers/getNetworkJSON"
 import { AppThunk } from "../../store"
+import { restructureLegacyGroups } from "../helpers/restuctureLegacyGroups"
 import {
   ICurrentNetwork,
   IImportNetworkAction,
   INetwork,
   IPerson,
-  IRelationship,
   NetworkActionTypes,
 } from "../networkTypes"
 import { resetLocalNetworks } from "./resetLocalNetworks"
@@ -55,7 +55,7 @@ export const importNetwork = (networkJSON: INetworkJSON): AppThunk => {
  * @returns a current network with updated UUIDs
  */
 function makeNetworkCopy(networkJSON: INetworkJSON) {
-  restructureLegacyGroups()
+  restructureLegacyGroups(networkJSON)
 
   const peopleCopy = [...networkJSON.people]
   peopleCopy.forEach(updatePersonCopyId)
@@ -75,62 +75,6 @@ function makeNetworkCopy(networkJSON: INetworkJSON) {
   //
   // #region makeNetworkCopy: HELPERS
   //
-
-  function restructureLegacyGroups() {
-    if (!("relationshipGroups" in networkJSON)) return
-    console.log("LEGACY GROUPS DETECTED")
-
-    interface ILegacyGroup {
-      name: string
-      personIds: string[]
-      pinXY?: { x: number; y: number }
-      backgroundColor?: string
-      textColor?: string
-    }
-    const legacyNetwork: INetworkJSON & {
-      relationshipGroups: {
-        [groupId: string]: ILegacyGroup
-      }
-    } = networkJSON
-    const groupsAsPeople = Object.entries(legacyNetwork.relationshipGroups).map(
-      groupToPerson,
-    )
-
-    groupsAsPeople.forEach((p) => legacyNetwork.people.push(p))
-    delete networkJSON["relationshipGroups"]
-    return
-
-    // #region restructureLegacyGroup Helper Functions
-    function groupToPerson(entry: [string, ILegacyGroup]): IPerson {
-      const [groupId, group] = entry
-      const { name, backgroundColor, textColor, pinXY } = group
-      const groupAsPerson: IPerson = {
-        isGroup: true,
-        id: groupId,
-        name,
-        relationships: {},
-        backgroundColor,
-        textColor,
-        pinXY,
-      }
-
-      group.personIds.forEach(linkTwoWays)
-      return groupAsPerson
-
-      // #region Legacy Group Update Helper Functions
-      function linkTwoWays(personId: string) {
-        const relPerson = legacyNetwork.people.find((p) => p.id === personId)
-        if (!relPerson) return
-
-        const defaultRel: IRelationship = { reason: "" }
-        groupAsPerson.relationships[personId] = { ...defaultRel }
-        relPerson.relationships[groupId] = { ...defaultRel }
-      }
-      // #endregion Legacy Group Update Helper Functions
-    }
-
-    // #endregion restructureLegacyGroup Helper Functions
-  }
 
   function updatePersonCopyId(personCopy: IPerson) {
     const oldId = personCopy.id

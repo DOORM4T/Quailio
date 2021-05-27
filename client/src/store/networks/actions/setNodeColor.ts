@@ -1,4 +1,4 @@
-import { groupsCollection } from "../../../firebase/services"
+import { peopleCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import { ISetNodeColor, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
@@ -19,15 +19,9 @@ export const setNodeColor =
       // User is authenticated? Firestore operations.
       const isAuthenticated = Boolean(getState().auth.userId)
       if (isAuthenticated) {
-        // Ensure the group document exists in the groups collection
-        // TODO: firestore for node color
-        console.log("TODO: NODE COLOR IN FIRESTORE")
-
-        // const groupDoc = await groupsCollection.doc(personId).get()
-        // if (!groupDoc.exists) throw new Error("That group doesn't exist")
-
-        // // Update the group's backgroundColor or textColor field
-        // groupDoc.ref.update({ [field]: newColor })
+        const personDoc = await peopleCollection.doc(personId).get()
+        if (!personDoc.exists) throw new Error("Person does not exist")
+        personDoc.ref.update({ [field]: newColor })
       }
 
       const action: ISetNodeColor = {
