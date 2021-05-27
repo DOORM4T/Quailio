@@ -27,10 +27,6 @@ export function restructureLegacyGroups(
   doRestructureInFirestore = false,
 ) {
   if (!("relationshipGroups" in currentNetwork)) return
-  if (!("personIds" in currentNetwork)) {
-    const withPersonIds = currentNetwork as ICurrentNetwork
-    withPersonIds.personIds = withPersonIds.people.map((p) => p.id)
-  }
   console.log("LEGACY GROUPS DETECTED -- RESTRUCTURING TO NEW GROUPS FORMAT")
 
   const legacyNetwork: ICurrentNetwork & ILegacyGroupsNetwork = currentNetwork
@@ -40,8 +36,9 @@ export function restructureLegacyGroups(
 
   groupsAsPeople.forEach((p) => {
     legacyNetwork.people.push(p)
-    legacyNetwork.personIds.push(p.id)
   })
+  legacyNetwork.personIds = legacyNetwork.people.map((p) => p.id)
+
   delete currentNetwork["relationshipGroups"]
   delete currentNetwork["groupIds"]
 
@@ -62,6 +59,8 @@ export function restructureLegacyGroups(
       textColor,
       pinXY,
     }
+
+    if (!group.personIds) return groupAsPerson
 
     group.personIds.forEach(linkTwoWays)
     return groupAsPerson
