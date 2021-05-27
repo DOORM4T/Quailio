@@ -425,6 +425,7 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
       ctx.beginPath()
       ctx.strokeRect(textX, textY, nameTagWidth, nameTagHeight)
 
+      ctx.fillStyle = node.textColor || DEFAULT_TEXT_COLOR
       ctx.fillText(
         name,
         textX + nameTagWidth / 2,

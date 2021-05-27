@@ -246,6 +246,9 @@ const ForceGraphCanvas: React.FC<IProps> = ({
         const didBackgroundToggle =
           nodeFromProps.isBackground !== n.isBackground
         const didIsGroupToggle = nodeFromProps.isGroup !== n.isGroup
+        const didBackgroundColorChange =
+          nodeFromProps.backgroundColor !== n.backgroundColor
+        const didTextColorChange = nodeFromProps.textColor !== n.textColor
 
         const doUpdate =
           didRelationshipsChange ||
@@ -254,7 +257,9 @@ const ForceGraphCanvas: React.FC<IProps> = ({
           didPinChange ||
           didScaleChange ||
           didBackgroundToggle ||
-          didIsGroupToggle
+          didIsGroupToggle ||
+          didBackgroundColorChange ||
+          didTextColorChange
         if (!doUpdate) return null
 
         // Merge the new node and previous node. New node properties override existing ones!
@@ -335,6 +340,8 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
     scaleXY,
     isBackground,
     isGroup,
+    backgroundColor,
+    textColor,
   }: IPerson) => ({
     id,
     name,
@@ -344,6 +351,8 @@ export default React.memo(ForceGraphCanvas, (prevProps, nextProps) => {
     scaleXY,
     isBackground,
     isGroup,
+    backgroundColor,
+    textColor,
   })
   const arePeopleSame = deepEqual(
     prevCurrentNetwork?.people.map(toCheckParams),
