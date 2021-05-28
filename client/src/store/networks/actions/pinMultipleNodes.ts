@@ -17,7 +17,6 @@ export const pinMultipleNodes = (
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
-    dispatch(setUILoading(true))
 
     try {
       batch(() => {
@@ -27,12 +26,10 @@ export const pinMultipleNodes = (
       })
 
       dispatch(setNetworkLoading(false))
-      dispatch(setUILoading(false))
       return
     } catch (error) {
       // Failed to set each person's pinXY state
       dispatch(setNetworkLoading(false))
-      dispatch(setUILoading(false))
       throw error
     }
   }
