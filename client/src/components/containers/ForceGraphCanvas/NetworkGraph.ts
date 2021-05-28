@@ -50,13 +50,13 @@ const mouseCoords: XYVals = { x: 0, y: 0 }
 
 // Default color if a node/its links aren't part of a group
 const DEFAULT_NODE_COLOR = "white"
+const DEFAULT_LINK_COLOR = "black"
 const DEFAULT_TEXT_COLOR = "black"
 const LOW_ATTENTION_COLOR = "rgba(0,0,0,0.1)" // Low-opacity grey for nodes/links for non-highlighted nodes when something is being highlighted
 const FONT_FAMILY = "Indie Flower, Times New Roman"
 const BASE_FONT_SIZE = Math.floor(NODE_SIZE / 3)
 const MAX_FONT_SIZE = BASE_FONT_SIZE * 10
 const BADGE_FONT_SIZE = BASE_FONT_SIZE / 1.5
-const MAX_BADGE_SIZE = BADGE_FONT_SIZE * 3
 
 let currentZoom = 1 // Use current zoom to scale visuals such as name tags
 
@@ -558,7 +558,7 @@ function drawLinkObject(
     ctx.strokeStyle = LOW_ATTENTION_COLOR
   } else {
     // TODO: use link color after implementing link groups
-    ctx.strokeStyle = "DEFAULT_LINK_COLOR"
+    ctx.strokeStyle = DEFAULT_LINK_COLOR
   }
 
   let lineWidth = doHighlightLink ? DEFAULT_LINK_SIZE * 2 : DEFAULT_LINK_SIZE
