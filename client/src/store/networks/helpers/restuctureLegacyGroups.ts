@@ -49,7 +49,7 @@ export function restructureLegacyGroups(
   // #region restructureLegacyGroup Helper Functions
   function groupToPerson(entry: [string, ILegacyGroup]): IPerson {
     const [groupId, group] = entry
-    const { name, backgroundColor, textColor, pinXY } = group
+    const { name = "", backgroundColor, textColor, pinXY } = group
     const groupAsPerson: IPerson = {
       isGroup: true,
       id: groupId,
