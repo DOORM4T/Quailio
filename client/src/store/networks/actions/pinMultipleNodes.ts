@@ -1,7 +1,6 @@
 import { batch } from "react-redux"
 import { XYVals } from "../../../components/containers/ForceGraphCanvas/networkGraphTypes"
 import { AppThunk } from "../../store"
-import { setUILoading } from "../../ui/uiActions"
 import { pinNode } from "./pinNode"
 import { setNetworkLoading } from "./setNetworkLoading"
 
@@ -13,15 +12,15 @@ import { setNetworkLoading } from "./setNetworkLoading"
  */
 export const pinMultipleNodes = (
   networkId: string,
-  nodes: { nodeId: string; isGroup: boolean; pinXY: XYVals }[],
+  nodes: { nodeId: string; pinXY: XYVals }[],
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
     try {
       batch(() => {
-        for (const { nodeId, isGroup, pinXY } of nodes) {
-          dispatch(pinNode(networkId, nodeId, isGroup, pinXY))
+        for (const { nodeId, pinXY } of nodes) {
+          dispatch(pinNode(networkId, nodeId, pinXY))
         }
       })
 

@@ -1,5 +1,5 @@
 import firebase from "firebase"
-import { groupsCollection, peopleCollection } from "../../../firebase/services"
+import { peopleCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import { ISetNodePinAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
@@ -13,7 +13,6 @@ import { setNetworkLoading } from "./setNetworkLoading"
 export const pinNode = (
   networkId: string,
   nodeId: string, // Can refer to a person ID or group ID -- groups are represented as nodes in the Force Graph and can be pinned
-  isGroup: boolean,
   pinXY?: { x: number; y: number },
 ): AppThunk => {
   return async (dispatch, getState) => {
@@ -24,10 +23,7 @@ export const pinNode = (
       const isSharing = getState().ui.isViewingShared // Viewers on a shared network should not be able to update the pinXY in Firestore
       const uid = getState().auth.userId
       if (!isSharing && uid) {
-        const nodeDoc = isGroup
-          ? await groupsCollection.doc(nodeId).get()
-          : await peopleCollection.doc(nodeId).get()
-
+        const nodeDoc = await peopleCollection.doc(nodeId).get()
         if (!nodeDoc) throw new Error("That node does not exist.")
 
         // Updates JUST the pinXY field on the document
@@ -46,7 +42,6 @@ export const pinNode = (
         type: NetworkActionTypes.SET_NODE_PIN,
         networkId,
         nodeId,
-        isGroup,
         pinXY,
       }
 

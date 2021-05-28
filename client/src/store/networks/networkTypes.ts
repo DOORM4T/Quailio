@@ -212,7 +212,6 @@ export interface ISetNodePinAction {
   type: NetworkActionTypes.SET_NODE_PIN
   networkId: string
   nodeId: string
-  isGroup: boolean
   pinXY?: XYVals
 }
 
