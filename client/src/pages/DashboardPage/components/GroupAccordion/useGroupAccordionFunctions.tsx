@@ -4,10 +4,6 @@ import {
   disconnectPeople,
 } from "../../../../store/networks/actions"
 import {
-  GroupColorField,
-  setNodeColor,
-} from "../../../../store/networks/actions/setNodeColor"
-import {
   ICurrentNetwork,
   IPerson,
 } from "../../../../store/networks/networkTypes"
@@ -32,40 +28,6 @@ function useGroupAccordionFunctions({
       handleTogglePersonInGroup: null,
       toggleGroupVisibility: null,
     }
-
-  const changeGroupColorByField = (field: GroupColorField) => async () => {
-    // Create a color picker input
-    const colorInput = document.createElement("input")
-    colorInput.type = "color"
-
-    // Open the color picker
-    colorInput.click()
-
-    // Wait for the user to change the color
-    const changeColor = () =>
-      new Promise((resolve) => {
-        colorInput.onchange = () => {
-          resolve(colorInput.value)
-        }
-      })
-
-    const newColor = await changeColor()
-    colorInput.remove()
-
-    // Update the color in global state using a custom Redux action
-    try {
-      await dispatch(
-        setNodeColor(
-          currentNetwork.id,
-          group.id,
-          field, // Change backgroundColor or textColor
-          newColor as string,
-        ),
-      )
-    } catch (error) {
-      console.error(error)
-    }
-  } // changeGroupColorByField
 
   const handleTogglePersonInGroup =
     (personId: string, isInGroup: boolean) => async () => {
@@ -101,7 +63,6 @@ function useGroupAccordionFunctions({
   } // toggleGroupVisibility
 
   return {
-    changeGroupColorByField,
     handleTogglePersonInGroup,
     toggleGroupVisibility,
   }

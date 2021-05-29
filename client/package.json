@@ -64,6 +64,7 @@
     "@types/d3-force": "^2.1.1",
     "@types/deep-equal": "^1.0.1",
     "@types/force-graph": "^1.21.2",
+    "@types/react-color": "^3.0.4",
     "@types/react-helmet": "^6.1.1",
     "@types/react-redux": "^7.1.15",
     "@types/react-router-dom": "^5.1.7",

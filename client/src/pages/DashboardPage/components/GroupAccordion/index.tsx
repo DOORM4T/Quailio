@@ -11,6 +11,7 @@ import {
 import * as Icons from "grommet-icons"
 import React, { Dispatch, memo, useEffect, useRef } from "react"
 import { useDispatch } from "react-redux"
+import SetNodeColorButton from "../../../../components/containers/SetNodeColorButton"
 import SearchAndCheckMenu from "../../../../components/SearchAndCheckMenu"
 import ToolTipButton from "../../../../components/ToolTipButton"
 import {
@@ -59,15 +60,12 @@ const GroupAccordion: React.FC<IProps> = ({
       people,
     })
 
-  const {
-    changeGroupColorByField,
-    handleTogglePersonInGroup,
-    toggleGroupVisibility,
-  } = useGroupAccordionFunctions({
-    currentNetwork,
-    group,
-    doShowGroup: showing.group,
-  })
+  const { handleTogglePersonInGroup, toggleGroupVisibility } =
+    useGroupAccordionFunctions({
+      currentNetwork,
+      group,
+      doShowGroup: showing.group,
+    })
 
   const { toggleAllGroupVisibility, isShowingAllGroups } = useToggleAllGroups({
     groups: group === "all" ? people.filter((p) => p.isGroup) : [],
@@ -245,15 +243,15 @@ const GroupAccordion: React.FC<IProps> = ({
     <Box gap="xsmall">
       {/* Buttons */}
       <Box direction="row" justify="end">
-        <ToolTipButton
-          tooltip="Change group background color"
-          onClick={changeGroupColorByField!("backgroundColor")}
-          icon={<Icons.Paint color={group.backgroundColor} />}
+        <SetNodeColorButton
+          field="backgroundColor"
+          networkId={currentNetwork.id}
+          nodeId={group.id}
         />
-        <ToolTipButton
-          tooltip="Change group text color"
-          onClick={changeGroupColorByField!("textColor")}
-          icon={<Icons.TextAlignFull color={group.textColor} />}
+        <SetNodeColorButton
+          field="textColor"
+          networkId={currentNetwork.id}
+          nodeId={group.id}
         />
       </Box>
       <Box background="light-1" height="medium">

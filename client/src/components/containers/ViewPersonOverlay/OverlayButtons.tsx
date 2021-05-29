@@ -78,8 +78,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }, 10)
   }
 
-  // REDUX SELECTOR | Viewing a shared network?
-  const isViewingShared = useSelector(getIsViewingShared) // Used to hide the edit mode buttin if true
+  const isViewingShared = useSelector(getIsViewingShared) // Used to hide the edit mode button if true
 
   /* Do not render if no network or person is selected, or if in sharing mode */
   if (!currentNetworkId || !currentPersonId || isViewingShared) return null
@@ -107,7 +106,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   }
 
   // Button for entering view mode
-  const viewModeButton: React.ReactNode = (
+  const viewModeButton = (
     <ToolTipButton
       tooltip="View mode"
       icon={<Icons.View color="status-ok" />}
@@ -124,7 +123,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   )
 
   // Button for entering edit mode
-  const editModeButton: React.ReactNode = (
+  const editModeButton = (
     <ToolTipButton
       tooltip="Edit mode"
       id="edit-button"
@@ -135,7 +134,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   )
 
   // Button for deleting the current person
-  const deleteCurrentPersonButton: React.ReactNode = (
+  const deleteCurrentPersonButton = (
     <ToolTipButton
       tooltip="Delete"
       id="delete-person-button"
@@ -202,7 +201,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   }
 
   // Button that opens a menu for connecting to/disconnecting from other people
-  const ConnectPeopleDropButton: React.ReactNode = (
+  const ConnectPeopleDropButton = (
     <Tip content="Manage connections">
       <DropButton
         id="manage-relationships-drop-button"
@@ -269,7 +268,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   }
 
   // Button that opens a menu for managing the current person's groups
-  const ManageGroupsDropButton: React.ReactNode = (
+  const ManageGroupsDropButton = (
     <Tip content="Manage groups">
       <DropButton
         id="manage-groups-drop-button"
@@ -324,7 +323,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }
   }
 
-  const scalePersonButton: React.ReactNode = (
+  const scalePersonButton = (
     <ToolTipButton
       tooltip="Resize in graph"
       id="scale-person-button"
@@ -347,7 +346,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }
   }
 
-  const toggleBackgroundNodeButton: React.ReactNode = (
+  const toggleBackgroundNodeButton = (
     <ToolTipButton
       tooltip={
         isPersonABackgroundNode
@@ -375,7 +374,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       console.error(error)
     }
   }
-  const toggleGroupNodeButton: React.ReactNode = (
+  const toggleGroupNodeButton = (
     <ToolTipButton
       tooltip={
         isPersonAGroupNode ? "Turn into non-group node" : "Turn into group node"
