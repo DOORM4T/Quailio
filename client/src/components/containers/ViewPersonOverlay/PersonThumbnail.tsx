@@ -19,6 +19,7 @@ import {
   getPersonInFocusThumbnailURL,
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import ToolTipButton from "../../ToolTipButton"
+import SetNodeColorButton from "../SetNodeColorButton"
 
 /* Limit for data urls as image links
     This value is equivalent to the max size for a field value -- 1MiB - 89 bytes
@@ -209,6 +210,16 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
           dropProps={{ align: isSmall ? { top: "bottom" } : { bottom: "top" } }}
         />
       )}
+      <SetNodeColorButton
+        field="backgroundColor"
+        networkId={currentNetworkId}
+        nodeId={currentPerson.id}
+      />
+      <SetNodeColorButton
+        field="textColor"
+        networkId={currentNetworkId}
+        nodeId={currentPerson.id}
+      />
     </Box>
   )
 

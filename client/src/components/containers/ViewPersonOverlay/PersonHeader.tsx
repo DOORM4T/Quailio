@@ -131,6 +131,12 @@ const PersonHeader: React.FC<IProps> = (props) => {
               (e.target as HTMLInputElement).blur()
           }}
           onBlur={handleUpdateName}
+          style={{
+            backgroundColor: person.backgroundColor
+              ? person.backgroundColor
+              : "white",
+            color: person.textColor ? person.textColor : "black",
+          }}
         />
       ) : (
         <h1 aria-label="Name" style={headerStyles}>
