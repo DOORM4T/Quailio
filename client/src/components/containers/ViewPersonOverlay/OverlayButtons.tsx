@@ -1,7 +1,8 @@
-import { Box, Button, DropButton, Heading, Tip } from "grommet"
+import { Box, Button, DropButton, Heading, List, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { BFS } from "../../../helpers/bfs"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import {
   connectPeople,
@@ -81,7 +82,12 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const isViewingShared = useSelector(getIsViewingShared) // Used to hide the edit mode button if true
 
   /* Do not render if no network or person is selected, or if in sharing mode */
-  if (!currentNetworkId || !currentPersonId || isViewingShared) return null
+  if (
+    !currentNetworkId ||
+    !currentPersonId ||
+    (isViewingShared && props.isEditing)
+  )
+    return null
 
   /**
    * Delete a person by their ID
@@ -391,22 +397,116 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
+  const RelativeToButton = (
+    <Tip content="Relative to...">
+      <DropButton
+        id="relative-to-drop-button"
+        icon={<Icons.LinkNext color="neutral-3" />}
+        hoverIndicator
+        dropAlign={{ left: "right" }}
+        dropContent={
+          <List
+            data={currentNetworkPeople.sort((a, b) =>
+              a.name
+                .toLocaleLowerCase()
+                .localeCompare(b.name.toLocaleLowerCase()),
+            )}
+            primaryKey="name"
+            action={(person: IPerson) => {
+              return (
+                <Button
+                  icon={<Icons.CircleQuestion color="status-ok" />}
+                  onClick={() => {
+                    // TODO: Cache graph
+                    const graph = new Map<string, string[]>()
+                    currentNetworkPeople.forEach((p) => {
+                      const neighbors = Object.keys(p.relationships)
+                      graph.set(p.id, neighbors)
+                    })
+
+                    const paths = BFS.findAllPaths(
+                      graph,
+                      currentPersonId,
+                      (nodeId) => nodeId === person.id,
+                    )
+                    if (paths.length === 0) {
+                      window.alert(
+                        `No (in)direct relationship between ${currentPersonName} and ${person.name}`,
+                      )
+                      return
+                    }
+
+                    const pathsMsg = paths
+                      .map(
+                        (path) =>
+                          "=============\n" +
+                          mapIdPathToRealPath(path)
+                            .map(
+                              (p, num) =>
+                                `${num + 1}.  ${p.name}${
+                                  p.reason ? `  |  ${p.reason}` : ""
+                                }`,
+                            )
+                            .join("\n"),
+                      )
+                      .join("\n\n")
+                    console.log(pathsMsg)
+                    window.alert(pathsMsg)
+                    return
+
+                    //
+                    function mapIdPathToRealPath(idPath: string[]) {
+                      const realPath = idPath.map((id, index) => {
+                        const node = currentNetworkPeople.find(
+                          (p) => p.id === id,
+                        )
+                        const prevIndex = index - 1
+                        let prevNodeId = null
+                        if (prevIndex >= 0 && prevIndex < idPath.length)
+                          prevNodeId = idPath[prevIndex]
+
+                        return {
+                          name: node?.name,
+                          reason: prevNodeId
+                            ? node?.relationships[prevNodeId]?.reason || null
+                            : null,
+                        }
+                      })
+
+                      return realPath
+                    }
+                  }}
+                />
+              )
+            }}
+            style={{ height: "400px" }}
+          />
+        }
+      />
+    </Tip>
+  )
+
   return (
     <Box direction="row">
       {props.isEditing ? (
         // Edit Mode
-        <React.Fragment>
-          {viewModeButton}
-          {ConnectPeopleDropButton}
-          {ManageGroupsDropButton}
-          {scalePersonButton}
-          {toggleGroupNodeButton}
-          {toggleBackgroundNodeButton}
-          {deleteCurrentPersonButton}
-        </React.Fragment>
+        !isViewingShared && (
+          <React.Fragment>
+            {viewModeButton}
+            {ConnectPeopleDropButton}
+            {ManageGroupsDropButton}
+            {scalePersonButton}
+            {toggleGroupNodeButton}
+            {toggleBackgroundNodeButton}
+            {deleteCurrentPersonButton}
+          </React.Fragment>
+        )
       ) : (
         // View Mode
-        <React.Fragment>{editModeButton}</React.Fragment>
+        <React.Fragment>
+          {!isViewingShared && editModeButton}
+          {RelativeToButton}
+        </React.Fragment>
       )}
     </Box>
   )

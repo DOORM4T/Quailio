@@ -143,10 +143,8 @@ const PersonHeader: React.FC<IProps> = (props) => {
           {personName}
         </h1>
       )}
-
       <Text>&nbsp;{person.isGroup ? "(group)" : ""}&nbsp;</Text>
       {GroupBadges}
-
       <OverlayButtons
         isEditing={props.isEditing}
         setIsEditing={props.setIsEditing}
