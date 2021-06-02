@@ -1073,6 +1073,7 @@ function handleSelectBoxDrag(Graph: ForceGraphInstance) {
     const endBounds = Graph.screen2GraphCoords(right, bottom)
     const toSelect = Graph.graphData()
       .nodes.filter((node) => {
+        if ((node as IPersonNode).isBackground) return false // Exclude background nodes from drag selection
         if (!node.x || !node.y) return false
         const isInXBounds = node.x > startBounds.x && node.x < endBounds.x
         const isInYBounds = node.y > startBounds.y && node.y < endBounds.y
