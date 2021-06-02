@@ -45,7 +45,6 @@ let hoverNodeId: string | null = null
 const nodeToConnect: NodeToConnect = { node: null }
 let isPanningOrZooming = false
 let isMouseOver = false
-let isShiftDown = false
 const mouseCoords: XYVals = { x: 0, y: 0 }
 
 // Default color if a node/its links aren't part of a group
@@ -59,6 +58,7 @@ const MAX_FONT_SIZE = BASE_FONT_SIZE * 10
 const BADGE_FONT_SIZE = BASE_FONT_SIZE / 1.5
 
 let currentZoom = 1 // Use current zoom to scale visuals such as name tags
+let isBoxSelecting = false // Tracks whether the user is box selecting nodes or not
 
 /**
  * Instantiates a network graph
@@ -76,9 +76,6 @@ export function createNetworkGraph(
 
   currentNetwork.people.forEach(createLinksByRelationships(gData))
   gData.links.forEach(setNodeNeighborsAndLinks(gData))
-
-  clearCustomListeners(container)
-  setCustomListeners(container)
 
   // Create the Force Graph
   const Graph = ForceGraph()(container)
@@ -135,6 +132,10 @@ export function createNetworkGraph(
   setTimeout(() => {
     sortNodesBySize(Graph.graphData() as IForceGraphData)
   }, 1000)
+
+  const forceGraphCanvas = container.querySelector("canvas")!
+  clearCustomListeners(forceGraphCanvas, Graph)
+  setCustomListeners(forceGraphCanvas, Graph)
 
   return Graph
 }
@@ -1012,6 +1013,9 @@ function setMouseOver(e: MouseEvent) {
 function setMouseOut(e: MouseEvent) {
   if (!isMouseOver) return
   isMouseOver = false
+
+  // Clear selection boxes if the mouse leaves the force graph canvas
+  clearSelectionBoxes()
 }
 
 function setMouseCoords(e: MouseEvent) {
@@ -1019,32 +1023,98 @@ function setMouseCoords(e: MouseEvent) {
   mouseCoords.y = e.offsetY
 }
 
-function setShiftDown(e: KeyboardEvent) {
-  if (isShiftDown === e.shiftKey) return
+function setBoxSelecting(isDown: boolean, container: HTMLElement) {
+  return (e: MouseEvent) => {
+    const isRightMouseDown = e.button === 2
+    if (!isRightMouseDown) return
+    isBoxSelecting = isDown
 
-  isShiftDown = e.shiftKey
+    if (isDown) {
+      const selectionBox = document.createElement("div")
+      selectionBox.id = "nodeSelectBox"
+      selectionBox.style.left = `${e.offsetX}px`
+      selectionBox.style.top = `${e.offsetY}px`
+      selectionBox.style.width = "0px"
+      selectionBox.style.height = "0px"
+
+      container.insertAdjacentElement("afterend", selectionBox)
+    } else {
+      clearSelectionBoxes()
+    }
+  }
 }
 
-export function clearCustomListeners(container: HTMLElement) {
+function clearSelectionBoxes() {
+  const selectionBoxes = document.querySelectorAll("#nodeSelectBox")
+  selectionBoxes.forEach((box) => box?.remove())
+}
+
+function handleSelectBoxDrag(Graph: ForceGraphInstance) {
+  return (e: MouseEvent) => {
+    if (!isBoxSelecting) return
+    const selectionBox = document.querySelector(
+      "#nodeSelectBox",
+    ) as HTMLDivElement
+    if (!selectionBox) return
+
+    const left = Number(selectionBox.style.left.replace("px", ""))
+    const top = Number(selectionBox.style.top.replace("px", ""))
+    const right = e.offsetX
+    const bottom = e.offsetY
+
+    const width = right - left
+    const height = bottom - top
+    selectionBox.style.width = `${width}px`
+    selectionBox.style.height = `${height}px`
+
+    // TODO: Allow selection from bottom-right to top-left
+
+    const startBounds = Graph.screen2GraphCoords(left, top)
+    const endBounds = Graph.screen2GraphCoords(right, bottom)
+    const toSelect = Graph.graphData()
+      .nodes.filter((node) => {
+        if (!node.x || !node.y) return false
+        const isInXBounds = node.x > startBounds.x && node.x < endBounds.x
+        const isInYBounds = node.y > startBounds.y && node.y < endBounds.y
+        return isInXBounds && isInYBounds
+      })
+      .map((n) => n.id as string)
+    store.dispatch(selectNodes(toSelect))
+  }
+}
+
+function hideContextMenu(e: Event) {
+  e.preventDefault()
+  return false
+}
+
+export function clearCustomListeners(
+  container: HTMLElement,
+  Graph: ForceGraphInstance,
+) {
   container.removeEventListener("mousemove", updateMouseCoords)
   container.removeEventListener("mouseup", setMouseCoords)
 
   container.removeEventListener("mouseenter", setMouseOver)
   container.removeEventListener("mouseleave", setMouseOut)
 
-  window.removeEventListener("keydown", setShiftDown)
-  window.removeEventListener("keyup", setShiftDown)
+  container.removeEventListener("pointerdown", setBoxSelecting(true, container))
+  container.removeEventListener("pointerup", setBoxSelecting(false, container))
+  container.removeEventListener("pointermove", handleSelectBoxDrag(Graph))
+  container.removeEventListener("contextmenu", hideContextMenu)
 }
 
-function setCustomListeners(container: HTMLElement) {
+function setCustomListeners(container: HTMLElement, Graph: ForceGraphInstance) {
   container.addEventListener("mousemove", updateMouseCoords)
   container.addEventListener("mouseup", setMouseCoords)
 
   container.addEventListener("mouseenter", setMouseOver)
   container.addEventListener("mouseleave", setMouseOut)
 
-  window.addEventListener("keydown", setShiftDown)
-  window.addEventListener("keyup", setShiftDown)
+  container.addEventListener("pointerdown", setBoxSelecting(true, container))
+  container.addEventListener("pointerup", setBoxSelecting(false, container))
+  container.addEventListener("pointermove", handleSelectBoxDrag(Graph))
+  container.addEventListener("contextmenu", hideContextMenu)
 }
 
 function handleZoomPan(transform: { k: number; x: number; y: number }) {

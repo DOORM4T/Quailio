@@ -108,14 +108,15 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   // Destroy the graph and related listeners to prevent memory leaks
   function destroyForceGraph() {
     if (!forceGraphRef.current) return
-    forceGraphRef.current._destructor()
-    forceGraphRef.current = undefined
-    window.removeEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
 
     // This does not work upon component unmount because canvasRef becomes undefined
     // BUT this works as intended when the user opens an new network, removing any previous listeners
     if (!canvasRef.current) return
-    clearCustomListeners(canvasRef.current)
+    clearCustomListeners(canvasRef.current, forceGraphRef.current)
+
+    forceGraphRef.current._destructor()
+    forceGraphRef.current = undefined
+    window.removeEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
   }
 
   // Render force graph on container mount or when we switch to a different network

@@ -35,3 +35,11 @@ body {
 img {
   object-fit: contain;
 }
+
+#nodeSelectBox {
+  background-color: #8fb9fc46;
+  border-color: #3770cc46;
+  position: absolute;
+  pointer-events: none;
+  z-index: 9999;
+}
