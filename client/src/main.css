@@ -36,10 +36,12 @@ img {
   object-fit: contain;
 }
 
+/* Drag-selection box */
 #nodeSelectBox {
-  background-color: #8fb9fc46;
-  border-color: #3770cc46;
   position: absolute;
-  pointer-events: none;
   z-index: 9999;
+  background-color: #8fb9fc46;
+
+  /* Need this to disable right click events that might interrupt right-click drag selecting*/
+  pointer-events: none;
 }

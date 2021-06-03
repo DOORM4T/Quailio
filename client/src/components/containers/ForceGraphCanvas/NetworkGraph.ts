@@ -1023,6 +1023,7 @@ function setMouseCoords(e: MouseEvent) {
   mouseCoords.y = e.offsetY
 }
 
+const selBoxAnchor: XYVals = { x: 0, y: 0 }
 function setBoxSelecting(isDown: boolean, container: HTMLElement) {
   return (e: MouseEvent) => {
     const isRightMouseDown = e.button === 2
@@ -1032,11 +1033,8 @@ function setBoxSelecting(isDown: boolean, container: HTMLElement) {
     if (isDown) {
       const selectionBox = document.createElement("div")
       selectionBox.id = "nodeSelectBox"
-      selectionBox.style.left = `${e.offsetX}px`
-      selectionBox.style.top = `${e.offsetY}px`
-      selectionBox.style.width = "0px"
-      selectionBox.style.height = "0px"
-
+      selBoxAnchor.x = e.offsetX
+      selBoxAnchor.y = e.offsetY
       container.insertAdjacentElement("afterend", selectionBox)
     } else {
       clearSelectionBoxes()
@@ -1049,7 +1047,10 @@ function clearSelectionBoxes() {
   selectionBoxes.forEach((box) => box?.remove())
 }
 
-function handleSelectBoxDrag(Graph: ForceGraphInstance) {
+function handleSelectBoxDrag(
+  Graph: ForceGraphInstance,
+  container: HTMLElement,
+) {
   return (e: MouseEvent) => {
     if (!isBoxSelecting) return
     const selectionBox = document.querySelector(
@@ -1057,20 +1058,33 @@ function handleSelectBoxDrag(Graph: ForceGraphInstance) {
     ) as HTMLDivElement
     if (!selectionBox) return
 
-    const left = Number(selectionBox.style.left.replace("px", ""))
-    const top = Number(selectionBox.style.top.replace("px", ""))
-    const right = e.offsetX
-    const bottom = e.offsetY
+    const width = container.offsetWidth
+    const height = container.offsetHeight
 
-    const width = right - left
-    const height = bottom - top
-    selectionBox.style.width = `${width}px`
-    selectionBox.style.height = `${height}px`
+    if (e.offsetX < selBoxAnchor.x) {
+      selectionBox.style.right = `${width - selBoxAnchor.x}px`
+      selectionBox.style.left = `${e.offsetX}px`
+    } else {
+      selectionBox.style.left = `${selBoxAnchor.x}px`
+      selectionBox.style.right = `${width - e.offsetX}px`
+    }
 
-    // TODO: Allow selection from bottom-right to top-left
+    if (e.offsetY < selBoxAnchor.y) {
+      selectionBox.style.bottom = `${height - selBoxAnchor.y}px`
+      selectionBox.style.top = `${e.offsetY}px`
+    } else {
+      selectionBox.style.top = `${selBoxAnchor.y}px`
+      selectionBox.style.bottom = `${height - e.offsetY}px`
+    }
 
-    const startBounds = Graph.screen2GraphCoords(left, top)
-    const endBounds = Graph.screen2GraphCoords(right, bottom)
+    const startX = Number(selectionBox.style.left.replace("px", ""))
+    const startY = Number(selectionBox.style.top.replace("px", ""))
+    const endX = width - Number(selectionBox.style.right.replace("px", ""))
+    const endY = height - Number(selectionBox.style.bottom.replace("px", ""))
+
+    const startBounds = Graph.screen2GraphCoords(startX, startY)
+    const endBounds = Graph.screen2GraphCoords(endX, endY)
+
     const toSelect = Graph.graphData()
       .nodes.filter((node) => {
         if ((node as IPersonNode).isBackground) return false // Exclude background nodes from drag selection
@@ -1080,6 +1094,17 @@ function handleSelectBoxDrag(Graph: ForceGraphInstance) {
         return isInXBounds && isInYBounds
       })
       .map((n) => n.id as string)
+
+    const isMultiselecting = e.shiftKey || e.altKey || e.ctrlKey
+    if (isMultiselecting) {
+      const currentSelectedNodes = new Set(store.getState().ui.selectedNodeIds)
+      for (const sel of toSelect) {
+        currentSelectedNodes.add(sel)
+      }
+      store.dispatch(selectNodes(Array.from(currentSelectedNodes)))
+      return
+    }
+
     store.dispatch(selectNodes(toSelect))
   }
 }
@@ -1101,7 +1126,10 @@ export function clearCustomListeners(
 
   container.removeEventListener("pointerdown", setBoxSelecting(true, container))
   container.removeEventListener("pointerup", setBoxSelecting(false, container))
-  container.removeEventListener("pointermove", handleSelectBoxDrag(Graph))
+  container.removeEventListener(
+    "pointermove",
+    handleSelectBoxDrag(Graph, container),
+  )
   container.removeEventListener("contextmenu", hideContextMenu)
 }
 
@@ -1114,7 +1142,10 @@ function setCustomListeners(container: HTMLElement, Graph: ForceGraphInstance) {
 
   container.addEventListener("pointerdown", setBoxSelecting(true, container))
   container.addEventListener("pointerup", setBoxSelecting(false, container))
-  container.addEventListener("pointermove", handleSelectBoxDrag(Graph))
+  container.addEventListener(
+    "pointermove",
+    handleSelectBoxDrag(Graph, container),
+  )
   container.addEventListener("contextmenu", hideContextMenu)
 }
 
