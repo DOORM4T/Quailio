@@ -7,6 +7,7 @@ import ForceGraph, {
 import {
   addPerson,
   connectPeople,
+  deletePerson,
   disconnectPeople,
   pinMultipleNodes,
   updateRelationshipReason,
@@ -819,6 +820,21 @@ function handleNodeClick(Graph: ForceGraphInstance) {
       case "LINK": {
         setMouseCoords(event) // This keeps the mouse position variables updated, since they otherwise update on mouse move
         await handleNodeLinking(Graph, node, doMultiselect)
+        return
+      }
+
+      case "DELETE": {
+        const doContinue = window.confirm(`Delete ${node.name}?`)
+        if (!doContinue) return
+
+        const networkId = store.getState().networks.currentNetwork?.id
+        if (!networkId) return
+
+        try {
+          await store.dispatch<any>(deletePerson(networkId, node.id))
+        } catch (error) {
+          console.error(error)
+        }
         return
       }
     }

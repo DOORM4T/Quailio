@@ -4,8 +4,9 @@ import React, { FC, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
-import { scalePerson } from "../../store/networks/actions"
+import { deletePerson, scalePerson } from "../../store/networks/actions"
 import { IPerson } from "../../store/networks/networkTypes"
+import { getCurrentNetworkId } from "../../store/selectors/networks/getCurrentNetwork"
 import { IApplicationState } from "../../store/store"
 import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
 import { ToolbarAction } from "../../store/ui/uiTypes"
@@ -19,6 +20,11 @@ interface IProps {
 const dropProps: DropProps = { align: { right: "left" } }
 const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
   const dispatch = useDispatch()
+  const currentNetworkId = useSelector(getCurrentNetworkId)
+  const selectedNodeIds = useSelector(
+    (state: IApplicationState) => state.ui.selectedNodeIds,
+  )
+
   const isSmall = useSmallBreakpoint()
 
   const currentAction = useSelector(
@@ -29,8 +35,10 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
     dispatch(setToolbarAction(toolbarAction))
   }
 
-  const accentIfSelected = (action: ToolbarAction) =>
-    currentAction === action ? "accent-1" : "light-1"
+  const accentIfSelected = (
+    action: ToolbarAction,
+    color: string = "accent-1",
+  ) => (currentAction === action ? color : "light-1")
 
   const isSmallMode = useSelector(
     (state: IApplicationState) => state.ui.isSmallMode,
@@ -53,6 +61,24 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
       onClick={toggleSmallMode}
     />
   )
+
+  const handleDeleteAction = async () => {
+    setAction("DELETE")()
+    if (!currentNetworkId) return
+
+    if (selectedNodeIds.length > 0) {
+      const doContinue = window.confirm(
+        `Delete ${selectedNodeIds.length} selected nodes?`,
+      )
+      if (!doContinue) return
+
+      for await (const nodeId of selectedNodeIds) {
+        dispatch(deletePerson(currentNetworkId, nodeId))
+      }
+
+      return
+    }
+  }
 
   return (
     <Box
@@ -110,14 +136,15 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
           onBlur={(e) => e.preventDefault()}
         />
       </Tip>
-      {/*
 
       <ToolTipButton
-        tooltip="Pin/Unpin"
-        icon={<Icons.Pin color={accentIfSelected("PIN")} />}
+        tooltip="Delete"
+        icon={
+          <Icons.Trash color={accentIfSelected("DELETE", "status-critical")} />
+        }
         dropProps={dropProps}
-        onClick={setAction("PIN")}
-      /> */}
+        onClick={handleDeleteAction}
+      />
       <Divider isVertical={isSmall} />
       {toggleSmallModeButton}
       <ToolTipButton
@@ -126,6 +153,13 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
         dropProps={dropProps}
         onClick={() => fireFitCanvasEvent()}
       />
+
+      {/*<ToolTipButton
+        tooltip="Pin/Unpin"
+        icon={<Icons.Pin color={accentIfSelected("PIN")} />}
+        dropProps={dropProps}
+        onClick={setAction("PIN")}
+      /> */}
     </Box>
   )
 }

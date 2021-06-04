@@ -15,13 +15,14 @@ export interface IUserInterfaceState {
 
 export type IVisibilityMap = { [nodeId: string]: boolean } // Visible if true or undefined
 export type ToolbarAction =
-  | "VIEW"
-  | "SELECT"
   | "CREATE"
-  | "MOVE"
+  | "DELETE"
   | "LINK"
-  | "RESIZE"
+  | "MOVE"
   | "PIN"
+  | "RESIZE"
+  | "SELECT"
+  | "VIEW"
 
 export interface IActiveGroupsByPersonId {
   [personId: string]: string[]
