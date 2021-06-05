@@ -9,7 +9,7 @@ import { IApplicationState } from "../../../store/store"
 import { setToolbarAction, zoomToPerson } from "../../../store/ui/uiActions"
 import Canvas from "../../Canvas"
 import {
-  clearCustomListeners,
+  addCustomListeners,
   clearHighlights,
   clearNodeToConnect,
   clearSelected,
@@ -31,6 +31,8 @@ const ForceGraphCanvas: React.FC<IProps> = ({
   const forceGraphRef = useRef<ForceGraphInstance | undefined>()
   const existingPeopleIdsRef = useRef<Set<string>>(new Set<string>())
   const existingPeopleIds = existingPeopleIdsRef.current
+
+  const clearListenersRef = useRef<(() => void) | null>(null)
 
   // Global state tracking a person to zoom-in on
   const dispatch: Dispatch<any> = useDispatch()
@@ -76,16 +78,23 @@ const ForceGraphCanvas: React.FC<IProps> = ({
       currentNetwork,
     ) as ForceGraphInstance
 
+    // Add listeners
+    // Store the cleanup function in a ref for use in destroyForceGraph()
+    // the nested canvas is created by the force graph; not the same as the container
+    const forceGraphNestedCanvas = canvasRef.current.querySelector("canvas")
+    if (forceGraphNestedCanvas) {
+      clearListenersRef.current = addCustomListeners(
+        forceGraphNestedCanvas,
+        forceGraphRef.current,
+      )
+    }
+
     handleResize()
     window.removeEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
     window.addEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
 
     window.removeEventListener(CUSTOM_EVENT_NAMES.fit, handleFitForceGraph)
     window.addEventListener(CUSTOM_EVENT_NAMES.fit, handleFitForceGraph)
-
-    return () => {
-      destroyForceGraph()
-    }
   }
 
   function handleResize() {
@@ -107,16 +116,14 @@ const ForceGraphCanvas: React.FC<IProps> = ({
 
   // Destroy the graph and related listeners to prevent memory leaks
   function destroyForceGraph() {
-    if (!forceGraphRef.current) return
-
-    // This does not work upon component unmount because canvasRef becomes undefined
-    // BUT this works as intended when the user opens an new network, removing any previous listeners
-    if (!canvasRef.current) return
-    clearCustomListeners(canvasRef.current, forceGraphRef.current)
-
-    forceGraphRef.current._destructor()
-    forceGraphRef.current = undefined
     window.removeEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
+    if (clearListenersRef.current !== null) clearListenersRef.current()
+    forceGraphRef.current?._destructor()
+
+    canvasRef.current = undefined
+    forceGraphRef.current = undefined
+
+    console.log("boom")
   }
 
   // Render force graph on container mount or when we switch to a different network
@@ -125,6 +132,12 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     clearHighlights()
     renderForceGraph()
     dispatch(setToolbarAction("VIEW"))
+
+    return () => {
+      console.log("leave")
+
+      destroyForceGraph()
+    }
   }, [canvasRef, currentNetwork?.id])
 
   // Update the existing force graph when people or groups change

@@ -134,10 +134,6 @@ export function createNetworkGraph(
     sortNodesBySize(Graph.graphData() as IForceGraphData)
   }, 1000)
 
-  const forceGraphCanvas = container.querySelector("canvas")!
-  clearCustomListeners(forceGraphCanvas, Graph)
-  setCustomListeners(forceGraphCanvas, Graph)
-
   return Graph
 }
 
@@ -1130,26 +1126,20 @@ function hideContextMenu(e: Event) {
   return false
 }
 
-export function clearCustomListeners(
-  container: HTMLElement,
-  Graph: ForceGraphInstance,
-) {
-  container.removeEventListener("mousemove", updateMouseCoords)
-  container.removeEventListener("mouseup", setMouseCoords)
-
-  container.removeEventListener("mouseenter", setMouseOver)
-  container.removeEventListener("mouseleave", setMouseOut)
-
-  container.removeEventListener("pointerdown", setBoxSelecting(true, container))
-  container.removeEventListener("pointerup", setBoxSelecting(false, container))
-  container.removeEventListener(
-    "pointermove",
-    handleSelectBoxDrag(Graph, container),
-  )
-  container.removeEventListener("contextmenu", hideContextMenu)
+function handleSearch(e: KeyboardEvent) {
+  if (e.ctrlKey) {
+    console.log(e.key)
+    if (e.key === "f") {
+      e.preventDefault()
+      console.log("SEARCHING")
+    }
+  }
 }
 
-function setCustomListeners(container: HTMLElement, Graph: ForceGraphInstance) {
+/**
+ * @returns function to clean up listeners
+ */
+export function addCustomListeners(container: HTMLElement, Graph: ForceGraphInstance) {
   container.addEventListener("mousemove", updateMouseCoords)
   container.addEventListener("mouseup", setMouseCoords)
 
@@ -1163,6 +1153,30 @@ function setCustomListeners(container: HTMLElement, Graph: ForceGraphInstance) {
     handleSelectBoxDrag(Graph, container),
   )
   container.addEventListener("contextmenu", hideContextMenu)
+  window.addEventListener("keydown", handleSearch)
+
+  return () => {
+    container.removeEventListener("mousemove", updateMouseCoords)
+    container.removeEventListener("mouseup", setMouseCoords)
+
+    container.removeEventListener("mouseenter", setMouseOver)
+    container.removeEventListener("mouseleave", setMouseOut)
+
+    container.removeEventListener(
+      "pointerdown",
+      setBoxSelecting(true, container),
+    )
+    container.removeEventListener(
+      "pointerup",
+      setBoxSelecting(false, container),
+    )
+    container.removeEventListener(
+      "pointermove",
+      handleSelectBoxDrag(Graph, container),
+    )
+    container.removeEventListener("contextmenu", hideContextMenu)
+    window.removeEventListener("keydown", handleSearch)
+  }
 }
 
 function handleZoomPan(transform: { k: number; x: number; y: number }) {
