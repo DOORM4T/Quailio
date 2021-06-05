@@ -22,6 +22,7 @@ import { store } from "../../../store/store"
 import {
   selectNodes,
   setPersonInFocus,
+  setToolbarAction,
   togglePersonOverlay,
 } from "../../../store/ui/uiActions"
 import {
@@ -1126,20 +1127,66 @@ function hideContextMenu(e: Event) {
   return false
 }
 
-function handleSearch(e: KeyboardEvent) {
-  if (e.ctrlKey) {
-    console.log(e.key)
-    if (e.key === "f") {
-      e.preventDefault()
-      console.log("SEARCHING")
+function handleShortkeys(Graph: ForceGraphInstance) {
+  return (e: KeyboardEvent) => {
+    switch (e.key) {
+      case "a": {
+        if (!e.ctrlKey) return
+        e.preventDefault()
+        selectAllNodes()
+        return
+      }
+
+      case "v": {
+        store.dispatch(setToolbarAction("VIEW"))
+        return
+      }
+
+      case "s": {
+        store.dispatch(setToolbarAction("SELECT"))
+        return
+      }
+
+      case "m": {
+        store.dispatch(setToolbarAction("MOVE"))
+        return
+      }
+
+      case "c": {
+        store.dispatch(setToolbarAction("CREATE"))
+        return
+      }
+      case "l": {
+        store.dispatch(setToolbarAction("LINK"))
+        return
+      }
+      case "r": {
+        store.dispatch(setToolbarAction("RESIZE"))
+        return
+      }
+      case "d": {
+        store.dispatch(setToolbarAction("DELETE"))
+        return
+      }
     }
   }
+
+  // #region Shortkey functions
+  function selectAllNodes() {
+    const allNodeIds = Graph.graphData().nodes.map((n) => n.id as string)
+    store.dispatch(selectNodes(allNodeIds))
+  }
+  // #endregion Shortkey functions
 }
 
 /**
  * @returns function to clean up listeners
  */
-export function addCustomListeners(container: HTMLElement, Graph: ForceGraphInstance) {
+export function addCustomListeners(
+  container: HTMLElement,
+  Graph: ForceGraphInstance,
+) {
+  container.tabIndex = 0 // This makes the container focusable, enabling keydown events
   container.addEventListener("mousemove", updateMouseCoords)
   container.addEventListener("mouseup", setMouseCoords)
 
@@ -1153,7 +1200,7 @@ export function addCustomListeners(container: HTMLElement, Graph: ForceGraphInst
     handleSelectBoxDrag(Graph, container),
   )
   container.addEventListener("contextmenu", hideContextMenu)
-  window.addEventListener("keydown", handleSearch)
+  container.addEventListener("keydown", handleShortkeys(Graph))
 
   return () => {
     container.removeEventListener("mousemove", updateMouseCoords)
@@ -1175,7 +1222,7 @@ export function addCustomListeners(container: HTMLElement, Graph: ForceGraphInst
       handleSelectBoxDrag(Graph, container),
     )
     container.removeEventListener("contextmenu", hideContextMenu)
-    window.removeEventListener("keydown", handleSearch)
+    container.removeEventListener("keydown", handleShortkeys(Graph))
   }
 }
 
