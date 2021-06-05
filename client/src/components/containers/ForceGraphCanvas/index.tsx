@@ -122,8 +122,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
 
     canvasRef.current = undefined
     forceGraphRef.current = undefined
-
-    console.log("boom")
   }
 
   // Render force graph on container mount or when we switch to a different network
@@ -134,8 +132,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     dispatch(setToolbarAction("VIEW"))
 
     return () => {
-      console.log("leave")
-
       destroyForceGraph()
     }
   }, [canvasRef, currentNetwork?.id])
