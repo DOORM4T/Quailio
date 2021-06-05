@@ -45,17 +45,22 @@ export const deletePerson = (networkId: string, personId: string): AppThunk => {
         const personData = (await (await personDoc.get()).data()) as IPerson
 
         /* Remove all relationships including the deleted Person */
-        const relationshipUpdates: Promise<void>[] = Object.keys(
-          personData.relationships,
-        ).map(async (relationshipId) => {
-          const otherPersonDoc = peopleCollection.doc(relationshipId)
-          const otherPersonData = (await otherPersonDoc.get()).data() as IPerson
-          const updatedRelationship: IRelationships = {
-            ...otherPersonData.relationships,
-          }
-          delete updatedRelationship[personId]
-          return otherPersonDoc.update({ relationships: updatedRelationship })
-        })
+        const relationshipUpdates = Object.keys(personData.relationships)
+          .map(async (relationshipId) => {
+            const otherPersonDoc = await peopleCollection
+              .doc(relationshipId)
+              .get()
+            if (!otherPersonDoc.exists) return null
+            const otherPersonData = otherPersonDoc.data() as IPerson
+            const updatedRelationship: IRelationships = {
+              ...otherPersonData.relationships,
+            }
+            delete updatedRelationship[personId]
+            return otherPersonDoc.ref.update({
+              relationships: updatedRelationship,
+            })
+          })
+          .filter((update) => update !== null) as Promise<void>[]
 
         await Promise.all(relationshipUpdates)
 

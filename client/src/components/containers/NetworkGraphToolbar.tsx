@@ -1,7 +1,7 @@
 import { Box, Button, DropButton, DropProps, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { FC, useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
+import { batch, useDispatch, useSelector } from "react-redux"
 import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { deletePerson, scalePerson } from "../../store/networks/actions"
@@ -72,7 +72,7 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
       )
       if (!doContinue) return
 
-      for await (const nodeId of selectedNodeIds) {
+      for (const nodeId of selectedNodeIds) {
         dispatch(deletePerson(currentNetworkId, nodeId))
       }
 
