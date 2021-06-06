@@ -1140,33 +1140,43 @@ function handleShortkeys(Graph: ForceGraphInstance) {
         return
       }
 
+      case "1":
       case "v": {
         store.dispatch(setToolbarAction("VIEW"))
         return
       }
 
+      case "2":
       case "s": {
         store.dispatch(setToolbarAction("SELECT"))
         return
       }
 
+      case "3":
       case "m": {
         store.dispatch(setToolbarAction("MOVE"))
         return
       }
 
+      case "4":
       case "c": {
         store.dispatch(setToolbarAction("CREATE"))
         return
       }
+
+      case "5":
       case "l": {
         store.dispatch(setToolbarAction("LINK"))
         return
       }
+
+      case "6":
       case "r": {
         store.dispatch(setToolbarAction("RESIZE"))
         return
       }
+
+      case "7":
       case "d": {
         store.dispatch(setToolbarAction("DELETE"))
         return
