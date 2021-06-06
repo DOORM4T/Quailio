@@ -1127,13 +1127,16 @@ function hideContextMenu(e: Event) {
   return false
 }
 
+const PAN_SPEED = 25
+let keysDown: { [keyName: string]: boolean } = {}
 function handleShortkeys(Graph: ForceGraphInstance) {
   return (e: KeyboardEvent) => {
+    keysDown[e.key] = true
     switch (e.key) {
       case "a": {
         if (!e.ctrlKey) return
         e.preventDefault()
-        selectAllNodes()
+        selectAllNodes(Graph)
         return
       }
 
@@ -1169,14 +1172,42 @@ function handleShortkeys(Graph: ForceGraphInstance) {
         return
       }
     }
-  }
 
-  // #region Shortkey functions
-  function selectAllNodes() {
-    const allNodeIds = Graph.graphData().nodes.map((n) => n.id as string)
-    store.dispatch(selectNodes(allNodeIds))
+    // Arrow Key Panning
+    let deltaX = 0
+    let deltaY = 0
+
+    if (keysDown["ArrowUp"]) {
+      deltaY = -PAN_SPEED
+    } else if (keysDown["ArrowDown"]) {
+      deltaY = PAN_SPEED
+    }
+
+    if (keysDown["ArrowLeft"]) {
+      deltaX = -PAN_SPEED
+    } else if (keysDown["ArrowRight"]) {
+      deltaX = PAN_SPEED
+    }
+
+    panBy(Graph, { deltaX, deltaY })
   }
-  // #endregion Shortkey functions
+}
+
+function clearKeysDown() {
+  keysDown = {}
+}
+
+function panBy(
+  Graph: ForceGraphInstance,
+  { deltaX = 0, deltaY = 0 }: { deltaX?: number; deltaY?: number },
+) {
+  const pan = Graph.centerAt()
+  Graph.centerAt(pan.x + deltaX, pan.y + deltaY)
+}
+
+function selectAllNodes(Graph: ForceGraphInstance) {
+  const allNodeIds = Graph.graphData().nodes.map((n) => n.id as string)
+  store.dispatch(selectNodes(allNodeIds))
 }
 
 /**
@@ -1201,6 +1232,7 @@ export function addCustomListeners(
   )
   container.addEventListener("contextmenu", hideContextMenu)
   container.addEventListener("keydown", handleShortkeys(Graph))
+  container.addEventListener("keyup", clearKeysDown)
 
   return () => {
     container.removeEventListener("mousemove", updateMouseCoords)
@@ -1223,6 +1255,7 @@ export function addCustomListeners(
     )
     container.removeEventListener("contextmenu", hideContextMenu)
     container.removeEventListener("keydown", handleShortkeys(Graph))
+    container.removeEventListener("keyup", clearKeysDown)
   }
 }
 
