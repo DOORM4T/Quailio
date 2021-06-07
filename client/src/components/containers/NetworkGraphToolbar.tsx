@@ -1,12 +1,13 @@
 import { Box, Button, DropButton, DropProps, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { FC, useEffect, useState } from "react"
-import { batch, useDispatch, useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { deletePerson, scalePerson } from "../../store/networks/actions"
 import { IPerson } from "../../store/networks/networkTypes"
 import { getCurrentNetworkId } from "../../store/selectors/networks/getCurrentNetwork"
+import { getSelectedNodeIds } from "../../store/selectors/ui/getSelectedNodeIds"
 import { IApplicationState } from "../../store/store"
 import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
 import { ToolbarAction } from "../../store/ui/uiTypes"
@@ -16,51 +17,117 @@ import { XYVals } from "./ForceGraphCanvas/networkGraphTypes"
 interface IProps {
   isViewingShared: boolean
 }
-
 const dropProps: DropProps = { align: { right: "left" } }
-const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
+function NetworkGraphToolbar({ isViewingShared }: IProps) {
   const dispatch = useDispatch()
-  const currentNetworkId = useSelector(getCurrentNetworkId)
-  const selectedNodeIds = useSelector(
-    (state: IApplicationState) => state.ui.selectedNodeIds,
-  )
-
   const isSmall = useSmallBreakpoint()
-
   const currentAction = useSelector(
     (state: IApplicationState) => state.ui.toolbarAction,
   )
-
   const setAction = (toolbarAction: ToolbarAction) => () => {
     dispatch(setToolbarAction(toolbarAction))
   }
-
-  const accentIfSelected = (
+  const selectionAccent: SelectionAccentFunc = (
     action: ToolbarAction,
     color: string = "accent-1",
   ) => (currentAction === action ? color : "light-1")
 
-  const isSmallMode = useSelector(
-    (state: IApplicationState) => state.ui.isSmallMode,
-  )
+  return (
+    <Box
+      direction={isSmall ? "row" : "column"}
+      width={isSmall ? "100%" : "48px"}
+      height={isSmall ? "48px" : "100%"}
+      pad="2rem"
+      align="center"
+      justify={isSmall ? "center" : "start"}
+    >
+      <ToolTipButton
+        tooltip="View"
+        icon={<Icons.View color={selectionAccent("VIEW")} />}
+        dropProps={dropProps}
+        onClick={setAction("VIEW")}
+      />
+      <Divider isVertical={isSmall} />
+      <ToolTipButton
+        tooltip="Select"
+        icon={<Icons.Select color={selectionAccent("SELECT")} />}
+        dropProps={dropProps}
+        onClick={setAction("SELECT")}
+      />
+      <ToolTipButton
+        tooltip="Move"
+        icon={<Icons.Pan color={selectionAccent("MOVE")} />}
+        dropProps={dropProps}
+        onClick={setAction("MOVE")}
+      />
+      {!isViewingShared && (
+        <ToolTipButton
+          tooltip="Create"
+          icon={<Icons.AddCircle color={selectionAccent("CREATE")} />}
+          dropProps={dropProps}
+          onClick={setAction("CREATE")}
+          isDisabled={isViewingShared}
+        />
+      )}
 
-  const toggleSmallMode = () => {
-    dispatch(setSmallMode(!isSmallMode))
-  }
-  const toggleSmallModeButton = (
-    <ToolTipButton
-      tooltip={`${isSmallMode ? "Exit simple view" : "Enter simple view"}`}
-      icon={
-        isSmallMode ? (
-          <Icons.EmptyCircle color="accent-2" />
-        ) : (
-          <Icons.Image color="accent-2" />
-        )
-      }
-      dropProps={dropProps}
-      onClick={toggleSmallMode}
-    />
+      {!isViewingShared && (
+        <ToolTipButton
+          tooltip="Link"
+          icon={<Icons.Connect color={selectionAccent("LINK")} />}
+          dropProps={dropProps}
+          onClick={setAction("LINK")}
+          isDisabled={isViewingShared}
+        />
+      )}
+      <Tip content="Resize" dropProps={dropProps}>
+        <DropButton
+          icon={<Icons.Expand color={selectionAccent("RESIZE")} />}
+          onClick={setAction("RESIZE")}
+          dropContent={<ResizeToolbar isHorizontal={isSmall} />}
+          dropAlign={{ right: "left" }}
+          onBlur={(e) => e.preventDefault()}
+        />
+      </Tip>
+
+      <DeleteActionButton
+        setAction={setAction}
+        selectionAccent={selectionAccent}
+      />
+      <Divider isVertical={isSmall} />
+      <SmallModeButton />
+      <ToolTipButton
+        tooltip="Zoom to fit"
+        icon={<Icons.Cluster color="accent-2" />}
+        dropProps={dropProps}
+        onClick={() => fireFitCanvasEvent()}
+      />
+
+      {/*<ToolTipButton
+        tooltip="Pin/Unpin"
+        icon={<Icons.Pin color={accentIfSelected("PIN")} />}
+        dropProps={dropProps}
+        onClick={setAction("PIN")}
+      /> */}
+    </Box>
   )
+}
+
+export default NetworkGraphToolbar
+
+type SelectionAccentFunc = (action: ToolbarAction, color?: string) => string
+type SetToolbarActionFunc = (toolbarAction: ToolbarAction) => () => void
+
+interface IDeleteActionProps {
+  setAction: SetToolbarActionFunc
+  selectionAccent: SelectionAccentFunc
+}
+function DeleteActionButton({
+  setAction,
+  selectionAccent,
+}: IDeleteActionProps) {
+  const dispatch = useDispatch()
+  const currentNetworkId = useSelector(getCurrentNetworkId)
+  const selectedNodeIds = useSelector(getSelectedNodeIds)
 
   const handleDeleteAction = async () => {
     setAction("DELETE")()
@@ -81,90 +148,41 @@ const NetworkGraphToolbar: React.FC<IProps> = ({ isViewingShared }) => {
   }
 
   return (
-    <Box
-      direction={isSmall ? "row" : "column"}
-      width={isSmall ? "100%" : "48px"}
-      height={isSmall ? "48px" : "100%"}
-      pad="2rem"
-      align="center"
-      justify={isSmall ? "center" : "start"}
-    >
-      <ToolTipButton
-        tooltip="View"
-        icon={<Icons.View color={accentIfSelected("VIEW")} />}
-        dropProps={dropProps}
-        onClick={setAction("VIEW")}
-      />
-      <Divider isVertical={isSmall} />
-      <ToolTipButton
-        tooltip="Select"
-        icon={<Icons.Select color={accentIfSelected("SELECT")} />}
-        dropProps={dropProps}
-        onClick={setAction("SELECT")}
-      />
-      <ToolTipButton
-        tooltip="Move"
-        icon={<Icons.Pan color={accentIfSelected("MOVE")} />}
-        dropProps={dropProps}
-        onClick={setAction("MOVE")}
-      />
-      {!isViewingShared && (
-        <ToolTipButton
-          tooltip="Create"
-          icon={<Icons.AddCircle color={accentIfSelected("CREATE")} />}
-          dropProps={dropProps}
-          onClick={setAction("CREATE")}
-          isDisabled={isViewingShared}
-        />
-      )}
-
-      {!isViewingShared && (
-        <ToolTipButton
-          tooltip="Link"
-          icon={<Icons.Connect color={accentIfSelected("LINK")} />}
-          dropProps={dropProps}
-          onClick={setAction("LINK")}
-          isDisabled={isViewingShared}
-        />
-      )}
-      <Tip content="Resize" dropProps={dropProps}>
-        <DropButton
-          icon={<Icons.Expand color={accentIfSelected("RESIZE")} />}
-          onClick={setAction("RESIZE")}
-          dropContent={<ResizeToolbar isHorizontal={isSmall} />}
-          dropAlign={{ right: "left" }}
-          onBlur={(e) => e.preventDefault()}
-        />
-      </Tip>
-
-      <ToolTipButton
-        tooltip="Delete"
-        icon={
-          <Icons.Trash color={accentIfSelected("DELETE", "status-critical")} />
-        }
-        dropProps={dropProps}
-        onClick={handleDeleteAction}
-      />
-      <Divider isVertical={isSmall} />
-      {toggleSmallModeButton}
-      <ToolTipButton
-        tooltip="Zoom to fit"
-        icon={<Icons.Cluster color="accent-2" />}
-        dropProps={dropProps}
-        onClick={() => fireFitCanvasEvent()}
-      />
-
-      {/*<ToolTipButton
-        tooltip="Pin/Unpin"
-        icon={<Icons.Pin color={accentIfSelected("PIN")} />}
-        dropProps={dropProps}
-        onClick={setAction("PIN")}
-      /> */}
-    </Box>
+    <ToolTipButton
+      tooltip="Delete"
+      icon={
+        <Icons.Trash color={selectionAccent("DELETE", "status-critical")} />
+      }
+      dropProps={dropProps}
+      onClick={handleDeleteAction}
+    />
   )
 }
 
-export default NetworkGraphToolbar
+function SmallModeButton() {
+  const dispatch = useDispatch()
+  const isSmallMode = useSelector(
+    (state: IApplicationState) => state.ui.isSmallMode,
+  )
+  const toggleSmallMode = () => {
+    dispatch(setSmallMode(!isSmallMode))
+  }
+
+  return (
+    <ToolTipButton
+      tooltip={`${isSmallMode ? "Exit simple view" : "Enter simple view"}`}
+      icon={
+        isSmallMode ? (
+          <Icons.EmptyCircle color="accent-2" />
+        ) : (
+          <Icons.Image color="accent-2" />
+        )
+      }
+      dropProps={dropProps}
+      onClick={toggleSmallMode}
+    />
+  )
+}
 
 const Divider: FC<{ isVertical: boolean }> = ({ isVertical }) => {
   return (
