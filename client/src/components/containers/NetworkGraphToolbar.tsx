@@ -3,10 +3,14 @@ import * as Icons from "grommet-icons"
 import React, { FC, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fireFitCanvasEvent } from "../../helpers/customEvents"
+import useGetPaths from "../../hooks/useGetPaths"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { deletePerson, scalePerson } from "../../store/networks/actions"
 import { IPerson } from "../../store/networks/networkTypes"
-import { getCurrentNetworkId } from "../../store/selectors/networks/getCurrentNetwork"
+import {
+  getCurrentNetworkId,
+  getCurrentNetworkPeople,
+} from "../../store/selectors/networks/getCurrentNetwork"
 import { getSelectedNodeIds } from "../../store/selectors/ui/getSelectedNodeIds"
 import { IApplicationState } from "../../store/store"
 import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
@@ -110,6 +114,12 @@ function NetworkGraphToolbar({ isViewingShared }: IProps) {
         onClick={() => fireFitCanvasEvent()}
       />
 
+      <ViewPathsActionButton
+        dropProps={dropProps}
+        setAction={setAction}
+        selectionAccent={selectionAccent}
+      />
+
       {/*<ToolTipButton
         tooltip="Pin/Unpin"
         icon={<Icons.Pin color={accentIfSelected("PIN")} />}
@@ -193,6 +203,43 @@ function SmallModeButton({ dropProps }: ISmallModeButtonProps) {
       }
       dropProps={dropProps}
       onClick={toggleSmallMode}
+    />
+  )
+}
+
+interface ISeeRelationshipsActionProps {
+  dropProps: DropProps
+  setAction: SetToolbarActionFunc
+  selectionAccent: SelectionAccentFunc
+}
+function ViewPathsActionButton({ dropProps }: ISeeRelationshipsActionProps) {
+  const selectedNodeIds = useSelector(getSelectedNodeIds)
+  const people = useSelector(getCurrentNetworkPeople)
+  const didSelect2 = selectedNodeIds.length === 2
+
+  const { getPaths } = useGetPaths()
+
+  const listRelationships = async () => {
+    // TODO: bfs between 2 selected nodes
+    if (!didSelect2) {
+      window.alert(
+        "Please select exactly 2 nodes to perform a relationship path search.",
+      )
+      return
+    }
+
+    const [p1, p2] = people.filter((p) => selectedNodeIds.includes(p.id))
+    getPaths(p1, p2)
+  }
+
+  return (
+    <ToolTipButton
+      tooltip="View relationship paths"
+      icon={
+        <Icons.Network color={didSelect2 ? "accent-2" : "status-disabled"} />
+      }
+      dropProps={dropProps}
+      onClick={listRelationships}
     />
   )
 }
