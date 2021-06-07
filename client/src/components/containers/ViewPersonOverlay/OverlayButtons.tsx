@@ -2,8 +2,8 @@ import { Box, Button, DropButton, Heading, List, Tip } from "grommet"
 import * as Icons from "grommet-icons"
 import React, { Dispatch } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { BFS } from "../../../helpers/bfs"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
+import useGetPaths from "../../../hooks/useGetPaths"
 import {
   connectPeople,
   deletePerson as deletePersonById,
@@ -49,6 +49,8 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const currentPersonName = useSelector(getPersonInFocusName)
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
   const groups = currentNetworkPeople.filter((p) => p.isGroup)
+
+  const { getPaths } = useGetPaths()
 
   const currentPerson = currentNetworkPeople.find(
     (p) => p.id === currentPersonId,
@@ -417,64 +419,8 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
                 <Button
                   icon={<Icons.CircleQuestion color="status-ok" />}
                   onClick={() => {
-                    // TODO: Cache graph
-                    const graph = new Map<string, string[]>()
-                    currentNetworkPeople.forEach((p) => {
-                      const neighbors = Object.keys(p.relationships)
-                      graph.set(p.id, neighbors)
-                    })
-
-                    const paths = BFS.findAllPaths(
-                      graph,
-                      currentPersonId,
-                      (nodeId) => nodeId === person.id,
-                    )
-                    if (paths.length === 0) {
-                      window.alert(
-                        `No (in)direct relationship between ${currentPersonName} and ${person.name}`,
-                      )
-                      return
-                    }
-
-                    const pathsMsg = paths
-                      .map(
-                        (path) =>
-                          "=============\n" +
-                          mapIdPathToRealPath(path)
-                            .map(
-                              (p, num) =>
-                                `${num + 1}.  ${p.name}${
-                                  p.reason ? `  |  ${p.reason}` : ""
-                                }`,
-                            )
-                            .join("\n"),
-                      )
-                      .join("\n\n")
-                    console.log(pathsMsg)
-                    window.alert(pathsMsg)
-                    return
-
-                    //
-                    function mapIdPathToRealPath(idPath: string[]) {
-                      const realPath = idPath.map((id, index) => {
-                        const node = currentNetworkPeople.find(
-                          (p) => p.id === id,
-                        )
-                        const prevIndex = index - 1
-                        let prevNodeId = null
-                        if (prevIndex >= 0 && prevIndex < idPath.length)
-                          prevNodeId = idPath[prevIndex]
-
-                        return {
-                          name: node?.name,
-                          reason: prevNodeId
-                            ? node?.relationships[prevNodeId]?.reason || null
-                            : null,
-                        }
-                      })
-
-                      return realPath
-                    }
+                    if (!currentPerson) return
+                    getPaths(currentPerson, person)
                   }}
                 />
               )
