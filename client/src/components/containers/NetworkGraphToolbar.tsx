@@ -17,10 +17,17 @@ import { XYVals } from "./ForceGraphCanvas/networkGraphTypes"
 interface IProps {
   isViewingShared: boolean
 }
-const dropProps: DropProps = { align: { right: "left" } }
 function NetworkGraphToolbar({ isViewingShared }: IProps) {
   const dispatch = useDispatch()
+
   const isSmall = useSmallBreakpoint()
+  const dropProps: DropProps = {
+    align: {
+      right: isSmall ? undefined : "left",
+      bottom: isSmall ? "top" : undefined,
+    },
+  }
+
   const currentAction = useSelector(
     (state: IApplicationState) => state.ui.toolbarAction,
   )
@@ -90,11 +97,12 @@ function NetworkGraphToolbar({ isViewingShared }: IProps) {
       </Tip>
 
       <DeleteActionButton
+        dropProps={dropProps}
         setAction={setAction}
         selectionAccent={selectionAccent}
       />
       <Divider isVertical={isSmall} />
-      <SmallModeButton />
+      <SmallModeButton dropProps={dropProps} />
       <ToolTipButton
         tooltip="Zoom to fit"
         icon={<Icons.Cluster color="accent-2" />}
@@ -118,10 +126,12 @@ type SelectionAccentFunc = (action: ToolbarAction, color?: string) => string
 type SetToolbarActionFunc = (toolbarAction: ToolbarAction) => () => void
 
 interface IDeleteActionProps {
+  dropProps: DropProps
   setAction: SetToolbarActionFunc
   selectionAccent: SelectionAccentFunc
 }
 function DeleteActionButton({
+  dropProps,
   setAction,
   selectionAccent,
 }: IDeleteActionProps) {
@@ -159,7 +169,10 @@ function DeleteActionButton({
   )
 }
 
-function SmallModeButton() {
+interface ISmallModeButtonProps {
+  dropProps: DropProps
+}
+function SmallModeButton({ dropProps }: ISmallModeButtonProps) {
   const dispatch = useDispatch()
   const isSmallMode = useSelector(
     (state: IApplicationState) => state.ui.isSmallMode,
