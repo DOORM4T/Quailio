@@ -119,8 +119,6 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     window.removeEventListener(CUSTOM_EVENT_NAMES.resize, handleResize)
     if (clearListenersRef.current !== null) clearListenersRef.current()
     forceGraphRef.current?._destructor()
-
-    canvasRef.current = undefined
     forceGraphRef.current = undefined
   }
 
@@ -129,6 +127,7 @@ const ForceGraphCanvas: React.FC<IProps> = ({
     clearSelected()
     clearHighlights()
     renderForceGraph()
+
     dispatch(setToolbarAction("VIEW"))
 
     return () => {
