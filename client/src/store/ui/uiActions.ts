@@ -1,11 +1,13 @@
 import { ActionCreator } from "redux"
 import { AppThunk } from "../store"
 import {
+  IBFSDetails,
   IFocusOnPersonAction,
   IInitializePersonGroupList,
   IPersonIDWithActiveGroups,
   IResetUIAction,
   ISelectNodesAction,
+  ISetBFSPathAction,
   ISetNodeVisibilityAction,
   ISetSmallModeAction,
   ISetToolbarAction,
@@ -124,4 +126,9 @@ export const setSmallMode = (isSmall: boolean): ISetSmallModeAction => ({
 export const selectNodes = (selectedNodeIds: string[]): ISelectNodesAction => ({
   type: UserInterfaceActionTypes.SELECT_NODES,
   selectedNodeIds,
+})
+
+export const setBFSPath = (paths: IBFSDetails | null): ISetBFSPathAction => ({
+  type: UserInterfaceActionTypes.SET_BFS_PATH,
+  paths,
 })

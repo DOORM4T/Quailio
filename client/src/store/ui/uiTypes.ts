@@ -1,3 +1,5 @@
+import { IPerson } from "../networks/networkTypes"
+
 // -== STATE TYPES ==- //
 export interface IUserInterfaceState {
   readonly isLoading: boolean
@@ -11,6 +13,7 @@ export interface IUserInterfaceState {
   readonly toolbarAction: ToolbarAction
   readonly isSmallMode: boolean
   readonly selectedNodeIds: string[]
+  readonly bfsPath: IBFSDetails | null
 }
 
 export type IVisibilityMap = { [nodeId: string]: boolean } // Visible if true or undefined
@@ -28,6 +31,17 @@ export interface IActiveGroupsByPersonId {
   [personId: string]: string[]
 }
 
+export interface IBFSDetails {
+  person1: IPerson
+  person2: IPerson
+  paths: IBFSPathItem[][]
+}
+export interface IBFSPathItem {
+  id: string
+  name: string
+  description: string
+}
+
 // -== ACTION TYPES ==- //
 export enum UserInterfaceActionTypes {
   LOADING = "UI/LOADING",
@@ -42,6 +56,7 @@ export enum UserInterfaceActionTypes {
   SET_TOOLBAR_ACTION = "UI/SET_TOOLBAR_ACTION",
   SET_SMALL_MODE = "UI/SET_SMALL_MODE",
   SELECT_NODES = "UI/SELECT_NODES",
+  SET_BFS_PATH = "UI/SET_BFS_PATH",
 }
 
 export interface ISetUILoadingAction {
@@ -108,6 +123,10 @@ export interface ISelectNodesAction {
   type: UserInterfaceActionTypes.SELECT_NODES
   selectedNodeIds: string[]
 }
+export interface ISetBFSPathAction {
+  type: UserInterfaceActionTypes.SET_BFS_PATH
+  paths: IBFSDetails | null
+}
 
 // action types used by the networks reducer
 export type UserInterfaceActions =
@@ -123,3 +142,4 @@ export type UserInterfaceActions =
   | ISetToolbarAction
   | ISetSmallModeAction
   | ISelectNodesAction
+  | ISetBFSPathAction

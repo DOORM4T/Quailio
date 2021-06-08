@@ -50,7 +50,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
   const groups = currentNetworkPeople.filter((p) => p.isGroup)
 
-  const { getPaths } = useGetPaths()
+  const { getPaths, showPaths } = useGetPaths()
 
   const currentPerson = currentNetworkPeople.find(
     (p) => p.id === currentPersonId,
@@ -420,7 +420,9 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
                   icon={<Icons.CircleQuestion color="status-ok" />}
                   onClick={() => {
                     if (!currentPerson) return
-                    getPaths(currentPerson, person)
+                    const pathDetails = getPaths(currentPerson, person)
+                    if (!pathDetails) return
+                    showPaths(pathDetails)
                   }}
                 />
               )

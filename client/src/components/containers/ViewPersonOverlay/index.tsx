@@ -98,7 +98,14 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
         { name: "contentEditor", start: [1, 0], end: [1, 1] },
       ]}
     >
-      {PersonHeaderContainer}
+      <Box
+        gridArea="header"
+        overflow={{ vertical: "auto" }}
+        background="brand"
+        fill
+      >
+        {PersonHeaderContainer}
+      </Box>
       <Box
         gridArea="relationships"
         overflow={{ vertical: "auto" }}

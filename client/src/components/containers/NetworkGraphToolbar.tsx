@@ -217,7 +217,7 @@ function ViewPathsActionButton({ dropProps }: ISeeRelationshipsActionProps) {
   const people = useSelector(getCurrentNetworkPeople)
   const didSelect2 = selectedNodeIds.length === 2
 
-  const { getPaths } = useGetPaths()
+  const { getPaths, showPaths } = useGetPaths()
 
   const listRelationships = async () => {
     // TODO: bfs between 2 selected nodes
@@ -229,7 +229,9 @@ function ViewPathsActionButton({ dropProps }: ISeeRelationshipsActionProps) {
     }
 
     const [p1, p2] = people.filter((p) => selectedNodeIds.includes(p.id))
-    getPaths(p1, p2)
+    const paths = getPaths(p1, p2)
+    if (!paths) return
+    showPaths(paths)
   }
 
   return (

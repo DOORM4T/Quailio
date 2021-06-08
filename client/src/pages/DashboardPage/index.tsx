@@ -6,6 +6,7 @@ import { Dispatch } from "redux"
 import { HEADER_HEIGHT } from "../../components/containers/AppHeader"
 import ForceGraphCanvas from "../../components/containers/ForceGraphCanvas/index"
 import NetworkGraphToolbar from "../../components/containers/NetworkGraphToolbar"
+import PathsOverlay from "../../components/containers/PathsOverlay"
 import { importJSONAsNetwork } from "../../helpers/importJSONAsNetwork"
 import { ICurrentNetwork } from "../../store/networks/networkTypes"
 import { IApplicationState } from "../../store/store"
@@ -107,6 +108,7 @@ const DashboardPage: React.FC = () => {
           </Box>
         )}
       </Box>
+      <PathsOverlay />
     </React.Fragment>
   )
 }

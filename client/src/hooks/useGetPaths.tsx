@@ -1,10 +1,14 @@
 import { useEffect, useRef } from "react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { BFS } from "../helpers/bfs"
 import { IPerson } from "../store/networks/networkTypes"
 import { getCurrentNetworkPeople } from "../store/selectors/networks/getCurrentNetwork"
+import { setBFSPath } from "../store/ui/uiActions"
+import { IBFSDetails, IBFSPathItem } from "../store/ui/uiTypes"
 
+const DEFAULT_REASON = ""
 function useGetPaths() {
+  const dispatch = useDispatch()
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
   const graphRef = useRef<Map<string, string[]> | null>(null)
 
@@ -19,8 +23,8 @@ function useGetPaths() {
     }
   }, [currentNetworkPeople])
 
-  const getPaths = (person1: IPerson, person2: IPerson) => {
-    if (!graphRef.current) return
+  const getPaths = (person1: IPerson, person2: IPerson): IBFSDetails | null => {
+    if (!graphRef.current) return null
 
     const paths = BFS.findAllPaths(
       graphRef.current,
@@ -32,47 +36,39 @@ function useGetPaths() {
       window.alert(
         `No (in)direct relationship between ${person1.name} and ${person2.name}`,
       )
-      return
+      return null
     }
 
-    // TODO: Return raw path data
-    const pathsMsg = _prettyPath(paths)
-    console.log(pathsMsg)
-    window.alert(pathsMsg)
+    const pathDetails = paths.map(_mapIdPathToRealPath)
+    return { person1, person2, paths: pathDetails }
   }
-  return { getPaths }
+
+  const showPaths = ({ person1, person2, paths }: IBFSDetails) => {
+    dispatch(setBFSPath({ person1, person2, paths }))
+  }
+
+  return { getPaths, showPaths }
 
   // #region Helper Functions
-  function _prettyPath(paths: string[][]) {
-    return paths
-      .map(
-        (path) =>
-          "=============\n" +
-          _mapIdPathToRealPath(path)
-            .map(
-              (p, num) =>
-                `${num + 1}.  ${p.name}${p.reason ? `  |  ${p.reason}` : ""}`,
-            )
-            .join("\n"),
-      )
-      .join("\n\n")
-  }
+  function _mapIdPathToRealPath(idPath: string[]): IBFSPathItem[] {
+    const realPath = idPath
+      .map((id, index) => {
+        const node = currentNetworkPeople.find((p) => p.id === id)
+        if (!node) return null
+        const prevIndex = index - 1
+        let prevNodeId = null
+        if (prevIndex >= 0 && prevIndex < idPath.length)
+          prevNodeId = idPath[prevIndex]
 
-  function _mapIdPathToRealPath(idPath: string[]) {
-    const realPath = idPath.map((id, index) => {
-      const node = currentNetworkPeople.find((p) => p.id === id)
-      const prevIndex = index - 1
-      let prevNodeId = null
-      if (prevIndex >= 0 && prevIndex < idPath.length)
-        prevNodeId = idPath[prevIndex]
-
-      return {
-        name: node?.name,
-        reason: prevNodeId
-          ? node?.relationships[prevNodeId]?.reason || null
-          : null,
-      }
-    })
+        return {
+          id,
+          name: node.name,
+          description: prevNodeId
+            ? node.relationships[prevNodeId]?.reason || DEFAULT_REASON
+            : DEFAULT_REASON,
+        }
+      })
+      .filter((item) => item !== null) as IBFSPathItem[]
 
     return realPath
   }
