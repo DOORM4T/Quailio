@@ -6,7 +6,10 @@ import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../../hooks/useSmallBreakpoint"
 import { getIsPersonOverlayOpen } from "../../../store/selectors/ui/getIsPersonOverlayOpen"
 import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShared"
-import { togglePersonOverlay } from "../../../store/ui/uiActions"
+import {
+  setPersonInFocus,
+  togglePersonOverlay,
+} from "../../../store/ui/uiActions"
 import Overlay from "../../Overlay"
 import ContentPanel from "./ContentPanel"
 import PersonHeader from "./PersonHeader"
@@ -21,23 +24,16 @@ const ViewPersonOverlay: React.FC<IProps> = (props) => {
   const isOverlayOpen = useSelector(getIsPersonOverlayOpen)
   const isSmall = useSmallBreakpoint()
   const [isEditing, setIsEditing] = React.useState(false) // Whether the overlay is in edit mode or not
-
-  // REDUX SELECTOR | Viewing a shared network?
-  const isViewingShared = useSelector(getIsViewingShared) // True? Disabled editing.
-
-  // Do not render if the overlay shouldn't be open
+  const isViewingShared = useSelector(getIsViewingShared) // True? Should disable editing
   if (!isOverlayOpen) return null
 
-  // -== FUNCTIONS ==- //
-  /**
-   * Hide the person menu
-   */
   const handleClose = () => {
     /* If there are unsaved changes, ask the user to confirm  */
     const doContinue = fireUnsavedChangeEvent()
     if (!doContinue) return
 
-    /* Close overlay */
+    // Close overlay
+    dispatch(setPersonInFocus(null))
     dispatch(togglePersonOverlay(false))
   }
 

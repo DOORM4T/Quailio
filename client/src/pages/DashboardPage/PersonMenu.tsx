@@ -1,8 +1,9 @@
-import { Accordion, Box, Stack, TextInput } from "grommet"
-import * as Icons from "grommet-icons"
-import React from "react"
-import ToolTipButton from "../../components/ToolTipButton"
+import { Accordion, Box } from "grommet"
+import React, { useEffect, useRef } from "react"
+import { useSelector } from "react-redux"
+import SearchInput from "../../components/SearchInput"
 import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
+import { getPersonInFocusId } from "../../store/selectors/ui/getPersonInFocusData"
 import GroupAccordion from "./components/GroupAccordion"
 import usePersonMenu, { SEARCH_INPUT_HEIGHT } from "./logic/usePersonMenu"
 
@@ -17,7 +18,6 @@ const PersonMenu: React.FC<IPersonMenuProps> = ({
 }) => {
   const { filterablePeople, isViewingShared, renderItem, search } =
     usePersonMenu({ currentNetwork })
-
   const groupNodes = currentNetwork?.people.filter((p) => p.isGroup) || []
   const doShowGroups = groupNodes.length > 0
 
@@ -40,37 +40,6 @@ const PersonMenu: React.FC<IPersonMenuProps> = ({
       />
     )
   }
-
-  const SearchInput: React.ReactNode = (
-    <Box
-      direction="row"
-      align="center"
-      pad="small"
-      gap="none"
-      height={SEARCH_INPUT_HEIGHT}
-    >
-      <Stack anchor="right" style={{ width: "100%" }}>
-        <TextInput
-          value={search.searchInput}
-          placeholder="Search"
-          onChange={search.handleSearchChange}
-          onKeyUp={search.handleSearchInputShortkeys}
-          onClick={(e) => e.currentTarget.select()}
-          width={`${isViewingShared ? "100%" : "75%"}`}
-          style={{ fontSize: "12px" }}
-        />
-        {search.isSearching && (
-          <ToolTipButton
-            tooltip="Clear search"
-            icon={<Icons.Close color="status-critical" />}
-            aria-label="Clear search"
-            onClick={search.clearSearch}
-            buttonStyle={SearchInputStyles}
-          />
-        )}
-      </Stack>
-    </Box>
-  ) // SearchInput
 
   // UI | Person lists by group
   const PersonListsByGroup: React.ReactNode = currentNetwork && (
@@ -103,22 +72,25 @@ const PersonMenu: React.FC<IPersonMenuProps> = ({
       width="large"
       height={isSmall ? "50%" : "100%"}
     >
-      {SearchInput}
+      <Box
+        direction="row"
+        align="center"
+        pad="small"
+        gap="none"
+        height={SEARCH_INPUT_HEIGHT}
+      >
+        <SearchInput
+          value={search.searchInput}
+          isSearching={search.isSearching}
+          onClick={(e) => e.currentTarget.select()}
+          handleShortKeys={search.handleSearchInputShortkeys}
+          handleChange={search.handleSearchChange}
+          clearSearch={search.clearSearch}
+        />
+      </Box>
       {PersonListsByGroup}
     </Box>
   )
 }
 
 export default PersonMenu
-
-const SearchInputStyles = {
-  background: "transparent",
-  cursor: "pointer",
-  border: "none",
-  width: 32,
-  height: 32,
-  display: "grid",
-  placeItems: "center",
-  marginRight: "1rem",
-  padding: "1px 0 0 0",
-}
