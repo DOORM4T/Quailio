@@ -100,11 +100,13 @@ function NetworkGraphToolbar({ isViewingShared }: IProps) {
         />
       </Tip>
 
-      <DeleteActionButton
-        dropProps={dropProps}
-        setAction={setAction}
-        selectionAccent={selectionAccent}
-      />
+      {!isViewingShared && (
+        <DeleteActionButton
+          dropProps={dropProps}
+          setAction={setAction}
+          selectionAccent={selectionAccent}
+        />
+      )}
       <Divider isVertical={isSmall} />
       <SmallModeButton dropProps={dropProps} />
       <ToolTipButton
