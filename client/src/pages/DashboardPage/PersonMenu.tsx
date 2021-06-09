@@ -21,6 +21,24 @@ const PersonMenu: React.FC<IPersonMenuProps> = ({
   const groupNodes = currentNetwork?.people.filter((p) => p.isGroup) || []
   const doShowGroups = groupNodes.length > 0
 
+  const personInFocus = useSelector(getPersonInFocusId)
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  useEffect(() => {
+    function find(e: KeyboardEvent) {
+      if (!e.ctrlKey || e.key !== "f") return
+      if (personInFocus !== null) return
+      e.preventDefault()
+      searchRef.current?.focus()
+      searchRef.current?.select()
+    }
+    window.removeEventListener("keydown", find)
+    window.addEventListener("keydown", find)
+
+    return () => {
+      window.removeEventListener("keydown", find)
+    }
+  }, [personInFocus])
+
   const sortGroupsByName = (g1: IPerson, g2: IPerson) =>
     g1.name.toLowerCase().localeCompare(g2.name.toLowerCase())
 
@@ -86,6 +104,7 @@ const PersonMenu: React.FC<IPersonMenuProps> = ({
           handleShortKeys={search.handleSearchInputShortkeys}
           handleChange={search.handleSearchChange}
           clearSearch={search.clearSearch}
+          ref={searchRef}
         />
       </Box>
       {PersonListsByGroup}
