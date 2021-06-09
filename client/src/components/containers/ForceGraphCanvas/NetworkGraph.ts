@@ -794,10 +794,10 @@ function handleNodeClick(Graph: ForceGraphInstance) {
   return async (n: NodeObject | null, event: MouseEvent) => {
     if (!n) return
     const node = n as NodeObject & IPersonNode
-    const currentToolbarAction = store.getState().ui.toolbarAction
+    const { toolbarAction, isViewingShared } = store.getState().ui
     const doMultiselect = event.altKey || event.ctrlKey || event.shiftKey
 
-    switch (currentToolbarAction) {
+    switch (toolbarAction) {
       case "SELECT":
       case "RESIZE":
       case "MOVE": {
@@ -815,12 +815,14 @@ function handleNodeClick(Graph: ForceGraphInstance) {
       }
 
       case "LINK": {
+        if (isViewingShared) return
         setMouseCoords(event) // This keeps the mouse position variables updated, since they otherwise update on mouse move
         await handleNodeLinking(Graph, node, doMultiselect)
         return
       }
 
       case "DELETE": {
+        if (isViewingShared) return
         const doContinue = window.confirm(`Delete ${node.name}?`)
         if (!doContinue) return
 
@@ -1132,6 +1134,8 @@ let keysDown: { [keyName: string]: boolean } = {}
 function handleShortkeys(Graph: ForceGraphInstance) {
   return (e: KeyboardEvent) => {
     keysDown[e.key] = true
+    const { isViewingShared } = store.getState().ui
+
     switch (e.key) {
       case "a": {
         if (!e.ctrlKey) return
@@ -1140,44 +1144,40 @@ function handleShortkeys(Graph: ForceGraphInstance) {
         return
       }
 
-      case "1":
       case "v": {
         store.dispatch(setToolbarAction("VIEW"))
         return
       }
 
-      case "2":
       case "s": {
         store.dispatch(setToolbarAction("SELECT"))
         return
       }
 
-      case "3":
       case "m": {
         store.dispatch(setToolbarAction("MOVE"))
         return
       }
 
-      case "4":
       case "c": {
+        if (isViewingShared) return
         store.dispatch(setToolbarAction("CREATE"))
         return
       }
 
-      case "5":
       case "l": {
+        if (isViewingShared) return
         store.dispatch(setToolbarAction("LINK"))
         return
       }
 
-      case "6":
       case "r": {
         store.dispatch(setToolbarAction("RESIZE"))
         return
       }
 
-      case "7":
       case "d": {
+        if (isViewingShared) return
         store.dispatch(setToolbarAction("DELETE"))
         return
       }
