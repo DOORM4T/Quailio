@@ -1,5 +1,6 @@
-import { Box, CheckBox, List, Text, TextInput } from "grommet"
+import { Box, CheckBox, List, Text } from "grommet"
 import React from "react"
+import SearchInput from "./SearchInput"
 
 interface IProps {
   defaultOptions: any[]
@@ -32,12 +33,15 @@ function SearchAndCheckMenu({
     setSearch(e.currentTarget.value)
   }
 
+  const clearSearch = () => setSearch("")
+
   return (
     <React.Fragment>
-      <TextInput
-        placeholder="Search by name"
+      <SearchInput
         value={search}
-        onChange={handleSearchChange}
+        handleChange={handleSearchChange}
+        clearSearch={clearSearch}
+        isSearching={search !== ""}
       />
       <Box overflow="auto" height={{ max: "large" }}>
         <List
