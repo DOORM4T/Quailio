@@ -263,6 +263,7 @@ const GroupAccordion: React.FC<IProps> = ({
             group.relationships[arg.id] !== undefined
           }
           toggleOption={handleTogglePersonInGroup!}
+          boxStyles={{ width: "100%" }}
         />
       </Box>
     </Box>

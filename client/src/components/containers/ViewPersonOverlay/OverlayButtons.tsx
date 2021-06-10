@@ -238,7 +238,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
               nameField="name"
               isCheckedFunction={(arg: IRelationshipOption) => arg.isConnected}
               toggleOption={toggleConnection}
-              maxHeight="350px"
             />
           </React.Fragment>
         }
@@ -308,8 +307,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
               toggleOption={toggleGroup}
               itemBgColorField="backgroundColor"
               itemTextColorField="textColor"
-              pad="small"
-              maxHeight="350px"
             />
           </React.Fragment>
         }

@@ -1,4 +1,4 @@
-import { Box, CheckBox, List, Text } from "grommet"
+import { Box, BoxTypes, CheckBox, List, Text } from "grommet"
 import React from "react"
 import SearchInput from "./SearchInput"
 
@@ -8,11 +8,11 @@ interface IProps {
   nameField: string // Field name for the Name of the option type
   isCheckedFunction: (arg: any) => boolean // Function to check if an option should be checked or not
   toggleOption: (id: string, isChecked: boolean) => () => void // Function for creating a function to toggle the individual state of an option
-  maxHeight?: string
 
   itemBgColorField?: string // Optional background color field for an item
   itemTextColorField?: string // Optional text color field for an item
-  pad?: string // Optional item padding
+
+  boxStyles?: BoxTypes
 }
 
 function SearchAndCheckMenu({
@@ -21,10 +21,9 @@ function SearchAndCheckMenu({
   nameField,
   isCheckedFunction: checkedCondition,
   toggleOption,
-  maxHeight = "small",
   itemBgColorField,
   itemTextColorField,
-  pad,
+  boxStyles,
 }: IProps) {
   // Search state
   const [search, setSearch] = React.useState<string>("")
@@ -43,7 +42,7 @@ function SearchAndCheckMenu({
         clearSearch={clearSearch}
         isSearching={search !== ""}
       />
-      <Box overflow="auto" height={{ max: "large" }}>
+      <Box overflow="auto" height="medium" width="medium" {...boxStyles}>
         <List
           id="add-relationship-buttons"
           primaryKey={nameField}
@@ -52,7 +51,6 @@ function SearchAndCheckMenu({
               opt[nameField].toLowerCase().includes(search.toLowerCase()),
             )
             .sort((a, b) => a[nameField].localeCompare(b[nameField]))}
-          style={{ maxHeight, overflowY: "auto" }}
         >
           {/* Render the list items */}
           {(option: any) => {
@@ -64,7 +62,6 @@ function SearchAndCheckMenu({
                 direction="row"
                 onClick={toggleOption(option[idField], isChecked)}
                 gap="small"
-                pad={pad}
                 style={{
                   // Color (if the color field props are valid)
                   backgroundColor: itemBgColorField
