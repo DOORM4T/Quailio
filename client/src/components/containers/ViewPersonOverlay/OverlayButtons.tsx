@@ -1,6 +1,6 @@
 import { Box, Button, DropButton, Heading, List, Tip } from "grommet"
 import * as Icons from "grommet-icons"
-import React, { Dispatch } from "react"
+import React, { Dispatch, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fireUnsavedChangeEvent } from "../../../helpers/unsavedChangeEvent"
 import useGetPaths from "../../../hooks/useGetPaths"
@@ -25,6 +25,7 @@ import {
 } from "../../../store/selectors/ui/getPersonInFocusData"
 import { togglePersonOverlay } from "../../../store/ui/uiActions"
 import SearchAndCheckMenu from "../../SearchAndCheckMenu"
+import SearchInput from "../../SearchInput"
 import ToolTipButton from "../../ToolTipButton"
 
 //                 //
@@ -49,8 +50,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const currentPersonName = useSelector(getPersonInFocusName)
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
   const groups = currentNetworkPeople.filter((p) => p.isGroup)
-
-  const { getPaths, showPaths } = useGetPaths()
 
   const currentPerson = currentNetworkPeople.find(
     (p) => p.id === currentPersonId,
@@ -396,41 +395,6 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
-  const RelativeToButton = (
-    <Tip content="Relative to...">
-      <DropButton
-        id="relative-to-drop-button"
-        icon={<Icons.LinkNext color="neutral-3" />}
-        hoverIndicator
-        dropAlign={{ left: "right" }}
-        dropContent={
-          <List
-            data={currentNetworkPeople.sort((a, b) =>
-              a.name
-                .toLocaleLowerCase()
-                .localeCompare(b.name.toLocaleLowerCase()),
-            )}
-            primaryKey="name"
-            action={(person: IPerson) => {
-              return (
-                <Button
-                  icon={<Icons.CircleQuestion color="status-ok" />}
-                  onClick={() => {
-                    if (!currentPerson) return
-                    const pathDetails = getPaths(currentPerson, person)
-                    if (!pathDetails) return
-                    showPaths(pathDetails)
-                  }}
-                />
-              )
-            }}
-            style={{ height: "400px" }}
-          />
-        }
-      />
-    </Tip>
-  )
-
   return (
     <Box direction="row">
       {props.isEditing ? (
@@ -450,7 +414,12 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
         // View Mode
         <React.Fragment>
           {!isViewingShared && editModeButton}
-          {RelativeToButton}
+          {currentPerson && (
+            <RelativeToButton
+              currentPerson={currentPerson}
+              people={currentNetworkPeople}
+            />
+          )}
         </React.Fragment>
       )}
     </Box>
@@ -458,3 +427,84 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
 }
 
 export default OverlayButtons
+
+interface IProps {
+  currentPerson: IPerson
+  people: IPerson[]
+}
+function RelativeToButton({ currentPerson, people }: IProps) {
+  const { getPaths, showPaths } = useGetPaths()
+  const [search, setSearch] = useState("")
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.currentTarget.value)
+  }
+
+  const clearSearch = () => setSearch("")
+
+  const relativeToDropRef = useRef<HTMLButtonElement | null>(null)
+  const handleCloseMenu = () => {
+    relativeToDropRef.current?.click()
+  }
+
+  return (
+    <Tip content="Relative to...">
+      <DropButton
+        id="relative-to-drop-button"
+        icon={<Icons.LinkNext color="neutral-3" />}
+        hoverIndicator
+        dropAlign={{ left: "right" }}
+        ref={relativeToDropRef}
+        dropContent={
+          <React.Fragment>
+            <Box direction="row" justify="center">
+              <Heading level={4} margin={{ left: "auto" }} textAlign="center">
+                Relative to...
+              </Heading>
+              <Button
+                onClick={handleCloseMenu}
+                icon={<Icons.Close />}
+                aria-label="Close group management menu"
+                margin={{ left: "auto" }}
+                hoverIndicator
+              />
+            </Box>
+
+            <SearchInput
+              value={search}
+              isSearching={search !== ""}
+              handleChange={handleSearchChange}
+              clearSearch={clearSearch}
+            />
+            <List
+              data={people
+                .filter((p) =>
+                  p.name.toLowerCase().includes(search.toLowerCase()),
+                )
+                .sort((a, b) =>
+                  a.name
+                    .toLocaleLowerCase()
+                    .localeCompare(b.name.toLocaleLowerCase()),
+                )}
+              primaryKey="name"
+              action={(person: IPerson) => {
+                return (
+                  <Button
+                    icon={<Icons.CircleQuestion color="status-ok" />}
+                    onClick={() => {
+                      clearSearch()
+                      if (!currentPerson) return
+                      const pathDetails = getPaths(currentPerson, person)
+                      if (!pathDetails) return
+                      showPaths(pathDetails)
+                    }}
+                  />
+                )
+              }}
+              style={{ height: "400px" }}
+            />
+          </React.Fragment>
+        }
+      />
+    </Tip>
+  )
+}
