@@ -12,6 +12,7 @@ import {
   pinMultipleNodes,
   updateRelationshipReason,
 } from "../../../store/networks/actions"
+import { duplicateNodes } from "../../../store/networks/actions/duplicateNodes"
 import {
   ConnectionShape,
   ICurrentNetwork,
@@ -1016,7 +1017,6 @@ export function clearNodeToConnect() {
 }
 
 function updateMouseCoords(e: MouseEvent) {
-  if (!nodeToConnect.node) return
   setMouseCoords(e)
 }
 
@@ -1131,19 +1131,81 @@ function hideContextMenu(e: Event) {
 
 const PAN_SPEED = 25
 let keysDown: { [keyName: string]: boolean } = {}
-function handleShortkeys(Graph: ForceGraphInstance) {
+// Short keys that require multiple keys down
+// e.g. this allows diagonal arrow key panning
+function handleMultiShortkeys(Graph: ForceGraphInstance) {
   return (e: KeyboardEvent) => {
     keysDown[e.key] = true
-    const { isViewingShared } = store.getState().ui
+
+    // Arrow Key Panning
+    let deltaX = 0
+    let deltaY = 0
+
+    if (keysDown["ArrowUp"]) {
+      deltaY = -PAN_SPEED
+    } else if (keysDown["ArrowDown"]) {
+      deltaY = PAN_SPEED
+    }
+
+    if (keysDown["ArrowLeft"]) {
+      deltaX = -PAN_SPEED
+    } else if (keysDown["ArrowRight"]) {
+      deltaX = PAN_SPEED
+    }
+
+    if (deltaX === 0 && deltaY === 0) return
+    panBy(Graph, { deltaX, deltaY })
+  }
+}
+
+function clearKeysDown() {
+  keysDown = {}
+}
+
+let toCopy: string[] = []
+let copyAnchorXY = { x: 0, y: 0 }
+function handleShortkeys(Graph: ForceGraphInstance) {
+  return (e: KeyboardEvent) => {
+    const { isViewingShared, selectedNodeIds } = store.getState().ui
+
+    if (e.ctrlKey) {
+      switch (e.key) {
+        // Select All
+        case "a": {
+          e.preventDefault()
+          selectAllNodes(Graph)
+          return
+        }
+
+        // Copy-Paste
+        case "c": {
+          copyAnchorXY = Graph.screen2GraphCoords(mouseCoords.x, mouseCoords.y)
+          toCopy = [...selectedNodeIds]
+          return
+        }
+
+        case "v": {
+          if (toCopy.length === 0) return
+
+          const networkId = store.getState().networks.currentNetwork?.id
+          if (!networkId) return
+
+          const targetXY = Graph.screen2GraphCoords(
+            mouseCoords.x,
+            mouseCoords.y,
+          )
+          store.dispatch<any>(
+            duplicateNodes(networkId, toCopy, {
+              anchor: copyAnchorXY,
+              target: targetXY,
+            }),
+          )
+          return
+        }
+      }
+    }
 
     switch (e.key) {
-      case "a": {
-        if (!e.ctrlKey) return
-        e.preventDefault()
-        selectAllNodes(Graph)
-        return
-      }
-
       case "v": {
         store.dispatch(setToolbarAction("VIEW"))
         return
@@ -1182,29 +1244,7 @@ function handleShortkeys(Graph: ForceGraphInstance) {
         return
       }
     }
-
-    // Arrow Key Panning
-    let deltaX = 0
-    let deltaY = 0
-
-    if (keysDown["ArrowUp"]) {
-      deltaY = -PAN_SPEED
-    } else if (keysDown["ArrowDown"]) {
-      deltaY = PAN_SPEED
-    }
-
-    if (keysDown["ArrowLeft"]) {
-      deltaX = -PAN_SPEED
-    } else if (keysDown["ArrowRight"]) {
-      deltaX = PAN_SPEED
-    }
-
-    panBy(Graph, { deltaX, deltaY })
   }
-}
-
-function clearKeysDown() {
-  keysDown = {}
 }
 
 function panBy(
@@ -1241,8 +1281,9 @@ export function addCustomListeners(
     handleSelectBoxDrag(Graph, container),
   )
   container.addEventListener("contextmenu", hideContextMenu)
-  container.addEventListener("keydown", handleShortkeys(Graph))
+  container.addEventListener("keydown", handleMultiShortkeys(Graph))
   container.addEventListener("keyup", clearKeysDown)
+  container.addEventListener("keyup", handleShortkeys(Graph))
 
   return () => {
     container.removeEventListener("mousemove", updateMouseCoords)
@@ -1264,8 +1305,9 @@ export function addCustomListeners(
       handleSelectBoxDrag(Graph, container),
     )
     container.removeEventListener("contextmenu", hideContextMenu)
-    container.removeEventListener("keydown", handleShortkeys(Graph))
+    container.removeEventListener("keydown", handleMultiShortkeys(Graph))
     container.removeEventListener("keyup", clearKeysDown)
+    container.removeEventListener("keyup", handleShortkeys(Graph))
   }
 }
 

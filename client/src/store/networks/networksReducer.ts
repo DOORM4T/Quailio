@@ -7,6 +7,7 @@ import {
   IDeleteNetworkByIdAction,
   IDeletePersonByIdAction,
   IDisconnectPeopleAction,
+  IDuplicateNodesAction,
   IGetAllNetworksIdsAction,
   IImportNetworkAction,
   INetwork,
@@ -114,6 +115,9 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.SET_NODE_COLOR:
       return getSetNodeColorState(state, action)
 
+    case NetworkActionTypes.DUPLICATE_NODES:
+      return getDuplicateNodesState(state, action)
+
     // SHARING
     case NetworkActionTypes.SHARE_NETWORK:
       return getShareNetworkState(state, action)
@@ -130,6 +134,28 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
 
     default:
       return state
+  }
+}
+
+function getDuplicateNodesState(
+  state: INetworksState,
+  action: IDuplicateNodesAction,
+): INetworksState {
+  if (state.currentNetwork?.id !== action.networkId) return state
+
+  const updatedPeople = state.currentNetwork.people.concat(action.nodeCopies)
+  const updatedIds = updatedPeople.map((p) => p.id)
+
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...state.currentNetwork,
+    people: updatedPeople,
+    personIds: updatedIds,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
   }
 }
 

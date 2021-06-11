@@ -84,6 +84,8 @@ export enum NetworkActionTypes {
   SET_RELATIONSHIP_SHAPE = "NETWORK/SET_RELATIONSHIP_SHAPE",
   SET_PERSON_NODE_SCALE = "NETWORK/SET_PERSON_NODE_SCALE",
   SET_PERSON_AS_BACKGROUND_NODE = "NETWORK/SET_PERSON_AS_BACKGROUND_NODE",
+
+  DUPLICATE_NODES = "NETWORK/DUPLICATE_NODES",
 }
 
 export interface INetworkLoadingAction {
@@ -237,6 +239,12 @@ export interface ISetPersonAsBackgroundNodeAction {
   isBackground: boolean
 }
 
+export interface IDuplicateNodesAction {
+  type: NetworkActionTypes.DUPLICATE_NODES
+  networkId: string
+  nodeCopies: IPerson[]
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -263,3 +271,4 @@ export type NetworksActions =
   | ISetRelationshipShape
   | ISetNodeScaleAction
   | ISetPersonAsBackgroundNodeAction
+  | IDuplicateNodesAction
