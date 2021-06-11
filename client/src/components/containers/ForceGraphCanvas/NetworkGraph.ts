@@ -1179,12 +1179,14 @@ function handleShortkeys(Graph: ForceGraphInstance) {
 
         // Copy-Paste
         case "c": {
+          if (isViewingShared) return
           copyAnchorXY = Graph.screen2GraphCoords(mouseCoords.x, mouseCoords.y)
           toCopy = [...selectedNodeIds]
           return
         }
 
         case "v": {
+          if (isViewingShared) return
           if (toCopy.length === 0) return
 
           const networkId = store.getState().networks.currentNetwork?.id
