@@ -17,10 +17,13 @@ import { setNetworkLoading } from "./setNetworkLoading"
 export const duplicateNodes = (
   networkId: string,
   nodeIds: string[],
-  pin?: {
-    anchor: XYVals
-    target: XYVals
-  },
+  options: {
+    clearFormatting?: boolean
+    pin?: {
+      anchor: XYVals
+      target: XYVals
+    }
+  } = { clearFormatting: false },
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
@@ -35,10 +38,22 @@ export const duplicateNodes = (
 
       const nodeCopies = nodes.map((n) => {
         const copy = { ...n }
-        copy.name = n.name + " [COPY]"
         copy.id = uuidv4()
-        copy.relationships = {}
 
+        if (options?.clearFormatting) {
+          // Clear formatting: makes the copy a standalone node with no relationships
+          copy.relationships = {}
+        } else {
+          copy.name = n.name + " [COPY]"
+          // Copy relationships -- make other nodes relate to the copy
+          Object.keys(copy.relationships).forEach((relId) => {
+            const relatedPerson = people.find((p) => p.id === relId)
+            if (!relatedPerson) return
+            relatedPerson.relationships[copy.id] = copy.relationships[relId]
+          })
+        }
+
+        const pin = options?.pin
         if (pin) {
           const copyX = copy.pinXY?.x ? copy.pinXY.x : 0
           const copyY = copy.pinXY?.y ? copy.pinXY.y : 0

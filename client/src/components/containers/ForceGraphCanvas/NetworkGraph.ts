@@ -1131,77 +1131,70 @@ function hideContextMenu(e: Event) {
 
 const PAN_SPEED = 25
 let keysDown: { [keyName: string]: boolean } = {}
+let toCopy: string[] = []
+let copyAnchorXY = { x: 0, y: 0 }
+
+// For combos that shouldn't be repeated while key combos are held down
+// Using this logic instead of "keypress" event because keypress does not preventdefault and detect mutliple keys properly
+let activeKeyCombos: { [combo: string]: boolean } = {}
+enum KeyCombos {
+  SELECT_ALL = "SELECT_ALL",
+  COPY = "COPY",
+  PASTE = "PASTE",
+  DUPLICATE = "DUPLICATE",
+}
+
 // Short keys that require multiple keys down
 // e.g. this allows diagonal arrow key panning
 function handleMultiShortkeys(Graph: ForceGraphInstance) {
   return (e: KeyboardEvent) => {
     keysDown[e.key] = true
-
-    // Arrow Key Panning
-    let deltaX = 0
-    let deltaY = 0
-
-    if (keysDown["ArrowUp"]) {
-      deltaY = -PAN_SPEED
-    } else if (keysDown["ArrowDown"]) {
-      deltaY = PAN_SPEED
-    }
-
-    if (keysDown["ArrowLeft"]) {
-      deltaX = -PAN_SPEED
-    } else if (keysDown["ArrowRight"]) {
-      deltaX = PAN_SPEED
-    }
-
-    if (deltaX === 0 && deltaY === 0) return
-    panBy(Graph, { deltaX, deltaY })
-  }
-}
-
-function clearKeysDown() {
-  keysDown = {}
-}
-
-let toCopy: string[] = []
-let copyAnchorXY = { x: 0, y: 0 }
-function handleShortkeys(Graph: ForceGraphInstance) {
-  return (e: KeyboardEvent) => {
     const { isViewingShared, selectedNodeIds } = store.getState().ui
 
     if (e.ctrlKey) {
       switch (e.key) {
-        // Select All
         case "a": {
+          if (activeKeyCombos[KeyCombos.SELECT_ALL]) return
+          activeKeyCombos[KeyCombos.SELECT_ALL] = true
+
           e.preventDefault()
           selectAllNodes(Graph)
           return
         }
 
-        // Copy-Paste
         case "c": {
+          if (activeKeyCombos[KeyCombos.COPY]) return
+          activeKeyCombos[KeyCombos.COPY] = true
+
           if (isViewingShared) return
           copyAnchorXY = Graph.screen2GraphCoords(mouseCoords.x, mouseCoords.y)
           toCopy = [...selectedNodeIds]
           return
         }
+      }
 
-        case "v": {
-          if (isViewingShared) return
-          if (toCopy.length === 0) return
+      // Paste & Duplicate
+      if (e.key.match(/(v|d)/)) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (isViewingShared) return
+        if (toCopy.length === 0) return
 
-          const networkId = store.getState().networks.currentNetwork?.id
-          if (!networkId) return
+        const networkId = store.getState().networks.currentNetwork?.id
+        if (!networkId) return
 
-          const targetXY = Graph.screen2GraphCoords(
-            mouseCoords.x,
-            mouseCoords.y,
-          )
-          store.dispatch<any>(
-            duplicateNodes(networkId, toCopy, {
-              anchor: copyAnchorXY,
-              target: targetXY,
-            }),
-          )
+        const targetXY = Graph.screen2GraphCoords(mouseCoords.x, mouseCoords.y)
+
+        if (e.key === "v") {
+          if (activeKeyCombos[KeyCombos.PASTE]) return
+          activeKeyCombos[KeyCombos.PASTE] = true
+          _handleDuplicateNode(networkId, targetXY, true)
+          return
+        } else if (e.key === "d") {
+          // Duplicate maintains relationships
+          if (activeKeyCombos[KeyCombos.DUPLICATE]) return
+          activeKeyCombos[KeyCombos.DUPLICATE] = true
+          _handleDuplicateNode(networkId, targetXY, false)
           return
         }
       }
@@ -1246,7 +1239,48 @@ function handleShortkeys(Graph: ForceGraphInstance) {
         return
       }
     }
+
+    // Arrow Key Panning
+    let deltaX = 0
+    let deltaY = 0
+
+    if (keysDown["ArrowUp"]) {
+      deltaY = -PAN_SPEED
+    } else if (keysDown["ArrowDown"]) {
+      deltaY = PAN_SPEED
+    }
+
+    if (keysDown["ArrowLeft"]) {
+      deltaX = -PAN_SPEED
+    } else if (keysDown["ArrowRight"]) {
+      deltaX = PAN_SPEED
+    }
+
+    if (deltaX === 0 && deltaY === 0) return
+    panBy(Graph, { deltaX, deltaY })
   }
+}
+
+function clearKeysDown() {
+  activeKeyCombos = {}
+  keysDown = {}
+}
+
+function _handleDuplicateNode(
+  networkId: string,
+  targetXY: XYVals,
+  doClearFormatting: boolean,
+) {
+  store.dispatch<any>(
+    duplicateNodes(networkId, toCopy, {
+      clearFormatting: doClearFormatting,
+      pin: {
+        anchor: copyAnchorXY,
+        target: targetXY,
+      },
+    }),
+  )
+  return
 }
 
 function panBy(
@@ -1285,7 +1319,6 @@ export function addCustomListeners(
   container.addEventListener("contextmenu", hideContextMenu)
   container.addEventListener("keydown", handleMultiShortkeys(Graph))
   container.addEventListener("keyup", clearKeysDown)
-  container.addEventListener("keyup", handleShortkeys(Graph))
 
   return () => {
     container.removeEventListener("mousemove", updateMouseCoords)
@@ -1309,7 +1342,6 @@ export function addCustomListeners(
     container.removeEventListener("contextmenu", hideContextMenu)
     container.removeEventListener("keydown", handleMultiShortkeys(Graph))
     container.removeEventListener("keyup", clearKeysDown)
-    container.removeEventListener("keyup", handleShortkeys(Graph))
   }
 }
 
