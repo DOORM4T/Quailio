@@ -1142,6 +1142,7 @@ enum KeyCombos {
   COPY = "COPY",
   PASTE = "PASTE",
   DUPLICATE = "DUPLICATE",
+  QUICK_DELETE = "QUICK_DELETE",
 }
 
 // Short keys that require multiple keys down
@@ -1236,6 +1237,29 @@ function handleMultiShortkeys(Graph: ForceGraphInstance) {
       case "d": {
         if (isViewingShared) return
         store.dispatch(setToolbarAction("DELETE"))
+        return
+      }
+
+      case "Delete":
+      case "Backspace": {
+        if (isViewingShared) return
+        if (activeKeyCombos[KeyCombos.QUICK_DELETE]) return
+        activeKeyCombos[KeyCombos.QUICK_DELETE] = true
+
+        if (selectedNodeIds.length === 0) return
+
+        const networkId = store.getState().networks.currentNetwork?.id
+        if (!networkId) return
+
+        const doContinue = window.confirm(
+          `Delete ${selectedNodeIds.length} selected nodes?`,
+        )
+        if (!doContinue) return
+
+        for (const nodeId of selectedNodeIds) {
+          store.dispatch<any>(deletePerson(networkId, nodeId))
+        }
+
         return
       }
     }
@@ -1417,4 +1441,5 @@ export function clearSelected() {
   if (selectedNodeIds.length === 0) return
   store.dispatch<any>(selectNodes([]))
 }
+
 // #endregion HELPER FUNCTIONS
