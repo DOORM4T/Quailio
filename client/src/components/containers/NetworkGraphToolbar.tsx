@@ -13,7 +13,11 @@ import {
 } from "../../store/selectors/networks/getCurrentNetwork"
 import { getSelectedNodeIds } from "../../store/selectors/ui/getSelectedNodeIds"
 import { IApplicationState } from "../../store/store"
-import { setSmallMode, setToolbarAction } from "../../store/ui/uiActions"
+import {
+  selectNodes,
+  setSmallMode,
+  setToolbarAction,
+} from "../../store/ui/uiActions"
 import { ToolbarAction } from "../../store/ui/uiTypes"
 import ToolTipButton from "../ToolTipButton"
 import { XYVals } from "./ForceGraphCanvas/networkGraphTypes"
@@ -164,6 +168,7 @@ function DeleteActionButton({
       for (const nodeId of selectedNodeIds) {
         dispatch(deletePerson(currentNetworkId, nodeId))
       }
+      dispatch(selectNodes([]))
 
       return
     }

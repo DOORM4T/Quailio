@@ -1148,7 +1148,7 @@ enum KeyCombos {
 // Short keys that require multiple keys down
 // e.g. this allows diagonal arrow key panning
 function handleMultiShortkeys(Graph: ForceGraphInstance) {
-  return (e: KeyboardEvent) => {
+  return async (e: KeyboardEvent) => {
     keysDown[e.key] = true
     const { isViewingShared, selectedNodeIds } = store.getState().ui
 
@@ -1259,7 +1259,7 @@ function handleMultiShortkeys(Graph: ForceGraphInstance) {
         for (const nodeId of selectedNodeIds) {
           store.dispatch<any>(deletePerson(networkId, nodeId))
         }
-
+        store.dispatch(selectNodes([]))
         return
       }
     }
