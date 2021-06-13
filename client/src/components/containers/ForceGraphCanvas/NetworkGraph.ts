@@ -484,6 +484,11 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
         ctx.fill()
       }
 
+      if (isSelected) {
+        ctx.strokeStyle = highlightColor
+        ctx.strokeRect(thumbnailX, thumbnailY, width, height)
+      }
+
       if (doPointerDetection) {
         // Paint pointer collision area (this color will not actually appear on the force graph)
         ctx.fillStyle = areaColor
