@@ -12,6 +12,7 @@ import {
   setIsGroup,
   toggleBackgroundNode,
 } from "../../../store/networks/actions"
+import { setHideNameTag } from "../../../store/networks/actions/setHideNameTag"
 import { IPerson, IRelationships } from "../../../store/networks/networkTypes"
 import {
   getCurrentNetworkId,
@@ -57,6 +58,8 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   const personScaleXY = currentPerson?.scaleXY || { x: 1, y: 1 }
   const isPersonABackgroundNode = currentPerson?.isBackground || false
   const isPersonAGroupNode = currentPerson?.isGroup || false
+  const doHideNameTag = currentPerson?.doHideNameTag || false
+  const hasThumbnail = Boolean(currentPerson?.thumbnailUrl)
 
   // Connection drop-button ref -- used to trigger a click to close the menu
   const connectPeopleDropButtonRef = React.useRef<any>()
@@ -395,32 +398,59 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
-  return (
-    <Box direction="row">
-      {props.isEditing ? (
-        // Edit Mode
-        !isViewingShared && (
-          <React.Fragment>
-            {viewModeButton}
-            {ConnectPeopleDropButton}
-            {ManageGroupsDropButton}
-            {scalePersonButton}
-            {toggleGroupNodeButton}
-            {toggleBackgroundNodeButton}
-            {deleteCurrentPersonButton}
-          </React.Fragment>
+  const toggleHideNameTag = async () => {
+    try {
+      await dispatch(setHideNameTag(currentPersonId, !doHideNameTag))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const toggleHideNameTagButton = (
+    <ToolTipButton
+      tooltip={
+        doHideNameTag ? "Click to Hide Name Tag" : "Click to Show Name Tag"
+      }
+      id="toggle-nametag-button"
+      icon={
+        doHideNameTag ? (
+          <Icons.Tag color="status-critical" />
+        ) : (
+          <Icons.Tag color="status-ok" />
         )
-      ) : (
-        // View Mode
-        <React.Fragment>
-          {!isViewingShared && editModeButton}
-          {currentPerson && (
-            <RelativeToButton
-              currentPerson={currentPerson}
-              people={currentNetworkPeople}
-            />
-          )}
-        </React.Fragment>
+      }
+      onClick={toggleHideNameTag}
+    />
+  )
+
+  if (props.isEditing && !isViewingShared) {
+    return (
+      <Box direction="column" align="center">
+        <Box direction="row">
+          {viewModeButton}
+          {ConnectPeopleDropButton}
+          {ManageGroupsDropButton}
+          {scalePersonButton}
+          {deleteCurrentPersonButton}
+        </Box>
+
+        <Box direction="row">
+          {toggleGroupNodeButton}
+          {toggleBackgroundNodeButton}
+          {hasThumbnail && toggleHideNameTagButton}
+        </Box>
+      </Box>
+    )
+  }
+
+  return (
+    <Box direction="row" align="center">
+      {!isViewingShared && editModeButton}
+      {currentPerson && (
+        <RelativeToButton
+          currentPerson={currentPerson}
+          people={currentNetworkPeople}
+        />
       )}
     </Box>
   )

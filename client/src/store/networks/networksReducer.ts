@@ -15,6 +15,7 @@ import {
   IPerson,
   IRelationships,
   IRenameNetworkAction,
+  ISetHideNameTagAction,
   ISetIsGroupAction,
   ISetNetworkAction,
   ISetNodeColor,
@@ -118,6 +119,9 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
     case NetworkActionTypes.DUPLICATE_NODES:
       return getDuplicateNodesState(state, action)
 
+    case NetworkActionTypes.SET_HIDE_NAMETAG:
+      return getHideNameTagState(state, action)
+
     // SHARING
     case NetworkActionTypes.SHARE_NETWORK:
       return getShareNetworkState(state, action)
@@ -137,6 +141,37 @@ export const networksReducer: Reducer<INetworksState, NetworksActions> = (
   }
 }
 
+function getHideNameTagState(
+  state: INetworksState,
+  action: ISetHideNameTagAction,
+): INetworksState {
+  const currentNetwork = state.currentNetwork
+  if (!currentNetwork) return state
+
+  const personIndex = currentNetwork.people.findIndex(
+    (p) => p.id === action.nodeId,
+  )
+  if (personIndex === -1) return state
+
+  const updatedPerson: IPerson = {
+    ...currentNetwork.people[personIndex],
+    doHideNameTag: action.doHide,
+  }
+
+  const updatedPeople = [...currentNetwork.people]
+  updatedPeople[personIndex] = updatedPerson
+
+  const updatedCurrentNetwork: ICurrentNetwork = {
+    ...currentNetwork,
+    people: updatedPeople,
+  }
+
+  return {
+    ...state,
+    currentNetwork: updatedCurrentNetwork,
+    isLoading: false,
+  }
+}
 function getDuplicateNodesState(
   state: INetworksState,
   action: IDuplicateNodesAction,

@@ -272,7 +272,11 @@ function nodePaint(graph: ForceGraphInstance, isAreaPaint: boolean) {
 
     const { height: thumbnailHeight } = drawThumbnail()
 
-    if (isSmallMode && !isBackground) return
+    if (
+      (node.thumbnail && node.doHideNameTag) ||
+      (isSmallMode && !isBackground)
+    )
+      return
     const { nameTagWidth: ntWidth, nameTagHeight: ntHeight } = drawNameTag()
 
     // Draw group badges

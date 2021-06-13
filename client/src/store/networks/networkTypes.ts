@@ -40,6 +40,8 @@ export interface IPerson {
   isGroup?: boolean
   backgroundColor?: string
   textColor?: string
+
+  doHideNameTag?: boolean
 }
 
 // A person's Relationships object maps a relationship to another person by their ID
@@ -86,6 +88,8 @@ export enum NetworkActionTypes {
   SET_PERSON_AS_BACKGROUND_NODE = "NETWORK/SET_PERSON_AS_BACKGROUND_NODE",
 
   DUPLICATE_NODES = "NETWORK/DUPLICATE_NODES",
+
+  SET_HIDE_NAMETAG = "NETWORK/SET_HIDE_NAMETAG",
 }
 
 export interface INetworkLoadingAction {
@@ -245,6 +249,12 @@ export interface IDuplicateNodesAction {
   nodeCopies: IPerson[]
 }
 
+export interface ISetHideNameTagAction {
+  type: NetworkActionTypes.SET_HIDE_NAMETAG
+  nodeId: string
+  doHide: boolean
+}
+
 /* Action types used by the networks reducer */
 export type NetworksActions =
   | INetworkLoadingAction
@@ -272,3 +282,4 @@ export type NetworksActions =
   | ISetNodeScaleAction
   | ISetPersonAsBackgroundNodeAction
   | IDuplicateNodesAction
+  | ISetHideNameTagAction
