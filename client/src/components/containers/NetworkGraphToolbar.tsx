@@ -6,6 +6,7 @@ import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useGetPaths from "../../hooks/useGetPaths"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { deletePerson, scalePerson } from "../../store/networks/actions"
+import { setHideNameTag } from "../../store/networks/actions/setHideNameTag"
 import { IPerson } from "../../store/networks/networkTypes"
 import {
   getCurrentNetworkId,
@@ -104,6 +105,12 @@ function NetworkGraphToolbar({ isViewingShared }: IProps) {
         />
       </Tip>
 
+      <ToggleNameTagActionButton
+        dropProps={dropProps}
+        setAction={setAction}
+        selectionAccent={selectionAccent}
+      />
+
       {!isViewingShared && (
         <DeleteActionButton
           dropProps={dropProps}
@@ -182,6 +189,59 @@ function DeleteActionButton({
       }
       dropProps={dropProps}
       onClick={handleDeleteAction}
+    />
+  )
+}
+
+interface IToggleNameTagActionProps {
+  dropProps: DropProps
+  setAction: SetToolbarActionFunc
+  selectionAccent: SelectionAccentFunc
+}
+function ToggleNameTagActionButton({
+  dropProps,
+  setAction,
+  selectionAccent,
+}: IToggleNameTagActionProps) {
+  const dispatch = useDispatch()
+  const currentNetworkId = useSelector(getCurrentNetworkId)
+  const selectedNodeIds = useSelector(getSelectedNodeIds)
+
+  const [doHide, setHide] = useState(true)
+
+  const handleToggleMany = async () => {
+    setAction("TOGGLE_NAMETAG")()
+    if (!currentNetworkId) return
+
+    if (selectedNodeIds.length > 0) {
+      // const doContinue = window.confirm(
+      //   `${doHide ? "Hide" : "Reveal"} nametags for ${
+      //     selectedNodeIds.length
+      //   } selected nodes?`,
+      // )
+      // if (!doContinue) return
+
+      for (const nodeId of selectedNodeIds) {
+        dispatch(setHideNameTag(nodeId, doHide))
+      }
+      setHide((latest) => !latest)
+      return
+    }
+  }
+
+  return (
+    <ToolTipButton
+      tooltip={doHide ? "Hide Nametag(s)" : "Show Nametag(s)"}
+      icon={
+        <Icons.Tag
+          color={selectionAccent(
+            "TOGGLE_NAMETAG",
+            doHide ? "status-critical" : "status-ok",
+          )}
+        />
+      }
+      dropProps={dropProps}
+      onClick={handleToggleMany}
     />
   )
 }

@@ -4,7 +4,7 @@ import { ISetHideNameTagAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
- * Set a person's pin position for the Force Graph
+ * Hide/Show the node's name tag in the Force Graph
  * @param networkId
  * @param nodeId
  * @param pinXY

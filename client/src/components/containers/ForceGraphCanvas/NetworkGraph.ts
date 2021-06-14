@@ -13,6 +13,7 @@ import {
   updateRelationshipReason,
 } from "../../../store/networks/actions"
 import { duplicateNodes } from "../../../store/networks/actions/duplicateNodes"
+import { setHideNameTag } from "../../../store/networks/actions/setHideNameTag"
 import {
   ConnectionShape,
   ICurrentNetwork,
@@ -846,6 +847,24 @@ function handleNodeClick(Graph: ForceGraphInstance) {
         }
         return
       }
+
+      case "TOGGLE_NAMETAG": {
+        try {
+          // Toggling based on node.doHideNameTag causes delays, meaning the user may need to click a node twice to actually toggle the node's nametag
+          // Getting the node in global state fixes this, so users only need to click a node once to toggle it's name tag visibility
+          const actualNode = store
+            .getState()
+            .networks.currentNetwork?.people.find((p) => p.id === node.id)
+          if (!actualNode) return
+          let doHide = actualNode.doHideNameTag
+          if (doHide === undefined) doHide = false
+
+          await store.dispatch<any>(setHideNameTag(node.id, !doHide))
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
     }
 
     // #region handleNodeClick Helper Functions
@@ -1246,6 +1265,11 @@ function handleMultiShortkeys(Graph: ForceGraphInstance) {
       case "d": {
         if (isViewingShared) return
         store.dispatch(setToolbarAction("DELETE"))
+        return
+      }
+
+      case "n": {
+        store.dispatch(setToolbarAction("TOGGLE_NAMETAG"))
         return
       }
 

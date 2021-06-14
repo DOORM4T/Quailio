@@ -25,6 +25,7 @@ export type ToolbarAction =
   | "PIN"
   | "RESIZE"
   | "SELECT"
+  | "TOGGLE_NAMETAG"
   | "VIEW"
 
 export interface IActiveGroupsByPersonId {
