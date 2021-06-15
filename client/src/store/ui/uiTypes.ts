@@ -13,7 +13,7 @@ export interface IUserInterfaceState {
   readonly toolbarAction: ToolbarAction
   readonly isSmallMode: boolean
   readonly selectedNodeIds: string[]
-  readonly bfsPath: IBFSDetails | null
+  readonly pathContent: IPathContent | null
 }
 
 export type IVisibilityMap = { [nodeId: string]: boolean } // Visible if true or undefined
@@ -32,12 +32,12 @@ export interface IActiveGroupsByPersonId {
   [personId: string]: string[]
 }
 
-export interface IBFSDetails {
+export interface IPathContent {
   person1: IPerson
   person2: IPerson
-  paths: IBFSPathItem[][]
+  paths: IPathContentItem[][]
 }
-export interface IBFSPathItem {
+export interface IPathContentItem {
   id: string
   name: string
   description: string
@@ -57,7 +57,7 @@ export enum UserInterfaceActionTypes {
   SET_TOOLBAR_ACTION = "UI/SET_TOOLBAR_ACTION",
   SET_SMALL_MODE = "UI/SET_SMALL_MODE",
   SELECT_NODES = "UI/SELECT_NODES",
-  SET_BFS_PATH = "UI/SET_BFS_PATH",
+  SET_PATH_CONTENT = "UI/SET_PATH_CONTENT",
 }
 
 export interface ISetUILoadingAction {
@@ -124,9 +124,9 @@ export interface ISelectNodesAction {
   type: UserInterfaceActionTypes.SELECT_NODES
   selectedNodeIds: string[]
 }
-export interface ISetBFSPathAction {
-  type: UserInterfaceActionTypes.SET_BFS_PATH
-  paths: IBFSDetails | null
+export interface ISetPathContentAction {
+  type: UserInterfaceActionTypes.SET_PATH_CONTENT
+  paths: IPathContent | null
 }
 
 // action types used by the networks reducer
@@ -143,4 +143,4 @@ export type UserInterfaceActions =
   | ISetToolbarAction
   | ISetSmallModeAction
   | ISelectNodesAction
-  | ISetBFSPathAction
+  | ISetPathContentAction

@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from "react"
 import { useSelector } from "react-redux"
 import SearchInput from "../../components/SearchInput"
 import { ICurrentNetwork, IPerson } from "../../store/networks/networkTypes"
-import { getBFSPath } from "../../store/selectors/ui/getBFSPath"
+import { getPathContent } from "../../store/selectors/ui/getPathContent"
 import { getPersonInFocusId } from "../../store/selectors/ui/getPersonInFocusData"
 import GroupAccordion from "./components/GroupAccordion"
 import usePersonMenu, { SEARCH_INPUT_HEIGHT } from "./logic/usePersonMenu"
@@ -23,11 +23,11 @@ const PersonMenu: React.FC<IPersonMenuProps> = ({
   const doShowGroups = groupNodes.length > 0
 
   const personInFocus = useSelector(getPersonInFocusId)
-  const bfsPath = useSelector(getBFSPath)
+  const pathContent = useSelector(getPathContent)
   const searchRef = useRef<HTMLInputElement | null>(null)
   useEffect(() => {
     // Override search when no modals are open as a result of these properties being non-null
-    const doOverride = personInFocus === null && bfsPath === null
+    const doOverride = personInFocus === null && pathContent === null
     function find(e: KeyboardEvent) {
       if (!e.ctrlKey || e.key !== "f") return
       if (!doOverride) return
@@ -41,7 +41,7 @@ const PersonMenu: React.FC<IPersonMenuProps> = ({
     return () => {
       window.removeEventListener("keydown", find)
     }
-  }, [personInFocus, bfsPath])
+  }, [personInFocus, pathContent])
 
   const sortGroupsByName = (g1: IPerson, g2: IPerson) =>
     g1.name.toLowerCase().localeCompare(g2.name.toLowerCase())

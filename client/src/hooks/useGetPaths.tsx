@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux"
 import { BFS } from "../helpers/bfs"
 import { IPerson } from "../store/networks/networkTypes"
 import { getCurrentNetworkPeople } from "../store/selectors/networks/getCurrentNetwork"
-import { setBFSPath } from "../store/ui/uiActions"
-import { IBFSDetails, IBFSPathItem } from "../store/ui/uiTypes"
+import { setPathOverlayContent } from "../store/ui/uiActions"
+import { IPathContent, IPathContentItem } from "../store/ui/uiTypes"
 
 const DEFAULT_REASON = ""
 function useGetPaths() {
@@ -23,7 +23,10 @@ function useGetPaths() {
     }
   }, [currentNetworkPeople])
 
-  const getPaths = (person1: IPerson, person2: IPerson): IBFSDetails | null => {
+  const getPaths = (
+    person1: IPerson,
+    person2: IPerson,
+  ): IPathContent | null => {
     if (!graphRef.current) return null
 
     const paths = BFS.findAllPaths(
@@ -43,14 +46,14 @@ function useGetPaths() {
     return { person1, person2, paths: pathDetails }
   }
 
-  const showPaths = ({ person1, person2, paths }: IBFSDetails) => {
-    dispatch(setBFSPath({ person1, person2, paths }))
+  const showPaths = ({ person1, person2, paths }: IPathContent) => {
+    dispatch(setPathOverlayContent({ person1, person2, paths }))
   }
 
   return { getPaths, showPaths }
 
   // #region Helper Functions
-  function _mapIdPathToRealPath(idPath: string[]): IBFSPathItem[] {
+  function _mapIdPathToRealPath(idPath: string[]): IPathContentItem[] {
     const realPath = idPath
       .map((id, index) => {
         const node = currentNetworkPeople.find((p) => p.id === id)
@@ -68,7 +71,7 @@ function useGetPaths() {
             : DEFAULT_REASON,
         }
       })
-      .filter((item) => item !== null) as IBFSPathItem[]
+      .filter((item) => item !== null) as IPathContentItem[]
 
     return realPath
   }

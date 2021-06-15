@@ -23,6 +23,7 @@ import {
 import { store } from "../../../store/store"
 import {
   selectNodes,
+  setPathOverlayContent,
   setPersonInFocus,
   setToolbarAction,
   togglePersonOverlay,
@@ -664,8 +665,8 @@ function drawLinkObject(
 function handleLinkHover(container: HTMLDivElement) {
   return (link: LinkObject | null) => {
     const currentToolbarAction = store.getState().ui.toolbarAction
-    const canView = currentToolbarAction === "VIEW"
-    if (!canView) return
+    const canHighlight = /(VIEW|LINK)/.test(currentToolbarAction)
+    if (!canHighlight || nodeToConnect.node !== null) return
 
     clearHighlights()
     container.style.cursor = link ? "pointer" : "grab"
@@ -684,8 +685,8 @@ function getLinkLabel(link: LinkObject | null) {
   if (!link || !link.source || !link.target) return ""
 
   const currentToolbarAction = store.getState().ui.toolbarAction
-  const canView = currentToolbarAction === "VIEW"
-  if (!canView) return ""
+  const doShowLabel = /(VIEW|LINK)/.test(currentToolbarAction)
+  if (!doShowLabel) return ""
 
   const sourceNode = link.source as IPersonNode
   const targetNode = link.target as IPersonNode
@@ -1415,17 +1416,45 @@ function handleZoomPanEnd(transform: { k: number; x: number; y: number }) {
 }
 
 async function handleLinkClick(link: LinkObject) {
-  const currentToolbarAction = store.getState().ui.toolbarAction
-  const canView = currentToolbarAction === "VIEW"
-  if (!canView) return
-
-  // DO NOT allow right click events if in sharing mode
-  if (store.getState().ui.isViewingShared) return
-
   if (typeof link.source === "string" || typeof link.target === "string") return
   const srcNode = link.source as IPersonNode | undefined
   const targetNode = link.target as IPersonNode | undefined
   if (!srcNode || !targetNode) return
+
+  const currentToolbarAction = store.getState().ui.toolbarAction
+  const doView = currentToolbarAction === "VIEW"
+  if (doView) {
+    // View the link
+    store.dispatch(
+      setPathOverlayContent({
+        paths: [
+          [
+            {
+              id: srcNode.id,
+              name: srcNode.name,
+              description: srcNode.relationships[targetNode.id].reason,
+            },
+            {
+              id: targetNode.id,
+              name: targetNode.name,
+              description: targetNode.relationships[srcNode.id].reason,
+            },
+          ],
+        ],
+        person1: srcNode,
+        person2: targetNode,
+      }),
+    )
+
+    return
+  }
+
+  // DO NOT allow link editing in Shared Mode
+  if (store.getState().ui.isViewingShared) return
+
+  // Edit a relationship reason via LINK mode
+  const doEditLink = currentToolbarAction === "LINK"
+  if (!doEditLink) return
 
   const relationship = srcNode.relationships[targetNode.id]
   if (!relationship) return

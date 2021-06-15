@@ -18,7 +18,7 @@ const initialState: IUserInterfaceState = {
   toolbarAction: "VIEW",
   isSmallMode: false,
   selectedNodeIds: [],
-  bfsPath: null,
+  pathContent: null,
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -104,7 +104,7 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
         personInFocus: null,
         personInZoom: null,
         selectedNodeIds: [],
-        bfsPath: null,
+        pathContent: null,
       }
     }
 
@@ -129,10 +129,10 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       }
     }
 
-    case UserInterfaceActionTypes.SET_BFS_PATH: {
+    case UserInterfaceActionTypes.SET_PATH_CONTENT: {
       return {
         ...state,
-        bfsPath: action.paths,
+        pathContent: action.paths,
       }
     }
 

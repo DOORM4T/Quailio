@@ -4,25 +4,25 @@ import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
-import { getBFSPath } from "../../store/selectors/ui/getBFSPath"
+import { getPathContent } from "../../store/selectors/ui/getPathContent"
 import {
-  setBFSPath,
+  setPathOverlayContent,
   setPersonInFocus,
   togglePersonOverlay,
 } from "../../store/ui/uiActions"
-import { IBFSPathItem } from "../../store/ui/uiTypes"
+import { IPathContentItem } from "../../store/ui/uiTypes"
 import Overlay from "../Overlay"
 function PathsOverlay() {
   const isSmall = useSmallBreakpoint()
   const dispatch: Dispatch<any> = useDispatch()
-  const bfsPath = useSelector(getBFSPath)
+  const bfsPath = useSelector(getPathContent)
   if (!bfsPath) return null
   const { person1, person2, paths } = bfsPath
 
   const handleClose = () => {
     const doContinue = fireUnsavedChangeEvent() // Trigger a listener if there is an active unsaved change event listener
     if (!doContinue) return
-    dispatch(setBFSPath(null))
+    dispatch(setPathOverlayContent(null))
   }
   // TODO: Small Screen Layout
   // const SmallScreenLayout: React.FC = () => (
@@ -35,7 +35,7 @@ function PathsOverlay() {
     return () => {
       dispatch(setPersonInFocus(personId))
       dispatch(togglePersonOverlay(true))
-      dispatch(setBFSPath(null))
+      dispatch(setPathOverlayContent(null))
     }
   }
 
@@ -90,7 +90,7 @@ function PathsOverlay() {
             margin={{ bottom: "small" }}
             background="light-3"
           >
-            {(pathItem: IBFSPathItem, i: number) => {
+            {(pathItem: IPathContentItem, i: number) => {
               return (
                 <Box align="start">
                   <Anchor onClick={navigateToPerson(pathItem.id)}>
