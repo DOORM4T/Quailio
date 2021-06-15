@@ -24,7 +24,7 @@ import {
   getPersonInFocusName,
   getPersonInFocusRelationships,
 } from "../../../store/selectors/ui/getPersonInFocusData"
-import { togglePersonOverlay } from "../../../store/ui/uiActions"
+import { togglePersonOverlay, zoomToPerson } from "../../../store/ui/uiActions"
 import SearchAndCheckMenu from "../../SearchAndCheckMenu"
 import SearchInput from "../../SearchInput"
 import ToolTipButton from "../../ToolTipButton"
@@ -423,6 +423,19 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     />
   )
 
+  const handleFindInGraph = async () => {
+    dispatch(togglePersonOverlay(false))
+    dispatch(zoomToPerson(currentPersonId))
+  }
+  const FindInGraphButton = (
+    <ToolTipButton
+      tooltip="Find in graph"
+      id="find-button"
+      icon={<Icons.Map color="accent-2" />}
+      onClick={handleFindInGraph}
+    />
+  )
+
   if (props.isEditing && !isViewingShared) {
     return (
       <Box direction="column" align="center">
@@ -446,6 +459,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   return (
     <Box direction="row" align="center">
       {!isViewingShared && editModeButton}
+      {FindInGraphButton}
       {currentPerson && (
         <RelativeToButton
           currentPerson={currentPerson}

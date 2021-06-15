@@ -940,6 +940,7 @@ function handleBackgroundClick(
   return async (e: MouseEvent) => {
     cancelLinking()
     clearSelected()
+    store.dispatch<any>(setPersonInFocus(null))
 
     // DO NOT allow click events if in sharing mode
     if (store.getState().ui.isViewingShared) return
