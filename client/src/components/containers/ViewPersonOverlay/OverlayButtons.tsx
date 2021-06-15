@@ -116,7 +116,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   }
 
   // Button for entering view mode
-  const viewModeButton = (
+  const ViewModeButton = (
     <ToolTipButton
       tooltip="View mode"
       icon={<Icons.View color="status-ok" />}
@@ -144,7 +144,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
   )
 
   // Button for deleting the current person
-  const deleteCurrentPersonButton = (
+  const DeleteCurrentPersonButton = (
     <ToolTipButton
       tooltip="Delete"
       id="delete-person-button"
@@ -330,7 +330,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }
   }
 
-  const scalePersonButton = (
+  const ScalePersonButton = (
     <ToolTipButton
       tooltip="Resize in graph"
       id="scale-person-button"
@@ -353,7 +353,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }
   }
 
-  const toggleBackgroundNodeButton = (
+  const ToggleBackgroundNodeButton = (
     <ToolTipButton
       tooltip={
         isPersonABackgroundNode
@@ -381,7 +381,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
       console.error(error)
     }
   }
-  const toggleGroupNodeButton = (
+  const ToggleGroupNodeButton = (
     <ToolTipButton
       tooltip={
         isPersonAGroupNode ? "Turn into non-group node" : "Turn into group node"
@@ -406,7 +406,7 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     }
   }
 
-  const toggleHideNameTagButton = (
+  const ToggleHideNameTagButton = (
     <ToolTipButton
       tooltip={
         doHideNameTag ? "Click to Hide Name Tag" : "Click to Show Name Tag"
@@ -427,17 +427,17 @@ const OverlayButtons: React.FC<IOverlayButtonProps> = (props) => {
     return (
       <Box direction="column" align="center">
         <Box direction="row">
-          {viewModeButton}
+          {ViewModeButton}
           {ConnectPeopleDropButton}
           {ManageGroupsDropButton}
-          {scalePersonButton}
-          {deleteCurrentPersonButton}
+          {ScalePersonButton}
+          {DeleteCurrentPersonButton}
         </Box>
 
         <Box direction="row">
-          {toggleGroupNodeButton}
-          {toggleBackgroundNodeButton}
-          {hasThumbnail && toggleHideNameTagButton}
+          {ToggleGroupNodeButton}
+          {ToggleBackgroundNodeButton}
+          {hasThumbnail && ToggleHideNameTagButton}
         </Box>
       </Box>
     )
