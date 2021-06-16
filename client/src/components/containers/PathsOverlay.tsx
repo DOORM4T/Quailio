@@ -1,23 +1,54 @@
-import { Anchor, Box, Grid, Image, List, Text } from "grommet"
-import React from "react"
+import { Anchor, Box, Grid, Image, List, Text, TextArea } from "grommet"
+import * as Icons from "grommet-icons"
+import React, { useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
+import { updateRelationshipReason } from "../../store/networks/actions"
 import { getPathContent } from "../../store/selectors/ui/getPathContent"
 import {
   setPathOverlayContent,
   setPersonInFocus,
   togglePersonOverlay,
 } from "../../store/ui/uiActions"
-import { IPathContentItem } from "../../store/ui/uiTypes"
+import { IPathContent, IPathContentItem } from "../../store/ui/uiTypes"
 import Overlay from "../Overlay"
+import ToolTipButton from "../ToolTipButton"
+
 function PathsOverlay() {
   const isSmall = useSmallBreakpoint()
   const dispatch: Dispatch<any> = useDispatch()
-  const bfsPath = useSelector(getPathContent)
-  if (!bfsPath) return null
-  const { person1, person2, paths } = bfsPath
+  const pathContent = useSelector(getPathContent)
+
+  const [isEditing, setEditing] = useState(false)
+  const toggleEditing = () => {
+    setEditing((latest) => !latest)
+  }
+
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const scrollTopRef = useRef<number | null>(null)
+
+  if (!pathContent) return null
+  const { person1, person2, paths } = pathContent
+
+  // Update path content in global state
+  // Example usage: updated a path description -- without this, descriptions would flicker to previous descriptions, not reflecting the latest changes
+  const updatePathContent = (
+    pathIndex: number,
+    pathItemIndex: number,
+    updatedContent: IPathContentItem,
+  ) => {
+    const updatedPaths = [...pathContent.paths]
+    updatedPaths[pathIndex][pathItemIndex] = updatedContent
+    const updatedPathContent: IPathContent = {
+      ...pathContent,
+      paths: updatedPaths,
+    }
+
+    dispatch(setPathOverlayContent(updatedPathContent))
+    scrollContainerRef.current?.scroll({ top: scrollTopRef.current || 0 })
+  }
 
   const p1Colors = {
     bg: person1.backgroundColor ? person1.backgroundColor : "brand",
@@ -65,6 +96,29 @@ function PathsOverlay() {
     </React.Fragment>
   )
 
+  const Controls = (
+    <Box
+      direction="row"
+      height={{ min: "48px" }}
+      style={{ position: "sticky", top: 0 }}
+      background="light-1"
+    >
+      <ToolTipButton
+        tooltip={
+          isEditing ? "Click to enter View Mode" : "Click to enter Edit Mode"
+        }
+        icon={
+          isEditing ? (
+            <Icons.Edit color="neutral-3" />
+          ) : (
+            <Icons.View color="neutral-1" />
+          )
+        }
+        onClick={toggleEditing}
+      />
+    </Box>
+  )
+
   const Paths = paths.map((path, index) => (
     <List
       key={index}
@@ -73,12 +127,45 @@ function PathsOverlay() {
       background="light-3"
     >
       {(pathItem: IPathContentItem, i: number) => {
+        const prevItemId = i > 0 ? path[i - 1].id : null
+
+        const handleUpdateDescription = async (description: string) => {
+          if (description === pathItem.description) return
+          if (prevItemId === null) return
+
+          try {
+            // Save current scroll position (updating rel reason will reset the scroll position)
+            scrollTopRef.current = scrollContainerRef.current?.scrollTop || null
+
+            // Update in global state
+            await dispatch(
+              updateRelationshipReason(pathItem.id, prevItemId, description),
+            )
+
+            // Update path overlay content to immediately reflect changes
+            const updatedItem: IPathContentItem = { ...pathItem, description }
+            updatePathContent(index, i, updatedItem)
+          } catch (error) {
+            console.error(error)
+          }
+        }
+
         return (
           <Box align="start">
             <Anchor onClick={navigateToPerson(pathItem.id)}>
               {i + 1}. {pathItem.name}
             </Anchor>
-            <Text>{pathItem.description}</Text>
+            {i > 0 && (
+              <React.Fragment>
+                {isEditing && (
+                  <DescriptionEditor
+                    initialDescription={pathItem.description}
+                    handleUpdateDescription={handleUpdateDescription}
+                  />
+                )}
+                {!isEditing && <Text>{pathItem.description}</Text>}
+              </React.Fragment>
+            )}
           </Box>
         )
       }}
@@ -105,7 +192,12 @@ function PathsOverlay() {
           {Person2Content}
         </Box>
       </Box>
-      <Box height="auto" overflow={{ vertical: "auto" }}>
+      <Box
+        height="auto"
+        overflow={{ vertical: "auto" }}
+        ref={scrollContainerRef}
+      >
+        {Controls}
         {Paths}
       </Box>
     </Box>
@@ -145,11 +237,12 @@ function PathsOverlay() {
       <Box
         gridArea="paths"
         background="light-1"
-        pad="medium"
         fill
         overflow={{ vertical: "auto" }}
+        ref={scrollContainerRef}
       >
-        {Paths}
+        {Controls}
+        <Box pad="medium">{Paths}</Box>
       </Box>
     </Grid>
   )
@@ -162,3 +255,32 @@ function PathsOverlay() {
 }
 
 export default PathsOverlay
+
+interface IDescriptionEditorProps {
+  initialDescription: string
+  handleUpdateDescription: (description: string) => void
+}
+
+// Editor for the description/relationship reason between two nodes in the path
+function DescriptionEditor({
+  initialDescription,
+  handleUpdateDescription,
+}: IDescriptionEditorProps) {
+  const [description, setDescription] = useState(initialDescription)
+  const handleChange = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    setDescription(e.currentTarget.value)
+  }
+
+  const handleSave = () => {
+    handleUpdateDescription(description)
+  }
+
+  return (
+    <TextArea
+      value={description}
+      onChange={handleChange}
+      onBlur={handleSave}
+      resize="vertical"
+    />
+  )
+}
