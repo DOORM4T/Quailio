@@ -19,17 +19,21 @@ function PathsOverlay() {
   if (!bfsPath) return null
   const { person1, person2, paths } = bfsPath
 
+  const p1Colors = {
+    bg: person1.backgroundColor ? person1.backgroundColor : "brand",
+    text: person1.textColor ? person1.textColor : "accent-1",
+  }
+
+  const p2Colors = {
+    bg: person2.backgroundColor ? person2.backgroundColor : "dark-1",
+    text: person2.textColor ? person2.textColor : "accent-1",
+  }
+
   const handleClose = () => {
     const doContinue = fireUnsavedChangeEvent() // Trigger a listener if there is an active unsaved change event listener
     if (!doContinue) return
     dispatch(setPathOverlayContent(null))
   }
-  // TODO: Small Screen Layout
-  // const SmallScreenLayout: React.FC = () => (
-  //   <Box fill {...boxProps}>
-
-  //   </Box>
-  // )
 
   const navigateToPerson = (personId: string) => {
     return () => {
@@ -38,6 +42,74 @@ function PathsOverlay() {
       dispatch(setPathOverlayContent(null))
     }
   }
+
+  const Person1Content = (
+    <React.Fragment>
+      {person1.thumbnailUrl && (
+        <Image src={person1.thumbnailUrl} width={128} height={128} />
+      )}
+      <Anchor color={p1Colors.text} onClick={navigateToPerson(person1.id)}>
+        {person1.name}
+      </Anchor>
+    </React.Fragment>
+  )
+
+  const Person2Content = (
+    <React.Fragment>
+      {person2.thumbnailUrl && (
+        <Image src={person2.thumbnailUrl} width={128} height={128} />
+      )}
+      <Anchor color={p2Colors.text} onClick={navigateToPerson(person2.id)}>
+        {person2.name}
+      </Anchor>
+    </React.Fragment>
+  )
+
+  const Paths = paths.map((path, index) => (
+    <List
+      key={index}
+      data={path}
+      margin={{ bottom: "small" }}
+      background="light-3"
+    >
+      {(pathItem: IPathContentItem, i: number) => {
+        return (
+          <Box align="start">
+            <Anchor onClick={navigateToPerson(pathItem.id)}>
+              {i + 1}. {pathItem.name}
+            </Anchor>
+            <Text>{pathItem.description}</Text>
+          </Box>
+        )
+      }}
+    </List>
+  ))
+
+  const SmallScreenLayout: React.FC = () => (
+    <Box fill direction="column">
+      <Box direction="row" width="100%" height={{ min: "128px" }}>
+        <Box
+          background={p1Colors.bg}
+          width="50%"
+          align="center"
+          justify="center"
+        >
+          {Person1Content}
+        </Box>
+        <Box
+          background={p2Colors.bg}
+          width="50%"
+          align="center"
+          justify="center"
+        >
+          {Person2Content}
+        </Box>
+      </Box>
+      <Box height="auto" overflow={{ vertical: "auto" }}>
+        {Paths}
+      </Box>
+    </Box>
+  )
 
   const LargeScreenLayout = () => (
     <Grid
@@ -53,28 +125,22 @@ function PathsOverlay() {
       <Box
         gridArea="person1"
         overflow={{ vertical: "auto" }}
-        background="neutral-3"
+        background={p1Colors.bg}
         fill
         align="center"
         justify="center"
       >
-        {person1.thumbnailUrl && (
-          <Image src={person1.thumbnailUrl} width={128} height={128} />
-        )}
-        <Anchor onClick={navigateToPerson(person1.id)}>{person1.name}</Anchor>
+        {Person1Content}
       </Box>
       <Box
         gridArea="person2"
         overflow={{ vertical: "auto" }}
-        background="dark-1"
+        background={p2Colors.bg}
         fill
         align="center"
         justify="center"
       >
-        {person2.thumbnailUrl && (
-          <Image src={person2.thumbnailUrl} width={128} height={128} />
-        )}
-        <Anchor onClick={navigateToPerson(person2.id)}>{person2.name}</Anchor>
+        {Person2Content}
       </Box>
       <Box
         gridArea="paths"
@@ -83,32 +149,14 @@ function PathsOverlay() {
         fill
         overflow={{ vertical: "auto" }}
       >
-        {paths.map((path, index) => (
-          <List
-            key={index}
-            data={path}
-            margin={{ bottom: "small" }}
-            background="light-3"
-          >
-            {(pathItem: IPathContentItem, i: number) => {
-              return (
-                <Box align="start">
-                  <Anchor onClick={navigateToPerson(pathItem.id)}>
-                    {i + 1}. {pathItem.name}
-                  </Anchor>
-                  <Text>{pathItem.description}</Text>
-                </Box>
-              )
-            }}
-          </List>
-        ))}
+        {Paths}
       </Box>
     </Grid>
   )
 
   return (
     <Overlay handleClose={handleClose}>
-      <LargeScreenLayout />
+      {isSmall ? <SmallScreenLayout /> : <LargeScreenLayout />}
     </Overlay>
   )
 }
