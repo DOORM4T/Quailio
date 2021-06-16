@@ -6,6 +6,7 @@ import { Dispatch } from "redux"
 import { fireUnsavedChangeEvent } from "../../helpers/unsavedChangeEvent"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
 import { updateRelationshipReason } from "../../store/networks/actions"
+import { getIsViewingShared } from "../../store/selectors/ui/getIsViewingShared"
 import { getPathContent } from "../../store/selectors/ui/getPathContent"
 import {
   setPathOverlayContent,
@@ -20,6 +21,7 @@ function PathsOverlay() {
   const isSmall = useSmallBreakpoint()
   const dispatch: Dispatch<any> = useDispatch()
   const pathContent = useSelector(getPathContent)
+  const isViewingShared = useSelector(getIsViewingShared)
 
   const [isEditing, setEditing] = useState(false)
   const toggleEditing = () => {
@@ -103,19 +105,21 @@ function PathsOverlay() {
       style={{ position: "sticky", top: 0 }}
       background="light-1"
     >
-      <ToolTipButton
-        tooltip={
-          isEditing ? "Click to enter View Mode" : "Click to enter Edit Mode"
-        }
-        icon={
-          isEditing ? (
-            <Icons.Edit color="neutral-3" />
-          ) : (
-            <Icons.View color="neutral-1" />
-          )
-        }
-        onClick={toggleEditing}
-      />
+      {!isViewingShared && (
+        <ToolTipButton
+          tooltip={
+            isEditing ? "Click to enter View Mode" : "Click to enter Edit Mode"
+          }
+          icon={
+            isEditing ? (
+              <Icons.Edit color="neutral-3" />
+            ) : (
+              <Icons.View color="neutral-1" />
+            )
+          }
+          onClick={toggleEditing}
+        />
+      )}
     </Box>
   )
 
@@ -132,6 +136,7 @@ function PathsOverlay() {
         const handleUpdateDescription = async (description: string) => {
           if (description === pathItem.description) return
           if (prevItemId === null) return
+          if (isViewingShared) return
 
           try {
             // Save current scroll position (updating rel reason will reset the scroll position)
