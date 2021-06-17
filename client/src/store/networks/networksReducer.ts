@@ -594,46 +594,49 @@ function getUpdatedPersonRelationshipState(
   state: INetworksState,
   action: IUpdateRelationshipReasonAction,
 ) {
-  /* Stop if no network is selected */
+  // Stop if no network is selected
   if (!state.currentNetwork) return state
+  const people = state.currentNetwork.people
 
-  /* Get each person */
-  const p1Data = state.currentNetwork.people.find((p) => p.id === action.p1Id)
-  const p2Data = state.currentNetwork.people.find((p) => p.id === action.p2Id)
-  if (!p1Data || !p2Data) return state
+  // Get each person
+  const p1Index = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.p1Id,
+  )
+  const p2Index = state.currentNetwork.people.findIndex(
+    (p) => p.id === action.p2Id,
+  )
+  if (p1Index === -1 || p2Index === -1) return state
 
-  /* Create the updated relationship */
+  // Create the updated relationships
   const updatedP1Relationships: IRelationships = {
-    ...p1Data.relationships,
+    ...people[p1Index].relationships,
     [action.p2Id]: {
-      ...p1Data.relationships[action.p2Id],
+      ...people[p1Index].relationships[action.p2Id],
       reason: action.newReason,
     },
   }
   const updatedP2Relationships: IRelationships = {
-    ...p2Data.relationships,
+    ...people[p2Index].relationships,
     [action.p1Id]: {
-      ...p2Data.relationships[action.p1Id],
+      ...people[p2Index].relationships[action.p1Id],
       reason: action.newReason,
     },
   }
 
-  /* Update each person */
+  // Update each person
   const updatedP1: IPerson = {
-    ...p1Data,
+    ...people[p1Index],
     relationships: updatedP1Relationships,
   }
   const updatedP2: IPerson = {
-    ...p2Data,
+    ...people[p2Index],
     relationships: updatedP2Relationships,
   }
 
-  /* Update the current network */
-  const peopleWithoutUpdated: IPerson[] = [
-    ...state.currentNetwork.people,
-  ].filter((p) => p.id !== action.p1Id && p.id !== action.p2Id)
-
-  const updatedPeople = peopleWithoutUpdated.concat(updatedP1).concat(updatedP2)
+  // Update the current network
+  const updatedPeople = [...people]
+  updatedPeople[p1Index] = updatedP1
+  updatedPeople[p2Index] = updatedP2
 
   const updatedNetwork: ICurrentNetwork = {
     ...state.currentNetwork,
