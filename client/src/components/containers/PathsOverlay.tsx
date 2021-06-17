@@ -36,19 +36,8 @@ function PathsOverlay() {
 
   // Update path content in global state
   // Example usage: updated a path description -- without this, descriptions would flicker to previous descriptions, not reflecting the latest changes
-  const updatePathContent = (
-    pathIndex: number,
-    pathItemIndex: number,
-    updatedContent: IPathContentItem,
-  ) => {
-    const updatedPaths = [...pathContent.paths]
-    updatedPaths[pathIndex][pathItemIndex] = updatedContent
-    const updatedPathContent: IPathContent = {
-      ...pathContent,
-      paths: updatedPaths,
-    }
-
-    dispatch(setPathOverlayContent(updatedPathContent))
+  const updatePathContent = (updatedContent: IPathContent) => {
+    dispatch(setPathOverlayContent(updatedContent))
     scrollContainerRef.current?.scroll({ top: scrollTopRef.current || 0 })
   }
 
@@ -148,8 +137,24 @@ function PathsOverlay() {
             )
 
             // Update path overlay content to immediately reflect changes
-            const updatedItem: IPathContentItem = { ...pathItem, description }
-            updatePathContent(index, i, updatedItem)
+            const updatePathIndexes = _getPathIndexes(
+              paths,
+              pathItem.id,
+              prevItemId,
+            )
+
+            const updatedPaths = _getPathsDeepCopy(paths)
+            for (const { pathIndex, itemIndex } of updatePathIndexes) {
+              if (updatedPaths[pathIndex] === undefined) continue
+              if (updatedPaths[pathIndex][itemIndex] === undefined) continue
+              updatedPaths[pathIndex][itemIndex].description = description
+            }
+
+            const updatedPathContent: IPathContent = {
+              ...pathContent,
+              paths: updatedPaths,
+            }
+            updatePathContent(updatedPathContent)
           } catch (error) {
             console.error(error)
           }
@@ -288,4 +293,44 @@ function DescriptionEditor({
       resize="vertical"
     />
   )
+}
+
+function _getPathIndexes(
+  paths: IPathContentItem[][],
+  itemId: string,
+  prevItemId: string,
+) {
+  const indexes = paths
+    .map((p, pathIndex) => {
+      return p.map((item, itemIndex) => {
+        const willUpdate =
+          item.id === itemId && p[itemIndex - 1]?.id === prevItemId
+
+        if (!willUpdate) return null
+        return { pathIndex, itemIndex }
+      })
+    })
+    .flat()
+
+  const nonNull = indexes.filter((obj) => obj !== null) as {
+    pathIndex: number
+    itemIndex: number
+  }[]
+
+  console.log(nonNull)
+
+  return nonNull
+}
+
+function _getPathsDeepCopy(paths: IPathContentItem[][]) {
+  const copy = []
+  for (const pathToCopy of paths) {
+    const pathCopy = []
+    for (const itemToCopy of pathToCopy) {
+      pathCopy.push({ ...itemToCopy })
+    }
+    copy.push(pathCopy)
+  }
+
+  return copy
 }
