@@ -27,13 +27,14 @@ const SearchInput = React.forwardRef((props: IProps, ref) => {
     style,
     isSearching,
     clearSearch,
+    placeholder,
   } = props
 
   return (
     <Stack anchor="right" style={{ width: "100%" }}>
       <TextInput
         value={value}
-        placeholder="Search"
+        placeholder={placeholder || "Search"}
         onChange={handleChange}
         onKeyUp={handleShortKeys}
         onClick={onClick}
