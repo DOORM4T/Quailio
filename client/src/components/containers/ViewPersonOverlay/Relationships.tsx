@@ -86,7 +86,8 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
       }
     }
 
-    const readOnlyRelReason = (
+    const isOneWay = relPerson.relationships[currentPerson.id].shape === "arrow"
+    const RelationshipReasonText = (
       <Text
         size="medium"
         style={{
@@ -158,9 +159,6 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
       }
     }
 
-    const shapeHighlight = (shape: ConnectionShape) =>
-      relationship.shape === shape ? "status-ok" : "status-disabled"
-
     const shapeButtons = (
       <Box direction="column">
         <ToolTipButton
@@ -179,22 +177,33 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
             height: "16px",
           }}
         />
-        {/* <hr />
-
-        <ToolTipButton
-          onClick={pickShape("none")}
-          icon={<Icons.Clear size="16px" color={shapeHighlight("none")} />}
-          tooltip="No line ending"
-          buttonStyle={{
-            height: "16px",
-          }}
-        />
-        <ToolTipButton
-          onClick={pickShape("arrow")}
-          icon={<Icons.CaretNext size="16px" color={shapeHighlight("arrow")} />}
-          tooltip="Arrow line ending"
-          buttonStyle={{ height: "16px" }}
-        /> */}
+        {isOneWay ? (
+          <ToolTipButton
+            tooltip="This is a one-way relationship"
+            icon={<Icons.LinkNext size="16px" color="status-disabled" />}
+          />
+        ) : (
+          <ToolTipButton
+            onClick={
+              relationship.shape === "arrow"
+                ? pickShape("none")
+                : pickShape("arrow")
+            }
+            icon={
+              relationship.shape === "arrow" ? (
+                <Icons.CaretNext size="16px" color="status-ok" />
+              ) : (
+                <Icons.Clear size="16px" color="status-critical" />
+              )
+            }
+            tooltip={
+              relationship.shape === "arrow"
+                ? "Click to make one-way relationship"
+                : "Click to make two-way relationship"
+            }
+            buttonStyle={{ height: "16px" }}
+          />
+        )}
       </Box>
     )
 
@@ -230,7 +239,7 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
                 />
               )}
             </Box>
-            <Box pad="4px">{readOnlyRelReason}</Box>
+            <Box pad="4px">{RelationshipReasonText}</Box>
           </Box>
         }
         {isEditing && shapeButtons}

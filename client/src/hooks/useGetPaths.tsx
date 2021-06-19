@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { BFS } from "../helpers/bfs"
 import { IPerson } from "../store/networks/networkTypes"
@@ -10,27 +9,14 @@ const DEFAULT_REASON = ""
 function useGetPaths() {
   const dispatch = useDispatch()
   const currentNetworkPeople = useSelector(getCurrentNetworkPeople)
-  const graphRef = useRef<Map<string, string[]> | null>(null)
-
-  useEffect(() => {
-    // Construct the graph data structure
-    graphRef.current = new Map<string, string[]>()
-    currentNetworkPeople.forEach(setNeighbors)
-
-    function setNeighbors(p: IPerson) {
-      const neighbors = Object.keys(p.relationships)
-      graphRef.current!.set(p.id, neighbors)
-    }
-  }, [currentNetworkPeople])
-
   const getPaths = (
     person1: IPerson,
     person2: IPerson,
   ): IPathContent | null => {
-    if (!graphRef.current) return null
+    const graph = _getGraph()
 
     const paths = BFS.findAllPaths(
-      graphRef.current,
+      graph,
       person1.id,
       (nodeId) => nodeId === person2.id,
     )
@@ -74,6 +60,26 @@ function useGetPaths() {
       .filter((item) => item !== null) as IPathContentItem[]
 
     return realPath
+  }
+
+  function _getGraph() {
+    // Construct the graph data structure
+    const graph = new Map<string, string[]>()
+    currentNetworkPeople.forEach(_setNeighbors)
+    return graph
+
+    function _setNeighbors(p: IPerson) {
+      const neighbors = Object.entries(p.relationships)
+        .filter(([id, value]) => {
+          // Exclude one-way relationships where the current node is being pointed to
+          const relPerson = currentNetworkPeople.find((rel) => rel.id === id)
+          if (!relPerson) return false
+          return relPerson.relationships[p.id].shape !== "arrow"
+        })
+        .map(([id]) => id)
+
+      graph.set(p.id, neighbors)
+    }
   }
   // #endregion Helper Functions
 }
