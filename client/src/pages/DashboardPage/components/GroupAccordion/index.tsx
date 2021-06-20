@@ -24,6 +24,7 @@ import useGroupAccordionFunctions from "./useGroupAccordionFunctions"
 import useGroupVisibility from "./useNodeVisibility"
 import useToggleAllGroups from "./useToggleAllGroups"
 
+const PAGINATION_STEP = 5
 interface IProps {
   currentNetwork: ICurrentNetwork
   // a group is a person whose .isGroup is true
@@ -280,17 +281,17 @@ const GroupAccordion: React.FC<IProps> = ({
         <Tabs>
           <GroupTab
             tabName="All"
-            items={visibilityLists.allPeople}
+            items={visibilityLists.allPeople.sort(alphanumericSort)}
             renderItem={renderItem}
           />
           <GroupTab
             tabName="Visible"
-            items={visibilityLists.visiblePeople}
+            items={visibilityLists.visiblePeople.sort(alphanumericSort)}
             renderItem={renderItem}
           />
           <GroupTab
             tabName="Hidden"
-            items={visibilityLists.hiddenPeople}
+            items={visibilityLists.hiddenPeople.sort(alphanumericSort)}
             renderItem={renderItem}
           />
           {group !== "all" && !isViewingShared && (
@@ -316,12 +317,18 @@ interface IGroupTab<T> {
 const GroupTab = memo(
   ({ items: people, renderItem, tabName }: IGroupTab<IPerson>) => {
     return (
-      <Tab
-        title={`${tabName} (${people.length})`}
-        disabled={people.length === 0}
-      >
-        <List data={people} children={renderItem} />
+      <Tab title={`${tabName} (${people.length})`}>
+        <List
+          data={people}
+          children={renderItem}
+          step={PAGINATION_STEP}
+          paginate={true}
+        />
       </Tab>
     )
   },
 )
+
+function alphanumericSort(a: IPerson, b: IPerson) {
+  return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+}
