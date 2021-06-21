@@ -2,11 +2,17 @@ import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { IPerson } from "../../../../store/networks/networkTypes"
 import { getNodeVisibilityMap } from "../../../../store/selectors/ui/getPersonNodeVisibility"
-import { setNodeVisibility, setUILoading } from "../../../../store/ui/uiActions"
+import { setNodeVisibility } from "../../../../store/ui/uiActions"
 
 interface IProps {
   group: IPerson | "all"
   people: IPerson[]
+}
+
+export interface IVisibilityLists {
+  all: IPerson[]
+  visible: IPerson[]
+  hidden: IPerson[]
 }
 
 function useGroupVisibility({ group, people }: IProps) {
@@ -19,12 +25,8 @@ function useGroupVisibility({ group, people }: IProps) {
   const hasPerson = (person: IPerson) =>
     group === "all" ? true : group.relationships[person.id] !== undefined
   const peopleInGroup = people.filter(hasPerson)
-  const visiblePeople = peopleInGroup.filter(
-    (p) => nodeVisibilityMap[p.id] !== false,
-  )
-  const hiddenPeople = peopleInGroup.filter(
-    (p) => nodeVisibilityMap[p.id] === false,
-  )
+  const visible = peopleInGroup.filter((p) => nodeVisibilityMap[p.id] !== false)
+  const hidden = peopleInGroup.filter((p) => nodeVisibilityMap[p.id] === false)
 
   const [doShowAllPeople, setShowAllPeople] = useState(true)
 
@@ -56,13 +58,13 @@ function useGroupVisibility({ group, people }: IProps) {
 
   return {
     visibilityLists: {
-      allPeople: peopleInGroup,
-      visiblePeople,
-      hiddenPeople,
+      all: peopleInGroup,
+      visible,
+      hidden,
     },
     showing: {
       group: doShowGroup,
-      allPeople: doShowAllPeople,
+      all: doShowAllPeople,
     },
     toggleAllNodeVisibility,
   }

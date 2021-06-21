@@ -4,12 +4,13 @@ import {
   Box,
   Image,
   List,
+  Pagination,
   Tab,
   Tabs,
   Text,
 } from "grommet"
 import * as Icons from "grommet-icons"
-import React, { Dispatch, memo, useEffect, useRef } from "react"
+import React, { Dispatch, memo, useEffect, useRef, useState } from "react"
 import { useDispatch } from "react-redux"
 import SetNodeColorButton from "../../../../components/containers/SetNodeColorButton"
 import SearchAndCheckMenu from "../../../../components/SearchAndCheckMenu"
@@ -21,10 +22,14 @@ import {
 import { zoomToPerson } from "../../../../store/ui/uiActions"
 import useViewPerson from "../../logic/useViewPerson"
 import useGroupAccordionFunctions from "./useGroupAccordionFunctions"
-import useGroupVisibility from "./useNodeVisibility"
+import useGroupVisibility, { IVisibilityLists } from "./useNodeVisibility"
 import useToggleAllGroups from "./useToggleAllGroups"
 
-const PAGINATION_STEP = 5
+export type RenderPersonItem = (
+  person: IPerson,
+  index: number,
+) => React.ReactNode
+
 interface IProps {
   currentNetwork: ICurrentNetwork
   // a group is a person whose .isGroup is true
@@ -32,7 +37,7 @@ interface IProps {
   group: IPerson | "all"
   people: IPerson[]
   isViewingShared: boolean
-  renderItem: (person: IPerson, index: number) => React.ReactNode
+  renderItem: RenderPersonItem
   search?: string
   panelProps?: AccordionPanelProps
 }
@@ -87,8 +92,7 @@ const GroupAccordion: React.FC<IProps> = ({
     actualAccordionLabel.style.top = "0px"
   }, [accordionRef])
 
-  const doHideFromSearch =
-    search !== "" && visibilityLists.allPeople.length === 0
+  const doHideFromSearch = search !== "" && visibilityLists.all.length === 0
   if (doHideFromSearch) return null
 
   const groupAccordionStyles: React.CSSProperties = {
@@ -144,10 +148,10 @@ const GroupAccordion: React.FC<IProps> = ({
       <ToolTipButton
         tooltip={
           group === "all"
-            ? showing.allPeople
+            ? showing.all
               ? "Click to hide all"
               : "Click to show all "
-            : showing.allPeople
+            : showing.all
             ? "Click to hide all in group"
             : "Click to show all in group"
         }
@@ -156,7 +160,7 @@ const GroupAccordion: React.FC<IProps> = ({
           toggleAllNodeVisibility()
         }}
         icon={
-          showing.allPeople ? (
+          showing.all ? (
             <Icons.FormView color="accent-1" />
           ) : (
             <Icons.FormViewHide color="accent-1" />
@@ -168,8 +172,8 @@ const GroupAccordion: React.FC<IProps> = ({
 
   const personCountLabel =
     "[" +
-    (visibilityLists.allPeople.length > 0
-      ? `${visibilityLists.visiblePeople.length}/${visibilityLists.allPeople.length}`
+    (visibilityLists.all.length > 0
+      ? `${visibilityLists.visible.length}/${visibilityLists.all.length}`
       : "EMPTY") +
     "]"
 
@@ -278,26 +282,14 @@ const GroupAccordion: React.FC<IProps> = ({
       {...panelProps}
     >
       <Box pad="medium">
-        <Tabs>
-          <GroupTab
-            tabName="All"
-            items={visibilityLists.allPeople.sort(alphanumericSort)}
-            renderItem={renderItem}
-          />
-          <GroupTab
-            tabName="Visible"
-            items={visibilityLists.visiblePeople.sort(alphanumericSort)}
-            renderItem={renderItem}
-          />
-          <GroupTab
-            tabName="Hidden"
-            items={visibilityLists.hiddenPeople.sort(alphanumericSort)}
-            renderItem={renderItem}
-          />
-          {group !== "all" && !isViewingShared && (
-            <Tab title="Manage">{ManageGroupBox}</Tab>
-          )}
-        </Tabs>
+        <GroupTabs
+          visibilityLists={visibilityLists}
+          renderItem={renderItem}
+          additionalTabs={
+            group !== "all" &&
+            !isViewingShared && <Tab title="Manage">{ManageGroupBox}</Tab>
+          }
+        />
       </Box>
     </AccordionPanel>
   )
@@ -311,23 +303,104 @@ interface IGroupTab<T> {
   tabName: string
 }
 
+interface IGroupTabs {
+  visibilityLists: IVisibilityLists
+  renderItem: RenderPersonItem
+  additionalTabs?: React.ReactNode
+}
+const GroupTabs = ({
+  visibilityLists,
+  renderItem,
+  additionalTabs,
+}: IGroupTabs) => {
+  return (
+    <Tabs>
+      <GroupTab
+        tabName="All"
+        items={visibilityLists.all.sort(alphanumericSort)}
+        renderItem={renderItem}
+      />
+      <GroupTab
+        tabName="Visible"
+        items={visibilityLists.visible.sort(alphanumericSort)}
+        renderItem={renderItem}
+      />
+      <GroupTab
+        tabName="Hidden"
+        items={visibilityLists.hidden.sort(alphanumericSort)}
+        renderItem={renderItem}
+      />
+      {additionalTabs}
+    </Tabs>
+  )
+}
+
 // MUST memoize this component
 // -- otherwise, GroupTab keeps rendering.
 // I have yet to find the useEffect or useState causing unecessary rerenders (if it exists).
+const PAGINATION_STEP = 5
 const GroupTab = memo(
   ({ items: people, renderItem, tabName }: IGroupTab<IPerson>) => {
+    const isEmpty = people.length === 0
+    const maxPage = Math.ceil(people.length / PAGINATION_STEP)
+
+    const [page, setPage] = useState(1)
+    const [peopleOnPage, setPeopleOnPage] = useState<IPerson[] | null>(null)
+
+    const handlePageChange = (e: React.SyntheticEvent & { page: number }) => {
+      setPage(e.page)
+    }
+
+    const updatePeopleOnPage = () => {
+      let boundedPage = page
+      if (page > maxPage) boundedPage = maxPage
+      else if (page < 1) boundedPage = 1
+
+      const range = calculatePageIndexes(boundedPage, PAGINATION_STEP)
+      const peopleInRange = people.slice(range.start, range.end + 1)
+      setPeopleOnPage(peopleInRange)
+    }
+
+    useEffect(updatePeopleOnPage, [people, page])
+
     return (
-      <Tab title={`${tabName} (${people.length})`}>
-        <List
-          data={people}
-          children={renderItem}
-          step={PAGINATION_STEP}
-          paginate={true}
-        />
+      <Tab title={`${tabName} (${people.length})`} disabled={isEmpty}>
+        <Box direction="column" align="center">
+          {!isEmpty && (
+            <Pagination
+              numberItems={people.length}
+              page={page}
+              step={PAGINATION_STEP}
+              onChange={handlePageChange}
+            />
+          )}
+          {!isEmpty && peopleOnPage && (
+            <List
+              data={peopleOnPage}
+              children={renderItem}
+              paginate={false}
+              style={{ width: "100%" }}
+            />
+          )}
+        </Box>
       </Tab>
     )
   },
 )
+
+/**
+ * @param page
+ * @param step
+ * @returns start and end item indexes (inclusive) for a given page
+ */
+function calculatePageIndexes(page: number, step: number) {
+  // e.g. page = 1, step = 5 is indexes 0 to 4 (inclusive)
+  // Formula: ((page - 1) * step) to (page * step - 1)
+  // ((1 - 1) * 5) to (1 * 5 - 1)
+  const start = (page - 1) * step
+  const end = page * step - 1
+  return { start, end }
+}
 
 function alphanumericSort(a: IPerson, b: IPerson) {
   return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
