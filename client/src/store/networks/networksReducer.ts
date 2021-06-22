@@ -13,6 +13,7 @@ import {
   INetwork,
   INetworksState,
   IPerson,
+  IRelationship,
   IRelationships,
   IRenameNetworkAction,
   ISetHideNameTagAction,
@@ -273,8 +274,15 @@ function getSetRelationshipShapeState(
   if (personIndex === -1) return state
 
   const updatedPerson = { ...state.currentNetwork.people[personIndex] }
-  const relationship = updatedPerson.relationships[action.relationshipId]
-  if (!relationship) return state
+  let relationship: IRelationship | string =
+    updatedPerson.relationships[action.relationshipId]
+  if (relationship === undefined) return state
+
+  // If is legacy string rel, update the relationship format
+  if (typeof relationship === "string") {
+    relationship = { reason: relationship }
+  }
+
   const updatedRel = { ...relationship }
   updatedRel.shape = action.shape
 

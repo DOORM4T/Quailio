@@ -3,6 +3,7 @@ import { AppThunk } from "../../store"
 import {
   ConnectionShape,
   IPerson,
+  IRelationship,
   IRelationships,
   ISetRelationshipShape,
   NetworkActionTypes,
@@ -17,32 +18,34 @@ import { setNetworkLoading } from "./setNetworkLoading"
  * @param shape
  */
 
-export const setRelationshipShape = (
-  networkId: string,
-  personId: string,
-  relationshipId: string,
-  shape: ConnectionShape,
-): AppThunk => async (dispatch, getState) => {
-  dispatch(setNetworkLoading(true))
+export const setRelationshipShape =
+  (
+    networkId: string,
+    personId: string,
+    relationshipId: string,
+    shape: ConnectionShape,
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    dispatch(setNetworkLoading(true))
 
-  try {
-    const uid = getState().auth.userId
-    if (uid) await updateShapeInFirestore(personId, relationshipId, shape)
+    try {
+      const uid = getState().auth.userId
+      if (uid) await updateShapeInFirestore(personId, relationshipId, shape)
 
-    const action: ISetRelationshipShape = {
-      type: NetworkActionTypes.SET_RELATIONSHIP_SHAPE,
-      networkId,
-      personId,
-      relationshipId,
-      shape,
+      const action: ISetRelationshipShape = {
+        type: NetworkActionTypes.SET_RELATIONSHIP_SHAPE,
+        networkId,
+        personId,
+        relationshipId,
+        shape,
+      }
+
+      return dispatch(action)
+    } catch (error) {
+      dispatch(setNetworkLoading(false))
+      throw error
     }
-
-    return dispatch(action)
-  } catch (error) {
-    dispatch(setNetworkLoading(false))
-    throw error
   }
-}
 
 async function updateShapeInFirestore(
   personId: string,
@@ -53,6 +56,14 @@ async function updateShapeInFirestore(
   if (!personDoc.exists) throw new Error("That person does not exist")
 
   const person = personDoc.data() as IPerson
+
+  // Update the relationship if it is in legacy string format
+  let relationship: IRelationship | string =
+    person.relationships[relationshipId]
+  if (typeof relationship === "string") {
+    relationship = { reason: relationship }
+  }
+
   const updatedRelationship: IRelationships = {
     ...person.relationships,
     [relationshipId]: { ...person.relationships[relationshipId], shape },

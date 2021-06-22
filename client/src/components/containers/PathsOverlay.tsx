@@ -317,8 +317,6 @@ function _getPathIndexes(
     itemIndex: number
   }[]
 
-  console.log(nonNull)
-
   return nonNull
 }
 

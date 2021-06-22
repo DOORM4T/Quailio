@@ -70,7 +70,7 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
 
   const renderListItem = (relPerson: IPerson, index: number) => {
     const relationship = currentPerson.relationships[relPerson.id]
-    if (!relationship) return null
+    if (relationship === undefined) return null
 
     const navigateToRelatedPerson = async () => {
       try {
@@ -87,6 +87,8 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
     }
 
     const isOneWay = relPerson.relationships[currentPerson.id].shape === "arrow"
+    const isLegacyRel = typeof relationship === "string" // Legacy relationships were just strings, instead of objects with reason & shape fields
+
     const RelationshipReasonText = (
       <Text
         size="medium"
@@ -96,7 +98,7 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
           whiteSpace: "break-spaces",
         }}
       >
-        {relationship.reason || "-"}
+        {(isLegacyRel ? relationship : relationship.reason) || "-"}
       </Text>
     )
 
@@ -142,7 +144,6 @@ const Relationships: FC<IProps> = ({ isEditing }) => {
     }
 
     const pickShape = (shape: ConnectionShape) => async () => {
-      console.log(relationship.shape, shape)
       if (relationship.shape === shape) return
 
       try {
