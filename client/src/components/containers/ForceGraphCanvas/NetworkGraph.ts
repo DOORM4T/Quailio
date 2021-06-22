@@ -1423,30 +1423,29 @@ async function handleLinkClick(link: LinkObject) {
   if (!srcNode || !targetNode) return
 
   const currentToolbarAction = store.getState().ui.toolbarAction
-  const doView = currentToolbarAction === "VIEW"
-  if (doView) {
-    // View the link
-    store.dispatch(
-      setPathOverlayContent({
-        paths: [
-          [
-            {
-              id: srcNode.id,
-              name: srcNode.name,
-              description: srcNode.relationships[targetNode.id].reason,
-            },
-            {
-              id: targetNode.id,
-              name: targetNode.name,
-              description: targetNode.relationships[srcNode.id].reason,
-            },
-          ],
+  const doOpenPathOverlay =
+    currentToolbarAction === "VIEW" || currentToolbarAction === "LINK"
+  if (doOpenPathOverlay) {
+    const content = {
+      paths: [
+        [
+          {
+            id: srcNode.id,
+            name: srcNode.name,
+            description: srcNode.relationships[targetNode.id].reason,
+          },
+          {
+            id: targetNode.id,
+            name: targetNode.name,
+            description: targetNode.relationships[srcNode.id].reason,
+          },
         ],
-        person1: srcNode,
-        person2: targetNode,
-      }),
-    )
+      ],
+      person1: srcNode,
+      person2: targetNode,
+    }
 
+    store.dispatch(setPathOverlayContent(content))
     return
   }
 
