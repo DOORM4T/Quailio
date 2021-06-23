@@ -1,11 +1,15 @@
 import { v4 as uuidv4 } from "uuid"
 import { AppThunk } from "../../store"
+import { pushActionToStack } from "../../ui/uiActions"
+import { IDeletePersonStackAction, StackActionTypes } from "../../ui/uiTypes"
 import { addPersonToFirestore } from "../helpers/addPersonToFirestore"
 import { IAddPersonAction, IPerson, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
 
 /**
  * Add a new Person to an existing Network
+ *
+ * THIS ACTION IS UNDO-ABLE
  * @param networkId ID of the network to add the person to
  * @param name new person's name
  */
@@ -18,8 +22,9 @@ export const addPerson = (
     dispatch(setNetworkLoading(true))
 
     // Initialize the new Person's document
+    const id = uuidv4()
     const newPerson: IPerson = {
-      id: uuidv4(),
+      id,
       name,
       relationships: {},
       content: "",
@@ -32,6 +37,15 @@ export const addPerson = (
       // Update the database if the user is authenticated
       const isAuthenticated = Boolean(getState().auth.userId)
       if (isAuthenticated) await addPersonToFirestore(networkId, newPerson)
+
+      // #region Add to the UNDO stack
+      // Undoing a CREATE action means we DELETE the person
+      const undoAction: IDeletePersonStackAction = {
+        type: StackActionTypes.DELETE,
+        payload: { id, name },
+      }
+      dispatch(pushActionToStack("undo", [undoAction]))
+      // //#endregion
 
       const action: IAddPersonAction = {
         type: NetworkActionTypes.ADD_PERSON,

@@ -1,5 +1,6 @@
 import { Reducer } from "redux"
 import {
+  ActionStack,
   IActiveGroupsByPersonId,
   IUserInterfaceState,
   UserInterfaceActions,
@@ -19,6 +20,8 @@ const initialState: IUserInterfaceState = {
   isSmallMode: false,
   selectedNodeIds: [],
   pathContent: null,
+  undoStack: [],
+  redoStack: [],
 }
 
 export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
@@ -105,6 +108,8 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
         personInZoom: null,
         selectedNodeIds: [],
         pathContent: null,
+        undoStack: [],
+        redoStack: [],
       }
     }
 
@@ -133,6 +138,35 @@ export const uiReducer: Reducer<IUserInterfaceState, UserInterfaceActions> = (
       return {
         ...state,
         pathContent: action.paths,
+      }
+    }
+
+    // Undo-Redo Functionality
+    case UserInterfaceActionTypes.PUSH_TO_STACK: {
+      const fieldToUpdate = action.stack === "undo" ? "undoStack" : "redoStack"
+      const updatedField = [...(state[fieldToUpdate] as ActionStack)]
+
+      // NOT using concat here since it incorrectly puts each item in the StackAction array into the array
+      // We want the stacks to look like this, since users may perform batch actions: [[MOVE, MOVE, ..., MOVE], [CREATE], [DELETE]...]
+      // Concat would make it lookl like this: [MOVE, MOVE, ..., MOVE, CREATE, DELETE...]
+      updatedField.push(action.actions)
+
+      return {
+        ...state,
+        [fieldToUpdate]: updatedField,
+      }
+    }
+    case UserInterfaceActionTypes.POP_FROM_STACK: {
+      const stackToUpdate = action.stack === "undo" ? "undoStack" : "redoStack"
+
+      // Just remove the action from the stack
+      // The actual popped action is executed in the pop action, not the reducer
+      const updatedField = [...(state[stackToUpdate] as ActionStack)]
+      updatedField.pop()
+
+      return {
+        ...state,
+        [stackToUpdate]: updatedField,
       }
     }
 

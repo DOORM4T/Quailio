@@ -1,21 +1,26 @@
 import { ActionCreator } from "redux"
 import { AppThunk } from "../store"
 import {
-  IPathContent as IPathOverlayContent,
   IFocusOnPersonAction,
   IInitializePersonGroupList,
+  IPathContent as IPathOverlayContent,
   IPersonIDWithActiveGroups,
+  IPopFromStackAction,
+  IPushToStackAction,
   IResetUIAction,
   ISelectNodesAction,
-  ISetPathContentAction,
   ISetNodeVisibilityAction,
+  ISetPathContentAction,
   ISetSmallModeAction,
   ISetToolbarAction,
   ISetUILoadingAction,
   ISetViewingSharedAction,
+  IStackAction,
   ITogglePersonOverlay,
   IToggleShareOverlayAction,
   IZoomToPersonAction,
+  StackActionTypes,
+  StackName,
   ToolbarAction,
   UserInterfaceActionTypes,
 } from "./uiTypes"
@@ -134,3 +139,50 @@ export const setPathOverlayContent = (
   type: UserInterfaceActionTypes.SET_PATH_CONTENT,
   paths,
 })
+
+export const pushActionToStack = (
+  stack: StackName,
+  actions: IStackAction[],
+): IPushToStackAction => {
+  return { type: UserInterfaceActionTypes.PUSH_TO_STACK, stack, actions }
+}
+
+export const popActionFromStack =
+  (stack: StackName): AppThunk =>
+  (dispatch, getState) => {
+    // This action performs the action that will be popped
+    // The reducer actually pops the action from the global undo/redo stack
+    const stackFieldName = stack === "undo" ? "undoStack" : "redoStack"
+    const stackField = getState().ui[stackFieldName]
+    if (stackField.length === 0)
+      throw new Error(`No items to pop from ${stackFieldName}`)
+
+    const stackActions = stackField[stackField.length - 1]
+    console.log(stackActions)
+
+    // TODO: Perform popped action
+
+    // TODO: Push to opposite stack
+    // TODO: Create "opposite StackActions" array
+    // const oppositeStackActions: IStackAction[] = []
+    for (const stackAction of stackActions) {
+      console.table(stackAction)
+      switch (stackAction.type) {
+        case StackActionTypes.CREATE: {
+          console.log("DO CREATE")
+          break
+        }
+
+        case StackActionTypes.DELETE: {
+          console.log("DO DELETE")
+          break
+        }
+      }
+    }
+
+    const action: IPopFromStackAction = {
+      type: UserInterfaceActionTypes.POP_FROM_STACK,
+      stack,
+    }
+    return dispatch(action)
+  }

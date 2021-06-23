@@ -14,6 +14,30 @@ export interface IUserInterfaceState {
   readonly isSmallMode: boolean
   readonly selectedNodeIds: string[]
   readonly pathContent: IPathContent | null
+  readonly undoStack: ActionStack
+  readonly redoStack: ActionStack
+}
+
+// e.g. [[CREATE], [MOVE, MOVE, MOVE, ..., MOVE], [DELETE, DELETE]]
+export type ActionStack = IStackAction[][]
+
+export enum StackActionTypes {
+  CREATE = "CREATE",
+  DELETE = "DELETE",
+}
+
+export interface IStackAction {
+  type: StackActionTypes
+  payload: any
+}
+
+export interface ICreatePersonStackAction extends IStackAction {
+  type: StackActionTypes.CREATE
+  payload: { id: string; name: string }
+}
+export interface IDeletePersonStackAction extends IStackAction {
+  type: StackActionTypes.DELETE
+  payload: { id: string; name: string }
 }
 
 export type IVisibilityMap = { [nodeId: string]: boolean } // Visible if true or undefined
@@ -58,6 +82,9 @@ export enum UserInterfaceActionTypes {
   SET_SMALL_MODE = "UI/SET_SMALL_MODE",
   SELECT_NODES = "UI/SELECT_NODES",
   SET_PATH_CONTENT = "UI/SET_PATH_CONTENT",
+
+  PUSH_TO_STACK = "UI/PUSH_TO_STACK",
+  POP_FROM_STACK = "UI/POP_FROM_STACK",
 }
 
 export interface ISetUILoadingAction {
@@ -129,6 +156,18 @@ export interface ISetPathContentAction {
   paths: IPathContent | null
 }
 
+export type StackName = "undo" | "redo"
+export interface IPushToStackAction {
+  type: UserInterfaceActionTypes.PUSH_TO_STACK
+  stack: StackName
+  actions: IStackAction[]
+}
+
+export interface IPopFromStackAction {
+  type: UserInterfaceActionTypes.POP_FROM_STACK
+  stack: StackName
+}
+
 // action types used by the networks reducer
 export type UserInterfaceActions =
   | ISetUILoadingAction
@@ -144,3 +183,5 @@ export type UserInterfaceActions =
   | ISetSmallModeAction
   | ISelectNodesAction
   | ISetPathContentAction
+  | IPushToStackAction
+  | IPopFromStackAction

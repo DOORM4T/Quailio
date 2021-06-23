@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useHistory } from "react-router-dom"
 import { fireResizeEvent } from "../../../helpers/customEvents"
@@ -18,6 +18,7 @@ import { getIsViewingShared } from "../../../store/selectors/ui/getIsViewingShar
 import { getNodeVisibilityMap } from "../../../store/selectors/ui/getPersonNodeVisibility"
 import {
   cachePersonGroupList,
+  popActionFromStack,
   setViewingShared,
   togglePersonOverlay,
   toggleShareOverlay,
@@ -44,13 +45,44 @@ export default function useDashboard() {
   // STATE | Show/hide the Person Menu
   const [doShowPersonMenu, setShowPersonMenu] = React.useState(true)
 
+  // EFFECT | Handle undo/redo shortkeys
+  useEffect(() => {
+    const handleUndoRedoShortkeys = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return
+      try {
+        if (e.key === "z") {
+          dispatch(popActionFromStack("undo"))
+
+          return
+        }
+        if (e.key === "y") {
+          dispatch(popActionFromStack("redo"))
+          return
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    if (!currentNetwork) {
+      window.removeEventListener("keyup", handleUndoRedoShortkeys)
+      return
+    }
+
+    window.addEventListener("keyup", handleUndoRedoShortkeys)
+
+    return () => {
+      window.removeEventListener("keyup", handleUndoRedoShortkeys)
+    }
+  }, [currentNetwork])
+
   // EFFECT | Programmatically triggers the ForceGraphCanvas to resize when the PersonMenu opens or closes
-  React.useEffect(() => {
+  useEffect(() => {
     fireResizeEvent()
   }, [doShowPersonMenu]) // EFFECT | when doShowPersonMenu changes
 
   // EFFECT | On mount, check if viewing a shared network
-  React.useEffect(() => {
+  useEffect(() => {
     // Get query params from the URL
     const sharedNetworkId = new URLSearchParams(window.location.search).get(
       "sharing",
@@ -81,7 +113,7 @@ export default function useDashboard() {
   }, []) // END | Shared network effect
 
   // EFFECT | Get the logged-in user's networks
-  React.useEffect(() => {
+  useEffect(() => {
     // Clear previous networks
     dispatch(resetLocalNetworks())
 
@@ -114,7 +146,7 @@ export default function useDashboard() {
   }, [isAuthenticated]) // END | Get logged-in networks
 
   // EFFECT | Hide all modals by default
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(togglePersonOverlay(false))
     dispatch(toggleShareOverlay(false))
   }, [])
@@ -123,7 +155,7 @@ export default function useDashboard() {
             |    The "groupsByPersonIds" global state is used by the force-graph 
             |    -- setting/caching the state from this PersonMenu component saves a lot of
             |    processing that would otherwise be inefficiently calculated during each tick of the force-graph  */
-  React.useEffect(() => {
+  useEffect(() => {
     // Stop if there aren't any groups in the current network -- this means there's no person-group data to cache
     if (!currentNetwork || !currentNetwork.people.some((p) => p.isGroup)) return
     const groups = currentNetwork.people.filter((p) => p.isGroup)
