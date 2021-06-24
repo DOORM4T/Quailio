@@ -33,11 +33,11 @@ export interface IStackAction {
 
 export interface ICreatePersonStackAction extends IStackAction {
   type: StackActionTypes.CREATE
-  payload: { id: string; name: string }
+  payload: IPerson
 }
 export interface IDeletePersonStackAction extends IStackAction {
   type: StackActionTypes.DELETE
-  payload: { id: string; name: string }
+  payload: IPerson
 }
 
 export type IVisibilityMap = { [nodeId: string]: boolean } // Visible if true or undefined
@@ -83,7 +83,7 @@ export enum UserInterfaceActionTypes {
   SELECT_NODES = "UI/SELECT_NODES",
   SET_PATH_CONTENT = "UI/SET_PATH_CONTENT",
 
-  PUSH_TO_STACK = "UI/PUSH_TO_STACK",
+  PUSH_TO_UNDO_STACK = "UI/PUSH_TO_STACK",
   POP_FROM_STACK = "UI/POP_FROM_STACK",
 }
 
@@ -156,16 +156,16 @@ export interface ISetPathContentAction {
   paths: IPathContent | null
 }
 
-export type StackName = "undo" | "redo"
 export interface IPushToStackAction {
-  type: UserInterfaceActionTypes.PUSH_TO_STACK
-  stack: StackName
+  type: UserInterfaceActionTypes.PUSH_TO_UNDO_STACK
   actions: IStackAction[]
 }
 
+export type StackName = "undo" | "redo"
 export interface IPopFromStackAction {
   type: UserInterfaceActionTypes.POP_FROM_STACK
   stack: StackName
+  oppositeStackActions: IStackAction[]
 }
 
 // action types used by the networks reducer

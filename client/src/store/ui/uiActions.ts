@@ -1,6 +1,9 @@
 import { ActionCreator } from "redux"
+import { addPerson, connectPeople, deletePerson } from "../networks/actions"
 import { AppThunk } from "../store"
 import {
+  ICreatePersonStackAction,
+  IDeletePersonStackAction,
   IFocusOnPersonAction,
   IInitializePersonGroupList,
   IPathContent as IPathOverlayContent,
@@ -140,49 +143,93 @@ export const setPathOverlayContent = (
   paths,
 })
 
-export const pushActionToStack = (
-  stack: StackName,
+// Undo-able actions push their opposite action to the undo stack
+export const pushActionToUndoStack = (
   actions: IStackAction[],
 ): IPushToStackAction => {
-  return { type: UserInterfaceActionTypes.PUSH_TO_STACK, stack, actions }
+  return { type: UserInterfaceActionTypes.PUSH_TO_UNDO_STACK, actions }
 }
 
 export const popActionFromStack =
   (stack: StackName): AppThunk =>
-  (dispatch, getState) => {
-    // This action performs the action that will be popped
-    // The reducer actually pops the action from the global undo/redo stack
-    const stackFieldName = stack === "undo" ? "undoStack" : "redoStack"
-    const stackField = getState().ui[stackFieldName]
-    if (stackField.length === 0)
-      throw new Error(`No items to pop from ${stackFieldName}`)
+  async (dispatch, getState) => {
+    try {
+      // This action performs the action that will be popped
+      // The reducer actually pops the action from the global undo/redo stack
+      const stackFieldName = stack === "undo" ? "undoStack" : "redoStack"
+      const stackField = getState().ui[stackFieldName]
+      if (stackField.length === 0)
+        throw new Error(`No items to pop from ${stackFieldName}`)
 
-    const stackActions = stackField[stackField.length - 1]
-    console.log(stackActions)
+      const toPop = stackField[stackField.length - 1]
 
-    // TODO: Perform popped action
+      const networkId = getState().networks.currentNetwork?.id
+      if (!networkId) throw new Error("Missing network ID")
 
-    // TODO: Push to opposite stack
-    // TODO: Create "opposite StackActions" array
-    // const oppositeStackActions: IStackAction[] = []
-    for (const stackAction of stackActions) {
-      console.table(stackAction)
-      switch (stackAction.type) {
-        case StackActionTypes.CREATE: {
-          console.log("DO CREATE")
-          break
-        }
+      const oppositeStackActions: IStackAction[] = []
+      action_loop: for await (const stackAction of toPop) {
+        switch (stackAction.type) {
+          case StackActionTypes.CREATE: {
+            const { payload: existingPerson } =
+              stackAction as ICreatePersonStackAction
 
-        case StackActionTypes.DELETE: {
-          console.log("DO DELETE")
-          break
+            // Re-create the person
+            await dispatch(
+              addPerson(
+                networkId,
+                existingPerson.name,
+                existingPerson.pinXY,
+                false,
+                existingPerson,
+              ),
+            )
+
+            // Re-connect the person to their relationships, if they had any
+            const relIds = Object.keys(existingPerson.relationships)
+            const hasRelationships = relIds.length > 0
+            if (hasRelationships) {
+              relIds.forEach((relId) => {
+                const rel = existingPerson.relationships[relId]
+                dispatch(
+                  connectPeople(networkId, {
+                    p1Id: existingPerson.id,
+                    p2Id: relId,
+                    reason: rel.reason,
+                    shape: rel.shape,
+                  }),
+                )
+              })
+            }
+
+            const opposite: IDeletePersonStackAction = {
+              type: StackActionTypes.DELETE,
+              payload: stackAction.payload,
+            }
+            oppositeStackActions.push(opposite)
+            continue action_loop
+          }
+
+          case StackActionTypes.DELETE: {
+            const { payload } = stackAction as IDeletePersonStackAction
+            await dispatch(deletePerson(networkId, payload.id, false))
+
+            const opposite: ICreatePersonStackAction = {
+              type: StackActionTypes.CREATE,
+              payload: stackAction.payload,
+            }
+            oppositeStackActions.push(opposite)
+            continue action_loop
+          }
         }
       }
-    }
 
-    const action: IPopFromStackAction = {
-      type: UserInterfaceActionTypes.POP_FROM_STACK,
-      stack,
+      const action: IPopFromStackAction = {
+        type: UserInterfaceActionTypes.POP_FROM_STACK,
+        stack,
+        oppositeStackActions,
+      }
+      return dispatch(action)
+    } catch (error) {
+      console.error(error)
     }
-    return dispatch(action)
   }

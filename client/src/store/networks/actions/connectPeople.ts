@@ -4,6 +4,7 @@ import {
 } from "../../../firebase/services"
 import { AppThunk } from "../../store"
 import {
+  ConnectionShape,
   IConnectPeopleAction,
   INetwork,
   IPerson,
@@ -23,13 +24,14 @@ export const connectPeople = (
   relationship: {
     p1Id: string
     p2Id: string
-    sharedReason?: string
+    reason?: string
+    shape?: ConnectionShape
   },
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
-    const { p1Id, p2Id, sharedReason = "" } = relationship
+    const { p1Id, p2Id, reason = "", shape = "none" } = relationship
 
     try {
       let p1Data: IPerson | undefined
@@ -72,11 +74,11 @@ export const connectPeople = (
       /* Copy existing relationships and add the new relationship for each person */
       const updatedP1Rels: IRelationships = {
         ...p1Data.relationships,
-        [p2Id]: { reason: sharedReason },
+        [p2Id]: { reason, shape },
       }
       const updatedP2Rels: IRelationships = {
         ...p2Data.relationships,
-        [p1Id]: { reason: sharedReason },
+        [p1Id]: { reason, shape: "none" },
       }
 
       /* Updated person data fetched from the database? Then update the database with the new data. */

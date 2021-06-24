@@ -1432,12 +1432,12 @@ async function handleLinkClick(link: LinkObject) {
           {
             id: srcNode.id,
             name: srcNode.name,
-            description: srcNode.relationships[targetNode.id].reason,
+            description: srcNode.relationships[targetNode.id]?.reason,
           },
           {
             id: targetNode.id,
             name: targetNode.name,
-            description: targetNode.relationships[srcNode.id].reason,
+            description: targetNode.relationships[srcNode.id]?.reason,
           },
         ],
       ],

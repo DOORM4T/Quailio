@@ -3,6 +3,8 @@ import {
   peopleCollection,
 } from "../../../firebase/services"
 import { AppThunk } from "../../store"
+import { pushActionToUndoStack } from "../../ui/uiActions"
+import { ICreatePersonStackAction, StackActionTypes } from "../../ui/uiTypes"
 import {
   IDeletePersonByIdAction,
   INetwork,
@@ -16,9 +18,14 @@ import { setNetworkLoading } from "./setNetworkLoading"
  * Delete a Person from a Network by ID
  * @param networkId
  * @param personId
+ * @param doAddToUndoStack whether to add the opposite action to the undo stack (should explicitly set to false when calling this action from the popAction in uiActions to avoid unecessary pushes to the undo stack)
  */
 
-export const deletePerson = (networkId: string, personId: string): AppThunk => {
+export const deletePerson = (
+  networkId: string,
+  personId: string,
+  doAddToUndoStack: boolean = true,
+): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
 
@@ -67,6 +74,22 @@ export const deletePerson = (networkId: string, personId: string): AppThunk => {
         /* Delete the Person's document */
         await personDoc.delete()
       }
+
+      // #region Add to the UNDO stack
+      // Undoing a CREATE action means we DELETE the person
+      if (doAddToUndoStack) {
+        const person = getState().networks.currentNetwork?.people.find(
+          (p) => p.id === personId,
+        )
+        if (!person) throw new Error("Person not found")
+
+        const undoAction: ICreatePersonStackAction = {
+          type: StackActionTypes.CREATE,
+          payload: person,
+        }
+        dispatch(pushActionToUndoStack([undoAction]))
+      }
+      // //#endregion
 
       /* Update state accordingly with networkId and personId */
       const action: IDeletePersonByIdAction = {
