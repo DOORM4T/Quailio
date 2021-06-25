@@ -24,6 +24,7 @@ export type ActionStack = IStackAction[][]
 export enum StackActionTypes {
   CREATE = "CREATE",
   DELETE = "DELETE",
+  PIN = "PIN",
 }
 
 export interface IStackAction {
@@ -37,6 +38,10 @@ export interface ICreatePersonStackAction extends IStackAction {
 }
 export interface IDeletePersonStackAction extends IStackAction {
   type: StackActionTypes.DELETE
+  payload: IPerson
+}
+export interface IPinPersonStackAction extends IStackAction {
+  type: StackActionTypes.PIN
   payload: IPerson
 }
 

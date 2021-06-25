@@ -1,5 +1,10 @@
 import { ActionCreator } from "redux"
-import { addPerson, connectPeople, deletePerson } from "../networks/actions"
+import {
+  addPerson,
+  connectPeople,
+  deletePerson,
+  pinNode,
+} from "../networks/actions"
 import { AppThunk } from "../store"
 import {
   ICreatePersonStackAction,
@@ -8,6 +13,7 @@ import {
   IInitializePersonGroupList,
   IPathContent as IPathOverlayContent,
   IPersonIDWithActiveGroups,
+  IPinPersonStackAction,
   IPopFromStackAction,
   IPushToStackAction,
   IResetUIAction,
@@ -216,6 +222,23 @@ export const popActionFromStack =
             const opposite: ICreatePersonStackAction = {
               type: StackActionTypes.CREATE,
               payload: stackAction.payload,
+            }
+            oppositeStackActions.push(opposite)
+            continue action_loop
+          }
+
+          case StackActionTypes.PIN: {
+            const { payload } = stackAction as IPinPersonStackAction
+            const personBeforeChange =
+              getState().networks.currentNetwork?.people.find(
+                (p) => p.id === payload.id,
+              )
+            if (!personBeforeChange) throw new Error("Person not found.")
+            await dispatch(pinNode(networkId, payload.id, payload.pinXY, false))
+
+            const opposite: IPinPersonStackAction = {
+              type: StackActionTypes.PIN,
+              payload: personBeforeChange,
             }
             oppositeStackActions.push(opposite)
             continue action_loop

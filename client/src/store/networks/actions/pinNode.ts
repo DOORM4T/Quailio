@@ -1,6 +1,8 @@
 import firebase from "firebase"
 import { peopleCollection } from "../../../firebase/services"
 import { AppThunk } from "../../store"
+import { pushActionToUndoStack } from "../../ui/uiActions"
+import { IPinPersonStackAction, StackActionTypes } from "../../ui/uiTypes"
 import { ISetNodePinAction, NetworkActionTypes } from "../networkTypes"
 import { setNetworkLoading } from "./setNetworkLoading"
 
@@ -14,6 +16,7 @@ export const pinNode = (
   networkId: string,
   nodeId: string, // Can refer to a person ID or group ID -- groups are represented as nodes in the Force Graph and can be pinned
   pinXY?: { x: number; y: number },
+  doAddToUndoStack: boolean = true,
 ): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(setNetworkLoading(true))
@@ -36,6 +39,21 @@ export const pinNode = (
           await nodeDoc.ref.update({ pinXY })
         }
       }
+
+      // #region Add to the UNDO stack
+      // Undoing a CREATE action means we DELETE the person
+      if (doAddToUndoStack) {
+        const person = getState().networks.currentNetwork?.people.find(
+          (p) => p.id === nodeId,
+        )
+        if (!person) throw new Error("Node not found.")
+        const undoAction: IPinPersonStackAction = {
+          type: StackActionTypes.PIN,
+          payload: person,
+        }
+        dispatch(pushActionToUndoStack([undoAction]))
+      }
+      // //#endregion
 
       // Action to update state with the new person content
       const action: ISetNodePinAction = {
