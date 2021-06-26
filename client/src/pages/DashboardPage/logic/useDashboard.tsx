@@ -26,6 +26,8 @@ import {
 import { IPersonIDWithActiveGroups } from "../../../store/ui/uiTypes"
 
 export default function useDashboard() {
+  // useUndoRedoShortkeys()  // DISABLED: Should find a better way to support undo-redo than manually writing opposite actions
+
   const dispatch = useDispatch()
   const history = useHistory()
   const isSmall = useSmallBreakpoint()
@@ -44,37 +46,6 @@ export default function useDashboard() {
 
   // STATE | Show/hide the Person Menu
   const [doShowPersonMenu, setShowPersonMenu] = React.useState(true)
-
-  // EFFECT | Handle undo/redo shortkeys
-  useEffect(() => {
-    const handleUndoRedoShortkeys = (e: KeyboardEvent) => {
-      if (!e.ctrlKey) return
-      try {
-        if (e.key === "z") {
-          dispatch(popActionFromStack("undo"))
-
-          return
-        }
-        if (e.key === "y") {
-          dispatch(popActionFromStack("redo"))
-          return
-        }
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    if (!currentNetwork) {
-      window.removeEventListener("keyup", handleUndoRedoShortkeys)
-      return
-    }
-
-    window.addEventListener("keyup", handleUndoRedoShortkeys)
-
-    return () => {
-      window.removeEventListener("keyup", handleUndoRedoShortkeys)
-    }
-  }, [currentNetwork])
 
   // EFFECT | Programmatically triggers the ForceGraphCanvas to resize when the PersonMenu opens or closes
   useEffect(() => {
@@ -193,4 +164,39 @@ export default function useDashboard() {
     networks,
     setShowPersonMenu,
   }
+}
+
+function useUndoRedoShortkeys() {
+  const dispatch = useDispatch()
+  const currentNetwork = useSelector(getCurrentNetwork)
+
+  useEffect(() => {
+    const handleUndoRedoShortkeys = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return
+      try {
+        if (e.key === "z") {
+          dispatch(popActionFromStack("undo"))
+
+          return
+        }
+        if (e.key === "y") {
+          dispatch(popActionFromStack("redo"))
+          return
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    if (!currentNetwork) {
+      window.removeEventListener("keyup", handleUndoRedoShortkeys)
+      return
+    }
+
+    window.addEventListener("keyup", handleUndoRedoShortkeys)
+
+    return () => {
+      window.removeEventListener("keyup", handleUndoRedoShortkeys)
+    }
+  }, [currentNetwork])
 }
