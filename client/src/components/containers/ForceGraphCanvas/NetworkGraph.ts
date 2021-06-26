@@ -7,6 +7,7 @@ import ForceGraph, {
 import {
   addPerson,
   connectPeople,
+  deleteMultipleNodes,
   deletePerson,
   disconnectPeople,
   pinMultipleNodes,
@@ -1291,10 +1292,12 @@ function handleMultiShortkeys(Graph: ForceGraphInstance) {
         )
         if (!doContinue) return
 
-        for (const nodeId of selectedNodeIds) {
-          store.dispatch<any>(deletePerson(networkId, nodeId))
+        try {
+          store.dispatch<any>(deleteMultipleNodes(networkId, selectedNodeIds))
+          store.dispatch(selectNodes([]))
+        } catch (error) {
+          console.error(error)
         }
-        store.dispatch(selectNodes([]))
         return
       }
     }

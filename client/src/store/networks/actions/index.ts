@@ -1,6 +1,7 @@
 export * from "./addPerson"
 export * from "./connectPeople"
 export * from "./createNetwork"
+export * from "./deleteMultipleNodes"
 export * from "./deleteNetwork"
 export * from "./deletePerson"
 export * from "./disconnectPeople"

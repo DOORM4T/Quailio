@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { fireFitCanvasEvent } from "../../helpers/customEvents"
 import useGetPaths from "../../hooks/useGetPaths"
 import useSmallBreakpoint from "../../hooks/useSmallBreakpoint"
-import { deletePerson, scalePerson } from "../../store/networks/actions"
+import { deleteMultipleNodes, scalePerson } from "../../store/networks/actions"
 import { setHideNameTag } from "../../store/networks/actions/setHideNameTag"
 import { IPerson } from "../../store/networks/networkTypes"
 import {
@@ -172,12 +172,12 @@ function DeleteActionButton({
       )
       if (!doContinue) return
 
-      for (const nodeId of selectedNodeIds) {
-        dispatch(deletePerson(currentNetworkId, nodeId))
+      try {
+        dispatch(deleteMultipleNodes(currentNetworkId, selectedNodeIds))
+        dispatch(selectNodes([]))
+      } catch (error) {
+        console.error(error)
       }
-      dispatch(selectNodes([]))
-
-      return
     }
   }
 
