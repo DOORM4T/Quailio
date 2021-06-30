@@ -1,7 +1,9 @@
+import cors from "cors"
 import express, { NextFunction, Response } from "express"
 import routes from "./routes"
 
 export const app = express()
+app.use(cors())
 app.use(routes)
 app.use(errorHandler as any)
 
