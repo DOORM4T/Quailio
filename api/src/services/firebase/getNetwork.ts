@@ -18,17 +18,17 @@ async function getSharedNetworkData(sharedId: string) {
     .where("sharedProperties.sharedId", "==", sharedId)
     .limit(1)
     .get()
-  if (!doc.docs[0].exists) throw new Error("That network does not exist.")
+  if (!doc || !doc.docs[0] || !doc.docs[0].exists)
+    throw new Error("That network does not exist.")
 
   const data = doc.docs[0].data() as INetwork
   return data
 }
 
 async function getRelationalPeople(data: INetwork) {
-  const getPersonPromises = data.personIds
-    .map(idToPerson)
-    .filter(isNonNull) as Promise<IPerson>[]
-  return await Promise.all(getPersonPromises)
+  const getPersonPromises = data.personIds.map(idToPerson)
+  const people = await Promise.all(getPersonPromises)
+  return people.filter(exists) as IPerson[]
 }
 
 async function idToPerson(personId: string) {
@@ -37,7 +37,7 @@ async function idToPerson(personId: string) {
   return doc.data() as IPerson
 }
 
-function isNonNull(item: any | null) {
+function exists(item: any | null) {
   if (item === null) return false
   return true
 }
@@ -45,7 +45,9 @@ function isNonNull(item: any | null) {
 function getSortedPeople(peopleData: IPerson[]) {
   // Sort people by name
   // This prevents person data from "changing position," since they may be fetched out of order
-  return peopleData.sort((p1, p2) =>
-    p1.name.toLocaleLowerCase().localeCompare(p2.name.toLocaleLowerCase()),
-  )
+  return peopleData.sort((p1, p2) => {
+    return p1.name
+      .toLocaleLowerCase()
+      .localeCompare(p2.name.toLocaleLowerCase())
+  })
 }
