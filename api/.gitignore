@@ -1,4 +1,6 @@
-node_modules
+
 .env
+build
+node_modules
 serviceAccountKey.json
 yarn-error.log
