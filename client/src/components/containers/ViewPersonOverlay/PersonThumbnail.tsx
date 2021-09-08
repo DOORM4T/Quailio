@@ -180,7 +180,7 @@ const PersonThumbnail: React.FC<IProps> = ({ isEditing }) => {
         icon={<Icons.Image />}
         onClick={openFileInput}
         id="set-uploaded-image-button"
-        tooltip={`Upload a thumbnail ${isAuthenticated ? "(1 MB Limit)" : ""}`}
+        tooltip={`Upload a thumbnail ${isAuthenticated ? "(10 MB Limit)" : ""}`}
         dropProps={{ align: { top: "bottom" } }}
       />
 
